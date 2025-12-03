@@ -1,0 +1,389 @@
+<mat-sidenav-container class="page-container">
+  <!-- Sidebar -->
+  <mat-sidenav
+    [mode]="sidenavOpened ? 'side' : 'over'"
+    [opened]="sidenavOpened"
+    class="dashboard-sidenav"
+    #sidenav>
+    <div class="sidenav-header">
+      <div class="brand-logo">
+        <mat-icon class="brand-icon">local_hospital</mat-icon>
+        <div class="brand-text">
+          <h2 class="brand-title">ImmunizeDB</h2>
+          <p class="brand-subtitle">Vaccine Management System</p>
+        </div>
+      </div>
+    </div>
+
+    <mat-nav-list class="nav-list">
+      <a mat-list-item class="nav-item" routerLink="/dashboard" routerLinkActive="active" matTooltip="Dashboard Overview" matTooltipPosition="right">
+        <mat-icon class="nav-icon">dashboard</mat-icon>
+        <span class="nav-label">Dashboard</span>
+        <mat-icon class="nav-chevron">chevron_right</mat-icon>
+      </a>
+
+      <a mat-list-item class="nav-item active" routerLink="/inventory" routerLinkActive="active" matTooltip="Manage Inventory" matTooltipPosition="right">
+        <mat-icon class="nav-icon">inventory_2</mat-icon>
+        <span class="nav-label">Inventory</span>
+        <mat-icon class="nav-chevron">chevron_right</mat-icon>
+      </a>
+
+      <a mat-list-item class="nav-item" matTooltip="Coming Soon" matTooltipPosition="right">
+        <mat-icon class="nav-icon">people</mat-icon>
+        <span class="nav-label">Patients</span>
+        <mat-chip class="coming-soon-chip">Soon</mat-chip>
+      </a>
+
+      <a mat-list-item class="nav-item" matTooltip="Coming Soon" matTooltipPosition="right">
+        <mat-icon class="nav-icon">campaign</mat-icon>
+        <span class="nav-label">Campaigns</span>
+        <mat-chip class="coming-soon-chip">Soon</mat-chip>
+      </a>
+
+      <a mat-list-item class="nav-item" matTooltip="Coming Soon" matTooltipPosition="right">
+        <mat-icon class="nav-icon">assessment</mat-icon>
+        <span class="nav-label">Reports</span>
+        <mat-chip class="coming-soon-chip">Soon</mat-chip>
+      </a>
+
+      <mat-divider class="nav-divider"></mat-divider>
+
+      <a mat-list-item class="nav-item" matTooltip="Settings" matTooltipPosition="right">
+        <mat-icon class="nav-icon">settings</mat-icon>
+        <span class="nav-label">Settings</span>
+        <mat-icon class="nav-chevron">chevron_right</mat-icon>
+      </a>
+    </mat-nav-list>
+
+    <div class="sidenav-footer">
+      <div class="user-profile-card">
+        <div class="user-avatar">
+          <mat-icon>account_circle</mat-icon>
+        </div>
+        <div class="user-info">
+          <p class="user-name">{{ currentUser?.username || 'User' }}</p>
+          <p class="user-role">{{ userRole }}</p>
+        </div>
+        <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-menu-btn">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <!-- Main Content -->
+  <mat-sidenav-content class="page-content">
+    <!-- Top Toolbar -->
+    <mat-toolbar class="page-toolbar">
+      <div class="toolbar-content">
+        <div class="toolbar-left">
+          <button mat-icon-button class="menu-toggle" (click)="toggleSidenav()">
+            <mat-icon>menu</mat-icon>
+          </button>
+
+          <div class="page-header">
+            <h1 class="page-title">
+              <mat-icon class="page-icon">inventory_2</mat-icon>
+              <span class="title-text">Vaccine Inventory Management</span>
+            </h1>
+            <p class="page-subtitle">Comprehensive stock tracking and batch management</p>
+          </div>
+        </div>
+
+        <div class="toolbar-right">
+          <button mat-raised-button color="primary" class="primary-btn" (click)="navigateToAddBatch()">
+            <mat-icon>add_circle</mat-icon>
+            Register New Batch
+          </button>
+
+          <button mat-icon-button class="toolbar-icon-btn" matTooltip="Help & Support">
+            <mat-icon>help_outline</mat-icon>
+          </button>
+
+          <button mat-icon-button [matMenuTriggerFor]="userMenu" class="toolbar-icon-btn user-btn">
+            <mat-icon>account_circle</mat-icon>
+          </button>
+
+          <mat-menu #userMenu="matMenu" class="user-dropdown-menu">
+            <div class="menu-header">
+              <p class="menu-user-name">{{ currentUser?.username }}</p>
+              <p class="menu-user-email">{{ currentUser?.email }}</p>
+            </div>
+            <mat-divider></mat-divider>
+            <button mat-menu-item>
+              <mat-icon>person</mat-icon>
+              <span>My Profile</span>
+            </button>
+            <button mat-menu-item>
+              <mat-icon>settings</mat-icon>
+              <span>Settings</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="logout()" class="logout-item">
+              <mat-icon>logout</mat-icon>
+              <span>Logout</span>
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+    </mat-toolbar>
+
+    <!-- Inventory Content -->
+    <div class="inventory-main" *ngIf="!loading">
+
+      <!-- Statistics Cards -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <mat-card class="stat-card">
+            <div class="stat-content">
+              <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #1976d2 0%, #64b5f6 100%);">
+                <mat-icon class="stat-icon">inventory</mat-icon>
+              </div>
+              <div class="stat-info">
+                <p class="stat-label">Total Batches</p>
+                <h2 class="stat-value">{{ dataSource.data.length }}</h2>
+                <p class="stat-subtitle">Registered in system</p>
+              </div>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <div class="stat-content">
+              <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #388e3c 0%, #81c784 100%);">
+                <mat-icon class="stat-icon">vaccines</mat-icon>
+              </div>
+              <div class="stat-info">
+                <p class="stat-label">Total Doses</p>
+                <h2 class="stat-value">{{ getTotalDoses() | number }}</h2>
+                <p class="stat-subtitle">Available for administration</p>
+              </div>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card">
+            <div class="stat-content">
+              <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #00897b 0%, #4db6ac 100%);">
+                <mat-icon class="stat-icon">category</mat-icon>
+              </div>
+              <div class="stat-info">
+                <p class="stat-label">Vaccine Types</p>
+                <h2 class="stat-value">{{ getUniqueVaccineCount() }}</h2>
+                <p class="stat-subtitle">Different vaccines in stock</p>
+              </div>
+            </div>
+          </mat-card>
+
+          <mat-card class="stat-card alert-card">
+            <div class="stat-content">
+              <div class="stat-icon-wrapper" style="background: linear-gradient(135deg, #d32f2f 0%, #ef5350 100%);">
+                <mat-icon class="stat-icon">event_busy</mat-icon>
+              </div>
+              <div class="stat-info">
+                <p class="stat-label">Expiring Soon</p>
+                <h2 class="stat-value">{{ getExpiringSoonCount() }}</h2>
+                <p class="stat-subtitle">Within 30 days</p>
+              </div>
+            </div>
+          </mat-card>
+        </div>
+      </section>
+
+      <!-- Filter and Search Section -->
+      <mat-card class="filter-card">
+        <div class="filter-content">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>
+              <mat-icon>search</mat-icon>
+              Search batches...
+            </mat-label>
+            <input matInput [formControl]="searchControl" placeholder="Enter vaccine name, batch number, or manufacturer">
+            <button mat-icon-button matSuffix *ngIf="searchControl.value" (click)="searchControl.setValue('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-form-field>
+
+          <button mat-stroked-button class="filter-btn" (click)="showFilters()">
+            <mat-icon>filter_list</mat-icon>
+            Filters
+          </button>
+
+          <button mat-stroked-button class="export-btn" (click)="exportData()">
+            <mat-icon>download</mat-icon>
+            Export
+          </button>
+
+          <button mat-icon-button class="refresh-btn" (click)="refreshData()" matTooltip="Refresh Data">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+      </mat-card>
+
+      <!-- Data Table -->
+      <mat-card class="table-card">
+        <div class="table-container">
+          <table mat-table [dataSource]="dataSource" matSort class="inventory-table">
+
+            <!-- Vaccine Name Column -->
+            <ng-container matColumnDef="vaccine_name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <div class="header-cell">
+                  <mat-icon>vaccines</mat-icon>
+                  Vaccine Name
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let batch" class="vaccine-cell">
+                <div class="vaccine-info">
+                  <mat-icon class="vaccine-icon">medication</mat-icon>
+                  <span class="vaccine-name">{{ batch.vaccine_name || batch.vaccineName }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Batch Number Column -->
+            <ng-container matColumnDef="batch_number">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <div class="header-cell">
+                  <mat-icon>tag</mat-icon>
+                  Batch Number
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let batch">
+                <span class="batch-number">{{ batch.batch_number || batch.batchNumber }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Manufacturer Column -->
+            <ng-container matColumnDef="manufacturer">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <div class="header-cell">
+                  <mat-icon>business</mat-icon>
+                  Manufacturer
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let batch">
+                <span class="manufacturer">{{ batch.manufacturer }}</span>
+              </td>
+            </ng-container>
+
+            <!-- Quantity Column -->
+            <ng-container matColumnDef="quantity">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <div class="header-cell">
+                  <mat-icon>inventory_2</mat-icon>
+                  Quantity
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let batch">
+                <div class="quantity-cell">
+                  <span class="quantity-value">{{ batch.quantity | number }}</span>
+                  <span class="quantity-unit">doses</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Expiry Date Column -->
+            <ng-container matColumnDef="expiry_date">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>
+                <div class="header-cell">
+                  <mat-icon>event</mat-icon>
+                  Expiry Date
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let batch">
+                <div class="expiry-cell" [class.expiry-warning]="calculateDaysUntilExpiry(batch.expiry_date) < 30">
+                  <mat-icon class="expiry-icon">calendar_today</mat-icon>
+                  <div class="expiry-info">
+                    <span class="expiry-date">{{ formatDate(batch.expiry_date) }}</span>
+                    <span class="expiry-days">({{ calculateDaysUntilExpiry(batch.expiry_date) }} days)</span>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>
+                <div class="header-cell">
+                  <mat-icon>info</mat-icon>
+                  Status
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let batch">
+                <mat-chip [class]="getStatusClass(batch)" class="status-chip">
+                  <mat-icon class="chip-icon">{{ getStatusIcon(batch) }}</mat-icon>
+                  {{ getStatusLabel(batch) }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>
+                <div class="header-cell">
+                  <mat-icon>settings</mat-icon>
+                  Actions
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let batch" class="actions-cell">
+                <button mat-icon-button [matMenuTriggerFor]="actionMenu" class="action-btn">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #actionMenu="matMenu">
+                  <button mat-menu-item (click)="viewBatch(batch)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>View Details</span>
+                  </button>
+                  <button mat-menu-item (click)="editBatch(batch)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Edit Batch</span>
+                  </button>
+                  <button mat-menu-item (click)="updateQuantity(batch)">
+                    <mat-icon>update</mat-icon>
+                    <span>Update Quantity</span>
+                  </button>
+                  <mat-divider></mat-divider>
+                  <button mat-menu-item class="delete-item" (click)="deleteBatch(batch)">
+                    <mat-icon>delete</mat-icon>
+                    <span>Delete Batch</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                class="table-row"
+                (click)="viewBatch(row)"></tr>
+
+            <!-- No Data Row -->
+            <tr class="mat-row no-data-row" *matNoDataRow>
+              <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                <div class="no-data-message">
+                  <mat-icon>inventory_2</mat-icon>
+                  <h3>No vaccine batches found</h3>
+                  <p>{{ searchControl.value ? 'Try adjusting your search criteria' : 'Start by registering your first vaccine batch' }}</p>
+                  <button mat-raised-button color="primary" (click)="navigateToAddBatch()" *ngIf="!searchControl.value">
+                    <mat-icon>add_circle</mat-icon>
+                    Register First Batch
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <mat-paginator
+            [pageSizeOptions]="[10, 25, 50, 100]"
+            showFirstLastButtons
+            class="inventory-paginator">
+          </mat-paginator>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <mat-spinner diameter="60"></mat-spinner>
+      <p>Loading inventory data...</p>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

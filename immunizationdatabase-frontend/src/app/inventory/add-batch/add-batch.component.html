@@ -1,0 +1,310 @@
+<div class="modal-container">
+  <!-- Modal Header -->
+  <div class="modal-header">
+    <div class="header-content">
+      <div class="header-icon-wrapper">
+        <mat-icon class="header-icon">add_circle</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="modal-title">Register New Vaccine Batch</h2>
+        <p class="modal-subtitle">Complete the form to add a new batch to inventory</p>
+      </div>
+    </div>
+    <button mat-icon-button class="close-btn" (click)="onCancel()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Progress Indicator -->
+  <div class="progress-section">
+    <div class="progress-info">
+      <span class="progress-label">Form Completion</span>
+      <span class="progress-value">{{ getFormCompletionPercentage() }}%</span>
+    </div>
+    <mat-progress-bar
+      mode="determinate"
+      [value]="getFormCompletionPercentage()"
+      color="primary">
+    </mat-progress-bar>
+  </div>
+
+  <!-- Modal Body with Stepper -->
+  <div class="modal-body">
+    <mat-stepper linear #stepper [selectedIndex]="currentStep">
+
+      <!-- Step 1: Basic Information -->
+      <mat-step [stepControl]="basicInfoForm" label="Basic Information">
+        <form [formGroup]="basicInfoForm" class="step-form">
+          <div class="step-header">
+            <mat-icon class="step-icon">vaccines</mat-icon>
+            <div>
+              <h3>Vaccine Details</h3>
+              <p>Enter the core information about the vaccine batch</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Vaccine Name</mat-label>
+              <input matInput
+                     formControlName="vaccine_name"
+                     placeholder="e.g., COVID-19 (Pfizer-BioNTech)"
+                     [matAutocomplete]="vaccineAuto">
+              <mat-icon matPrefix color="primary">medication</mat-icon>
+              <mat-autocomplete #vaccineAuto="matAutocomplete">
+                <mat-option *ngFor="let vaccine of filteredVaccineNames | async" [value]="vaccine">
+                  <mat-icon>vaccines</mat-icon>
+                  {{ vaccine }}
+                </mat-option>
+              </mat-autocomplete>
+              <mat-hint>Select or type vaccine name</mat-hint>
+              <mat-error *ngIf="hasError(basicInfoForm, 'vaccine_name', 'required')">
+                Vaccine name is required
+              </mat-error>
+              <mat-error *ngIf="hasError(basicInfoForm, 'vaccine_name', 'minlength')">
+                Name must be at least 2 characters
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Batch Number</mat-label>
+              <input matInput
+                     formControlName="batch_number"
+                     placeholder="e.g., BN-2024-001"
+                     (input)="batchNumberControl!.setValue($any($event.target).value.toUpperCase())">
+              <mat-icon matPrefix color="primary">tag</mat-icon>
+              <mat-hint>Uppercase letters, numbers, and hyphens only</mat-hint>
+              <mat-error *ngIf="hasError(basicInfoForm, 'batch_number', 'required')">
+                Batch number is required
+              </mat-error>
+              <mat-error *ngIf="hasError(basicInfoForm, 'batch_number', 'pattern')">
+                Invalid format (use A-Z, 0-9, and -)
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Manufacturer</mat-label>
+              <input matInput
+                     formControlName="manufacturer"
+                     placeholder="e.g., Pfizer"
+                     [matAutocomplete]="manufacturerAuto">
+              <mat-icon matPrefix color="primary">business</mat-icon>
+              <mat-autocomplete #manufacturerAuto="matAutocomplete">
+                <mat-option *ngFor="let mfr of filteredManufacturers | async" [value]="mfr">
+                  <mat-icon>business</mat-icon>
+                  {{ mfr }}
+                </mat-option>
+              </mat-autocomplete>
+              <mat-hint>Select or type manufacturer name</mat-hint>
+              <mat-error *ngIf="hasError(basicInfoForm, 'manufacturer', 'required')">
+                Manufacturer is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Quantity (Doses)</mat-label>
+              <input matInput
+                     type="number"
+                     formControlName="quantity"
+                     placeholder="e.g., 5000"
+                     min="1"
+                     max="1000000">
+              <mat-icon matPrefix color="primary">pin</mat-icon>
+              <span matSuffix class="quantity-suffix">doses</span>
+              <mat-hint>Number of vaccine doses in this batch</mat-hint>
+              <mat-error *ngIf="hasError(basicInfoForm, 'quantity', 'required')">
+                Quantity is required
+              </mat-error>
+              <mat-error *ngIf="hasError(basicInfoForm, 'quantity', 'min')">
+                Quantity must be at least 1
+              </mat-error>
+              <mat-error *ngIf="hasError(basicInfoForm, 'quantity', 'max')">
+                Quantity cannot exceed 1,000,000
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious disabled>
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button matStepperNext color="primary"
+                    [disabled]="!basicInfoForm.valid">
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Step 2: Storage Information -->
+      <mat-step [stepControl]="storageForm" label="Storage Details">
+        <form [formGroup]="storageForm" class="step-form">
+          <div class="step-header">
+            <mat-icon class="step-icon">inventory</mat-icon>
+            <div>
+              <h3>Storage Information</h3>
+              <p>Specify storage conditions and expiry date</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Expiry Date</mat-label>
+              <input matInput
+                     [matDatepicker]="picker"
+                     formControlName="expiry_date"
+                     [min]="minDate"
+                     placeholder="Select expiry date">
+              <mat-datepicker-toggle matPrefix [for]="picker">
+                <mat-icon matDatepickerToggleIcon>event</mat-icon>
+              </mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+              <mat-hint>Must be a future date</mat-hint>
+              <mat-error *ngIf="hasError(storageForm, 'expiry_date', 'required')">
+                Expiry date is required
+              </mat-error>
+              <mat-error *ngIf="hasError(storageForm, 'expiry_date', 'matDatepickerMin')">
+                Date cannot be in the past
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Storage Location</mat-label>
+              <input matInput
+                     formControlName="storage_location"
+                     placeholder="e.g., Refrigerator A - Shelf 2">
+              <mat-icon matPrefix color="primary">location_on</mat-icon>
+              <mat-hint>Physical storage location (optional)</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Storage Temperature (°C)</mat-label>
+              <input matInput
+                     type="number"
+                     step="0.1"
+                     formControlName="temperature"
+                     placeholder="e.g., -70"
+                     min="-100"
+                     max="50">
+              <mat-icon matPrefix color="primary">thermostat</mat-icon>
+              <span matSuffix class="temp-suffix">°C</span>
+              <mat-hint>Required storage temperature (optional)</mat-hint>
+              <mat-error *ngIf="hasError(storageForm, 'temperature', 'min')">
+                Temperature cannot be below -100°C
+              </mat-error>
+              <mat-error *ngIf="hasError(storageForm, 'temperature', 'max')">
+                Temperature cannot exceed 50°C
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Storage Guidelines Info Box -->
+            <div class="info-box full-width">
+              <mat-icon class="info-icon">info</mat-icon>
+              <div class="info-content">
+                <h4>Storage Guidelines</h4>
+                <ul>
+                  <li>Most vaccines require refrigeration between 2°C and 8°C</li>
+                  <li>Some vaccines like Pfizer COVID-19 require ultra-cold storage (-70°C)</li>
+                  <li>Always verify manufacturer's storage requirements</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button matStepperNext color="primary"
+                    [disabled]="!storageForm.valid">
+              Next
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- Step 3: Additional Information -->
+      <mat-step [stepControl]="additionalForm" label="Additional Info">
+        <form [formGroup]="additionalForm" class="step-form">
+          <div class="step-header">
+            <mat-icon class="step-icon">description</mat-icon>
+            <div>
+              <h3>Additional Information</h3>
+              <p>Add any extra details or special instructions</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Notes</mat-label>
+              <textarea matInput
+                        formControlName="notes"
+                        rows="6"
+                        placeholder="Enter any additional information, special handling instructions, or important notes about this batch..."
+                        maxlength="500"></textarea>
+              <mat-icon matPrefix color="primary">notes</mat-icon>
+              <mat-hint align="end">
+                {{ notesControl!.value?.length || 0 }} / 500 characters
+              </mat-hint>
+              <mat-error *ngIf="hasError(additionalForm, 'notes', 'maxlength')">
+                Notes cannot exceed 500 characters
+              </mat-error>
+            </mat-form-field>
+
+            <!-- Summary Card -->
+            <div class="summary-card full-width">
+              <h4 class="summary-title">
+                <mat-icon>check_circle</mat-icon>
+                Batch Summary
+              </h4>
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <span class="summary-label">Vaccine:</span>
+                  <span class="summary-value">{{ basicInfoForm.value.vaccine_name || 'Not specified' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Batch Number:</span>
+                  <span class="summary-value">{{ basicInfoForm.value.batch_number || 'Not specified' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Manufacturer:</span>
+                  <span class="summary-value">{{ basicInfoForm.value.manufacturer || 'Not specified' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Quantity:</span>
+                  <span class="summary-value">{{ basicInfoForm.value.quantity ? (basicInfoForm.value.quantity | number) + ' doses' : 'Not specified' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Expiry Date:</span>
+                  <span class="summary-value">{{ storageForm.value.expiry_date ? (storageForm.value.expiry_date | date: 'mediumDate') : 'Not specified' }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Storage Location:</span>
+                  <span class="summary-value">{{ storageForm.value.storage_location || 'Not specified' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-actions">
+            <button mat-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon>
+              Previous
+            </button>
+            <button mat-raised-button color="primary" (click)="onSubmit()"
+                    [disabled]="!isAllFormsValid() || submitting"
+                    class="submit-btn">
+              <mat-spinner diameter="20" *ngIf="submitting"></mat-spinner>
+              <mat-icon *ngIf="!submitting">save</mat-icon>
+              {{ submitting ? 'Registering...' : 'Register Batch' }}
+            </button>
+          </div>
+        </form>
+      </mat-step>
+    </mat-stepper>
+  </div>
+</div>
