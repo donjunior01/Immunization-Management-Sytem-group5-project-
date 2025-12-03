@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: immunizationdb-backend
+
+  # Allow bean definition overriding to resolve security configuration conflict
+  main:
+    allow-bean-definition-overriding: true
+
+  # MySQL Database configuration
+  datasource:
+    url: jdbc:mysql://localhost:3307/immunizedb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: ISI3Eng!2025
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA/Hibernate configuration for MySQL
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Changed from 'update' to force table recreation
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    open-in-view: false
+
+# Server configuration (moved from spring.server to root level)
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration: 3600000 # 1 hour in milliseconds
+  refresh-expiration: 604800000 # 7 days in milliseconds
+
+# Logging configuration
+logging:
+  level:
+    com.immunizationdb: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/immunizationdb.log
+    max-size: 10MB
+    max-history: 30
+
+# Management endpoints (for monitoring)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
