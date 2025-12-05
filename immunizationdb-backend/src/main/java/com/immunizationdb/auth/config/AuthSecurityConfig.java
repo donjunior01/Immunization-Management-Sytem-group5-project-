@@ -1,9 +1,11 @@
 package com.immunizationdb.auth.config;
 
 import com.immunizationdb.auth.repository.UserRepository;
+import com.immunizationdb.auth.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -18,6 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,10 +31,15 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class AuthSecurityConfig {
 
     private final UserRepository userRepository;
+    private final JwtAuthenticationFilter jwtAuthFilter;
+
+    public AuthSecurityConfig(UserRepository userRepository, @Lazy JwtAuthenticationFilter jwtAuthFilter) {
+        this.userRepository = userRepository;
+        this.jwtAuthFilter = jwtAuthFilter;
+    }
 
     /**
      * Configure security filter chain
@@ -42,18 +50,21 @@ public class AuthSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public endpoints (without /api prefix since context path is already /api)
                         .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/health",
-                                "/api/auth/refresh"
+                                "/auth/login",
+                                "/auth/register",
+                                "/auth/health",
+                                "/auth/refresh"
                         ).permitAll()
 
                         // Role-based access (User Story 1.2)
-                        .requestMatchers("/api/admin/**").hasRole("GOVERNMENT_OFFICIAL")
-                        .requestMatchers("/api/facility/**").hasAnyRole("FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
-                        .requestMatchers("/api/vaccination/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
+                        .requestMatchers("/admin/**").hasRole("GOVERNMENT_OFFICIAL")
+                        .requestMatchers("/patients/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
+                        .requestMatchers("/inventory/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
+                        .requestMatchers("/vaccinations/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
+                        .requestMatchers("/campaigns/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
+                        .requestMatchers("/reports/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
 
                         // All other requests require authentication
                         .anyRequest().authenticated()
@@ -61,9 +72,8 @@ public class AuthSecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authenticationProvider(authenticationProvider());
-
-        // JWT filter will be added automatically by Spring since it's a @Component
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -107,11 +117,11 @@ public class AuthSecurityConfig {
     }
 
     /**
-     * Password encoder - BCrypt
+     * Password encoder - BCrypt with strength 12
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     /**

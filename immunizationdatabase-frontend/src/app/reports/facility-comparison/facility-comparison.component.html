@@ -1,0 +1,276 @@
+<div class="comparison-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>compare</mat-icon>
+        Facility Performance Comparison
+      </h1>
+      <p>Compare vaccination performance across facilities</p>
+    </div>
+    <button mat-raised-button color="primary" (click)="exportReport()">
+      <mat-icon>download</mat-icon>
+      Export Report
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="filters">
+        <mat-form-field appearance="outline">
+          <mat-label>District</mat-label>
+          <mat-select [(ngModel)]="selectedDistrict" (selectionChange)="onDistrictChange()">
+            <mat-option value="all">All Districts</mat-option>
+            <mat-option value="central">Central</mat-option>
+            <mat-option value="north">North</mat-option>
+            <mat-option value="south">South</mat-option>
+            <mat-option value="east">East</mat-option>
+            <mat-option value="west">West</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Time Period</mat-label>
+          <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+            <mat-option value="current-month">Current Month</mat-option>
+            <mat-option value="current-quarter">Current Quarter</mat-option>
+            <mat-option value="current-year">Current Year</mat-option>
+            <mat-option value="last-year">Last Year</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading comparison data...</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading">
+    <!-- Top Performers -->
+    <mat-card class="top-performers-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>emoji_events</mat-icon>
+          Top 3 Performing Facilities
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="top-performers">
+          <div *ngFor="let facility of topFacilities" class="performer-card" [class]="'rank-' + facility.rank">
+            <div class="rank-badge">
+              <mat-icon [style.color]="getRankColor(facility.rank)">
+                {{ getRankIcon(facility.rank) }}
+              </mat-icon>
+              <span class="rank-number">#{{ facility.rank }}</span>
+            </div>
+            <div class="performer-info">
+              <h3>{{ facility.name }}</h3>
+              <p class="district">{{ facility.district }} District</p>
+              <div class="metrics">
+                <div class="metric">
+                  <mat-icon>vaccines</mat-icon>
+                  <span>{{ facility.vaccinationsPerformed | number }} vaccinations</span>
+                </div>
+                <div class="metric">
+                  <mat-icon>show_chart</mat-icon>
+                  <span>{{ facility.coverageRate }}% coverage</span>
+                </div>
+                <div class="metric">
+                  <mat-icon>star</mat-icon>
+                  <span>{{ facility.performance }}% performance</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Detailed Comparison Table -->
+    <mat-card class="comparison-table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>analytics</mat-icon>
+          Performance Metrics Comparison
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="comparisonData" class="comparison-table">
+          <ng-container matColumnDef="metric">
+            <th mat-header-cell *matHeaderCellDef>Metric</th>
+            <td mat-cell *matCellDef="let row">
+              <strong>{{ row.metric }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="facility1">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ topFacilities[0]?.name }}
+              <mat-icon class="rank-icon" [style.color]="getRankColor(1)">emoji_events</mat-icon>
+            </th>
+            <td mat-cell *matCellDef="let row" [class.best]="isBestPerformer(row.facility1, row.facility1, row.facility2, row.facility3)">
+              {{ row.facility1 }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="facility2">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ topFacilities[1]?.name }}
+              <mat-icon class="rank-icon" [style.color]="getRankColor(2)">workspace_premium</mat-icon>
+            </th>
+            <td mat-cell *matCellDef="let row" [class.best]="isBestPerformer(row.facility2, row.facility1, row.facility2, row.facility3)">
+              {{ row.facility2 }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="facility3">
+            <th mat-header-cell *matHeaderCellDef>
+              {{ topFacilities[2]?.name }}
+              <mat-icon class="rank-icon" [style.color]="getRankColor(3)">military_tech</mat-icon>
+            </th>
+            <td mat-cell *matCellDef="let row" [class.best]="isBestPerformer(row.facility3, row.facility1, row.facility2, row.facility3)">
+              {{ row.facility3 }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="average">
+            <th mat-header-cell *matHeaderCellDef>Average</th>
+            <td mat-cell *matCellDef="let row" class="average-cell">
+              {{ row.average }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="comparisonColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: comparisonColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- All Facilities Ranking -->
+    <mat-card class="ranking-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>leaderboard</mat-icon>
+          All Facilities Performance Ranking
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="facilitiesData" class="ranking-table">
+          <ng-container matColumnDef="rank">
+            <th mat-header-cell *matHeaderCellDef>Rank</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="rank-cell">
+                <mat-icon [style.color]="getRankColor(row.rank)">
+                  {{ getRankIcon(row.rank) }}
+                </mat-icon>
+                <span class="rank-number">#{{ row.rank }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="facility">
+            <th mat-header-cell *matHeaderCellDef>Facility</th>
+            <td mat-cell *matCellDef="let row">
+              <strong>{{ row.name }}</strong>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="district">
+            <th mat-header-cell *matHeaderCellDef>District</th>
+            <td mat-cell *matCellDef="let row">{{ row.district }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="vaccinations">
+            <th mat-header-cell *matHeaderCellDef>Vaccinations</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="highlight">{{ row.vaccinationsPerformed | number }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="coverage">
+            <th mat-header-cell *matHeaderCellDef>Coverage</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-chip [color]="getCoverageColor(row.coverageRate)" selected>
+                {{ row.coverageRate }}%
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="stock">
+            <th mat-header-cell *matHeaderCellDef>Stock Status</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-chip [color]="getStockColor(row.stockLevels)" selected>
+                {{ row.stockLevels }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="staff">
+            <th mat-header-cell *matHeaderCellDef>Staff</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="staff-cell">
+                <mat-icon>people</mat-icon>
+                {{ row.activeStaff }}
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="performance">
+            <th mat-header-cell *matHeaderCellDef>Performance</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="performance-cell">
+                <span [class]="getPerformanceColor(row.performance)">{{ row.performance }}%</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" 
+                       [style.width.%]="row.performance"
+                       [class]="getPerformanceColor(row.performance)">
+                  </div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="ranking-row"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- District Summary -->
+    <mat-card class="district-summary-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>map</mat-icon>
+          District Performance Summary
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="district-grid">
+          <div *ngFor="let district of districtSummary" class="district-item">
+            <div class="district-header">
+              <h3>{{ district.district }} District</h3>
+              <mat-chip [color]="getCoverageColor(district.averageCoverage)" selected>
+                {{ district.averageCoverage }}%
+              </mat-chip>
+            </div>
+            <div class="district-stats">
+              <div class="stat">
+                <mat-icon>business</mat-icon>
+                <span>{{ district.facilities }} facilities</span>
+              </div>
+              <div class="stat">
+                <mat-icon>vaccines</mat-icon>
+                <span>{{ district.totalVaccinations | number }} vaccinations</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -60,9 +60,6 @@ public class AuthService {
                 userRepository.updateFailedLoginAttempts(user.getId(), 0);
             }
 
-            // Update last login
-            userRepository.updateLastLogin(user.getId(), LocalDateTime.now());
-
             // Generate JWT token
             String jwtToken = jwtService.generateToken(user);
 
@@ -126,7 +123,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .fullName(request.getFullName())
                 .role(Role.valueOf(request.getRole()))
-                .enabled(true)
+                .active(true)
                 .locked(false)
                 .build();
 
@@ -169,7 +166,7 @@ public class AuthService {
      */
     @Transactional
     public UserResponse updateProfile(String userId, UpdateProfileRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
@@ -195,8 +192,8 @@ public class AuthService {
      */
     @Transactional
     public void unlockAccount(String userId) {
-        userRepository.updateLockedStatus(userId, false);
-        userRepository.updateFailedLoginAttempts(userId, 0);
+        userRepository.updateLockedStatus(Long.valueOf(userId), false);
+        userRepository.updateFailedLoginAttempts(Long.valueOf(userId), 0);
         log.info("Account unlocked: {}", userId);
     }
 }

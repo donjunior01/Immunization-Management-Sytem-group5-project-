@@ -1,0 +1,279 @@
+.record-vaccination-container {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.record-card {
+  mat-card-header {
+    margin-bottom: 24px;
+
+    h2 {
+      margin: 0;
+      color: #1976d2;
+      font-size: 24px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    mat-card-subtitle {
+      margin-top: 8px;
+      color: #666;
+    }
+  }
+
+  mat-card-content {
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+
+      .form-section {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        background: #fafafa;
+
+        h3 {
+          margin: 0 0 16px 0;
+          color: #333;
+          font-size: 18px;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          &::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #1976d2;
+            border-radius: 2px;
+          }
+        }
+
+        .form-row {
+          display: flex;
+          gap: 16px;
+
+          &.two-columns {
+            mat-form-field {
+              flex: 1;
+            }
+          }
+        }
+      }
+
+      mat-form-field {
+        &.full-width {
+          width: 100%;
+        }
+      }
+
+      .patient-option {
+        display: flex;
+        flex-direction: column;
+        padding: 8px 0;
+
+        strong {
+          font-size: 14px;
+          color: #333;
+        }
+
+        .patient-details {
+          font-size: 12px;
+          color: #666;
+          margin-top: 4px;
+        }
+      }
+
+      .selected-patient-card,
+      .selected-batch-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px;
+        background: white;
+        border: 2px solid #1976d2;
+        border-radius: 8px;
+        margin-top: 16px;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          color: #1976d2;
+
+          &.warning {
+            color: #ff9800;
+          }
+        }
+
+        .patient-info,
+        .batch-info {
+          flex: 1;
+
+          h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+          }
+
+          p {
+            margin: 4px 0;
+            color: #666;
+            font-size: 14px;
+          }
+
+          .warning-chip {
+            margin-top: 8px;
+            background-color: #fff3e0;
+            color: #f57c00;
+            font-size: 12px;
+            font-weight: 500;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+              margin-right: 4px;
+            }
+          }
+        }
+      }
+
+      .batch-option {
+        display: flex;
+        flex-direction: column;
+        padding: 8px 0;
+
+        .batch-name {
+          font-size: 14px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .batch-details {
+          font-size: 12px;
+          color: #666;
+          margin-top: 4px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+
+          .warning-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            color: #ff9800;
+            vertical-align: middle;
+          }
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid #e0e0e0;
+
+        button {
+          min-width: 120px;
+
+          &[type="submit"] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+          }
+
+          mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.button-spinner {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .record-vaccination-container {
+    padding: 16px;
+  }
+
+  .record-card {
+    mat-card-content {
+      form {
+        .form-section {
+          padding: 16px;
+
+          .form-row {
+            &.two-columns {
+              flex-direction: column;
+              gap: 0;
+
+              mat-form-field {
+                width: 100%;
+              }
+            }
+          }
+        }
+
+        .selected-patient-card,
+        .selected-batch-card {
+          flex-direction: column;
+          text-align: center;
+
+          mat-icon {
+            margin: 0 auto;
+          }
+        }
+
+        .form-actions {
+          flex-direction: column-reverse;
+
+          button {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Custom snackbar styles
+::ng-deep {
+  .success-snackbar {
+    background-color: #4caf50 !important;
+    color: white !important;
+  }
+
+  .error-snackbar {
+    background-color: #f44336 !important;
+    color: white !important;
+  }
+
+  .warning-snackbar {
+    background-color: #ff9800 !important;
+    color: white !important;
+  }
+}

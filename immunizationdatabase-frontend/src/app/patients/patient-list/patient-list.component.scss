@@ -1,0 +1,240 @@
+.patient-list-container {
+  padding: 24px;
+  height: 100%;
+}
+
+.list-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  mat-card-header {
+    margin-bottom: 24px;
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+
+      h2 {
+        margin: 0;
+        color: #1976d2;
+        font-size: 24px;
+        font-weight: 500;
+      }
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    mat-card-subtitle {
+      margin-top: 8px;
+      color: #666;
+      font-weight: 500;
+    }
+  }
+
+  mat-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    .filters-section {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+
+      .search-field {
+        flex: 2;
+        min-width: 300px;
+      }
+
+      .gender-filter {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      button {
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    .loading-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      background: rgba(255, 255, 255, 0.9);
+
+      p {
+        margin-top: 16px;
+        color: #666;
+        font-size: 16px;
+      }
+    }
+
+    .table-container {
+      flex: 1;
+      overflow: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+
+      .patients-table {
+        width: 100%;
+        background: white;
+
+        th {
+          background: #f5f5f5;
+          font-weight: 600;
+          color: #333;
+          padding: 16px;
+        }
+
+        td {
+          padding: 16px;
+          color: #555;
+        }
+
+        .patient-row {
+          cursor: pointer;
+          transition: background-color 0.2s;
+
+          &:hover {
+            background-color: #f5f5f5;
+          }
+        }
+
+        .gender-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 500;
+
+          &.male {
+            background-color: #e3f2fd;
+            color: #1976d2;
+          }
+
+          &.female {
+            background-color: #fce4ec;
+            color: #c2185b;
+          }
+
+          &.other {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+          }
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 4px;
+        }
+
+        .no-data {
+          padding: 60px 20px !important;
+          text-align: center;
+
+          .no-data-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #999;
+
+            mat-icon {
+              font-size: 48px;
+              width: 48px;
+              height: 48px;
+              margin-bottom: 16px;
+            }
+
+            p {
+              margin: 0;
+              font-size: 16px;
+            }
+          }
+        }
+      }
+
+      mat-paginator {
+        border-top: 1px solid #e0e0e0;
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 1200px) {
+  .patient-list-container {
+    .list-card {
+      mat-card-content {
+        .table-container {
+          .patients-table {
+            font-size: 14px;
+
+            th, td {
+              padding: 12px 8px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .patient-list-container {
+    padding: 16px;
+
+    .list-card {
+      mat-card-header {
+        .header-content {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+
+          button {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+      }
+
+      mat-card-content {
+        .filters-section {
+          flex-direction: column;
+
+          .search-field,
+          .gender-filter {
+            width: 100%;
+          }
+
+          button {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+
+        .table-container {
+          overflow-x: auto;
+
+          .patients-table {
+            min-width: 800px;
+          }
+        }
+      }
+    }
+  }
+}

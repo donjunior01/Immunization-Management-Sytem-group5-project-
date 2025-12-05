@@ -1,0 +1,499 @@
+<div class="dashboard-container">
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading national dashboard data...</p>
+  </div>
+
+  <!-- Welcome Header -->
+  <div class="welcome-section">
+    <div class="welcome-header">
+      <div>
+        <h1 class="welcome-title">National Immunization Dashboard</h1>
+        <p class="welcome-subtitle">{{ currentUser?.fullName }} • Government Official</p>
+      </div>
+      <div class="header-controls">
+        <mat-form-field appearance="outline" class="time-range-selector">
+          <mat-label>Time Range</mat-label>
+          <mat-select [(value)]="selectedTimeRange" (selectionChange)="onTimeRangeChange($event.value)">
+            <mat-option value="week">This Week</mat-option>
+            <mat-option value="month">This Month</mat-option>
+            <mat-option value="quarter">This Quarter</mat-option>
+            <mat-option value="year">This Year</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="navigateToReports()">
+          <mat-icon>analytics</mat-icon> View Detailed Reports
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- National Statistics -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper blue">
+          <mat-icon class="stat-icon">location_city</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.totalDistricts }}</h3>
+          <p class="stat-label">Districts</p>
+          <p class="stat-sublabel">{{ stats.totalFacilities }} facilities</p>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper purple">
+          <mat-icon class="stat-icon">people</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.totalPatientsRegistered | number }}</h3>
+          <p class="stat-label">Total Registered</p>
+          <p class="stat-sublabel">Nationwide</p>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper green">
+          <mat-icon class="stat-icon">vaccines</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.totalVaccinationsThisMonth | number }}</h3>
+          <p class="stat-label">Vaccinations (Month)</p>
+          <p class="stat-sublabel">{{ stats.nationalCoverageRate }}% coverage</p>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper orange">
+          <mat-icon class="stat-icon" [matBadge]="stats.activeCampaigns" matBadgeColor="accent" aria-hidden="false">campaign</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.activeCampaigns }}</h3>
+          <p class="stat-label">Active Campaigns</p>
+          <p class="stat-sublabel">{{ stats.completedCampaignsThisYear }} completed this year</p>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card highlight-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper gradient">
+          <mat-icon class="stat-icon">show_chart</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.nationalCoverageRate }}%</h3>
+          <p class="stat-label">National Coverage Rate</p>
+          <mat-progress-bar
+            mode="determinate"
+            [value]="stats.nationalCoverageRate"
+            [color]="getCoverageColor(stats.nationalCoverageRate)">
+          </mat-progress-bar>
+        </div>
+      </div>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper teal">
+          <mat-icon class="stat-icon">inventory_2</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.totalVaccineStock | number }}</h3>
+          <p class="stat-label">National Stock</p>
+          <p class="stat-sublabel">Total doses available</p>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Tabs for Different Views -->
+  <mat-tab-group class="dashboard-tabs" animationDuration="300ms">
+    <!-- District Performance Tab -->
+    <mat-tab label="District Performance">
+      <div class="tab-content">
+        <mat-card class="content-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="header-icon">leaderboard</mat-icon>
+              District Performance Rankings
+            </mat-card-title>
+            <button mat-icon-button color="primary" (click)="exportDistrictReport()">
+              <mat-icon>download</mat-icon>
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="districtPerformance" class="data-table">
+              <!-- Rank Column -->
+              <ng-container matColumnDef="rank">
+                <th mat-header-cell *matHeaderCellDef>Rank</th>
+                <td mat-cell *matCellDef="let district">
+                  <div class="rank-badge" [class.top-rank]="district.rank <= 3">
+                    #{{ district.rank }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- District Name Column -->
+              <ng-container matColumnDef="districtName">
+                <th mat-header-cell *matHeaderCellDef>District</th>
+                <td mat-cell *matCellDef="let district">
+                  <div class="district-cell">
+                    <strong>{{ district.districtName }}</strong>
+                    <span class="facility-count">{{ district.facilities }} facilities</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Facilities Column -->
+              <ng-container matColumnDef="facilities">
+                <th mat-header-cell *matHeaderCellDef>Population</th>
+                <td mat-cell *matCellDef="let district">
+                  <div class="population-cell">
+                    <span class="total">{{ district.population | number }}</span>
+                    <span class="registered">{{ district.registered | number }} registered</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Coverage Column -->
+              <ng-container matColumnDef="coverage">
+                <th mat-header-cell *matHeaderCellDef>Coverage Rate</th>
+                <td mat-cell *matCellDef="let district">
+                  <div class="coverage-cell">
+                    <mat-chip [color]="getCoverageColor(district.coverageRate)">
+                      {{ district.coverageRate }}%
+                    </mat-chip>
+                    <mat-progress-bar
+                      mode="determinate"
+                      [value]="district.coverageRate"
+                      [color]="getCoverageColor(district.coverageRate)">
+                    </mat-progress-bar>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Vaccinated Column -->
+              <ng-container matColumnDef="vaccinated">
+                <th mat-header-cell *matHeaderCellDef>Vaccinated</th>
+                <td mat-cell *matCellDef="let district">{{ district.vaccinated | number }}</td>
+              </ng-container>
+
+              <!-- Trend Column -->
+              <ng-container matColumnDef="trend">
+                <th mat-header-cell *matHeaderCellDef>Trend</th>
+                <td mat-cell *matCellDef="let district">
+                  <mat-icon [class]="getTrendClass(district.trend)">
+                    {{ getTrendIcon(district.trend) }}
+                  </mat-icon>
+                </td>
+              </ng-container>
+
+              <!-- Stock Status Column -->
+              <ng-container matColumnDef="stockStatus">
+                <th mat-header-cell *matHeaderCellDef>Stock</th>
+                <td mat-cell *matCellDef="let district">
+                  <mat-chip [class]="getStockStatusClass(district.stockStatus)">
+                    {{ district.stockStatus | titlecase }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let district">
+                  <button mat-icon-button color="primary" (click)="navigateToDistrictDetails(district)" matTooltip="View Details">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="districtColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: districtColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- National Campaigns Tab -->
+    <mat-tab label="National Campaigns">
+      <div class="tab-content">
+        <mat-card class="content-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="header-icon">campaign</mat-icon>
+              National Campaign Overview
+            </mat-card-title>
+            <button mat-icon-button color="primary" (click)="exportCampaignReport()">
+              <mat-icon>download</mat-icon>
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="campaignOverviews" class="data-table">
+              <!-- Campaign Name Column -->
+              <ng-container matColumnDef="campaignName">
+                <th mat-header-cell *matHeaderCellDef>Campaign</th>
+                <td mat-cell *matCellDef="let campaign">
+                  <div class="campaign-cell">
+                    <strong>{{ campaign.campaignName }}</strong>
+                    <span class="campaign-id">{{ campaign.id }}</span>
+                    <span class="campaign-dates">{{ campaign.startDate }} to {{ campaign.endDate }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Districts Column -->
+              <ng-container matColumnDef="districts">
+                <th mat-header-cell *matHeaderCellDef>Districts</th>
+                <td mat-cell *matCellDef="let campaign">
+                  <mat-chip class="district-chip">
+                    {{ campaign.targetDistricts.length }} districts
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Progress Column -->
+              <ng-container matColumnDef="progress">
+                <th mat-header-cell *matHeaderCellDef>Progress</th>
+                <td mat-cell *matCellDef="let campaign">
+                  <div class="progress-cell">
+                    <span class="progress-text">{{ campaign.totalVaccinated | number }} / {{ campaign.totalTargetPopulation | number }}</span>
+                    <mat-progress-bar
+                      mode="determinate"
+                      [value]="campaign.coveragePercent"
+                      [color]="getCoverageColor(campaign.coveragePercent)">
+                    </mat-progress-bar>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Coverage Column -->
+              <ng-container matColumnDef="coverage">
+                <th mat-header-cell *matHeaderCellDef>Coverage</th>
+                <td mat-cell *matCellDef="let campaign">
+                  <mat-chip [color]="getCoverageColor(campaign.coveragePercent)">
+                    {{ campaign.coveragePercent }}%
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Budget Column -->
+              <ng-container matColumnDef="budget">
+                <th mat-header-cell *matHeaderCellDef>Budget</th>
+                <td mat-cell *matCellDef="let campaign">
+                  <div class="budget-cell">
+                    <span class="spent">KES {{ campaign.spent | number }}</span>
+                    <span class="total">/ {{ campaign.budget | number }}</span>
+                    <mat-progress-bar
+                      mode="determinate"
+                      [value]="getBudgetPercentage(campaign)"
+                      color="accent">
+                    </mat-progress-bar>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Status Column -->
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let campaign">
+                  <mat-chip [class]="getCampaignStatusClass(campaign.status)">
+                    {{ campaign.status | titlecase }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let campaign">
+                  <button mat-icon-button color="primary" (click)="navigateToCampaignDetails(campaign)" matTooltip="View Details">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="campaignColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: campaignColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Stock Distribution Tab -->
+    <mat-tab label="Stock Distribution">
+      <div class="tab-content">
+        <mat-card class="content-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="header-icon">inventory</mat-icon>
+              Vaccine Stock by District
+            </mat-card-title>
+            <button mat-icon-button color="primary" (click)="exportStockReport()">
+              <mat-icon>download</mat-icon>
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="vaccineStockByDistrict" class="data-table">
+              <!-- District Name Column -->
+              <ng-container matColumnDef="districtName">
+                <th mat-header-cell *matHeaderCellDef>District</th>
+                <td mat-cell *matCellDef="let stock">
+                  <strong>{{ stock.districtName }}</strong>
+                </td>
+              </ng-container>
+
+              <!-- Total Stock Column -->
+              <ng-container matColumnDef="totalStock">
+                <th mat-header-cell *matHeaderCellDef>Total Stock</th>
+                <td mat-cell *matCellDef="let stock">{{ stock.totalStock | number }}</td>
+              </ng-container>
+
+              <!-- Distributed Column -->
+              <ng-container matColumnDef="distributed">
+                <th mat-header-cell *matHeaderCellDef>Distributed</th>
+                <td mat-cell *matCellDef="let stock">{{ stock.distributed | number }}</td>
+              </ng-container>
+
+              <!-- Remaining Column -->
+              <ng-container matColumnDef="remaining">
+                <th mat-header-cell *matHeaderCellDef>Remaining</th>
+                <td mat-cell *matCellDef="let stock">
+                  <div class="remaining-cell">
+                    <strong>{{ stock.remaining | number }}</strong>
+                    <span class="restock-date">Last restock: {{ stock.lastRestockDate }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Expiring Column -->
+              <ng-container matColumnDef="expiring">
+                <th mat-header-cell *matHeaderCellDef>Expiring (30d)</th>
+                <td mat-cell *matCellDef="let stock">
+                  <mat-chip [color]="stock.expiringIn30Days > 100 ? 'warn' : ''">
+                    {{ stock.expiringIn30Days }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Risk Column -->
+              <ng-container matColumnDef="risk">
+                <th mat-header-cell *matHeaderCellDef>Stockout Risk</th>
+                <td mat-cell *matCellDef="let stock">
+                  <mat-chip [class]="getRiskClass(stock.stockoutRisk)">
+                    {{ stock.stockoutRisk | titlecase }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let stock">
+                  <button mat-icon-button color="primary" (click)="navigateToStockManagement(stock)" matTooltip="View Details">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="stockColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: stockColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Coverage by Vaccine Tab -->
+    <mat-tab label="Coverage by Vaccine">
+      <div class="tab-content">
+        <mat-card class="content-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="header-icon">vaccines</mat-icon>
+              National Coverage by Vaccine Type
+            </mat-card-title>
+            <button mat-icon-button color="primary" (click)="exportCoverageReport()">
+              <mat-icon>download</mat-icon>
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="coverageByVaccine" class="data-table">
+              <!-- Vaccine Name Column -->
+              <ng-container matColumnDef="vaccineName">
+                <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+                <td mat-cell *matCellDef="let vaccine">
+                  <strong>{{ vaccine.vaccineName }}</strong>
+                </td>
+              </ng-container>
+
+              <!-- Progress Column -->
+              <ng-container matColumnDef="progress">
+                <th mat-header-cell *matHeaderCellDef>Administered</th>
+                <td mat-cell *matCellDef="let vaccine">
+                  <div class="progress-cell">
+                    <span class="progress-text">{{ vaccine.administeredDoses | number }} / {{ vaccine.targetDoses | number }}</span>
+                    <mat-progress-bar
+                      mode="determinate"
+                      [value]="vaccine.coveragePercent"
+                      [color]="getCoverageColor(vaccine.coveragePercent)">
+                    </mat-progress-bar>
+                  </div>
+                </td>
+              </ng-container>
+
+              <!-- Coverage Column -->
+              <ng-container matColumnDef="coverage">
+                <th mat-header-cell *matHeaderCellDef>Coverage</th>
+                <td mat-cell *matCellDef="let vaccine">
+                  <mat-chip [color]="getCoverageColor(vaccine.coveragePercent)">
+                    {{ vaccine.coveragePercent }}%
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Defaulters Column -->
+              <ng-container matColumnDef="defaulters">
+                <th mat-header-cell *matHeaderCellDef>Defaulters</th>
+                <td mat-cell *matCellDef="let vaccine">
+                  <mat-chip color="warn">
+                    {{ vaccine.defaulters | number }}
+                  </mat-chip>
+                </td>
+              </ng-container>
+
+              <!-- Stock Column -->
+              <ng-container matColumnDef="stock">
+                <th mat-header-cell *matHeaderCellDef>Available Stock</th>
+                <td mat-cell *matCellDef="let vaccine">{{ vaccine.stockAvailability | number }}</td>
+              </ng-container>
+
+              <!-- Trend Column -->
+              <ng-container matColumnDef="trend">
+                <th mat-header-cell *matHeaderCellDef>Trend</th>
+                <td mat-cell *matCellDef="let vaccine">
+                  <mat-icon [class]="getTrendClass(vaccine.trend)">
+                    {{ getTrendIcon(vaccine.trend) }}
+                  </mat-icon>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="vaccineColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: vaccineColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

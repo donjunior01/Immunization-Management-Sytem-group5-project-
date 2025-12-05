@@ -19,21 +19,21 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Create test users if they don't exist
-        createUserIfNotExists("health_worker", "password123", "health@immunizedb.com",
-                "Health Worker", Role.HEALTH_WORKER);
-
-        createUserIfNotExists("facility_manager", "password123", "manager@immunizedb.com",
-                "Facility Manager", Role.FACILITY_MANAGER);
-
-        createUserIfNotExists("admin", "password123", "admin@immunizedb.com",
-                "Government Official", Role.GOVERNMENT_OFFICIAL);
-
-        log.info("Test users initialized successfully");
-        log.info("Login credentials:");
-        log.info("  Health Worker: health_worker / password123");
-        log.info("  Facility Manager: facility_manager / password123");
-        log.info("  Government Official: admin / password123");
+        // Users are initialized via Flyway migration script
+        // Default users:
+        //   Username: health.worker | Password: Password123! | Role: HEALTH_WORKER
+        //   Username: facility.manager | Password: Password123! | Role: FACILITY_MANAGER
+        //   Username: gov.official | Password: Password123! | Role: GOVERNMENT_OFFICIAL
+        
+        long userCount = userRepository.count();
+        log.info("=".repeat(80));
+        log.info("Database initialized successfully with {} users", userCount);
+        log.info("=".repeat(80));
+        log.info("DEFAULT LOGIN CREDENTIALS:");
+        log.info("  Health Worker:      health.worker / Password123!");
+        log.info("  Facility Manager:   facility.manager / Password123!");
+        log.info("  Government Official: gov.official / Password123!");
+        log.info("=".repeat(80));
     }
 
     private void createUserIfNotExists(String username, String password, String email,
@@ -45,7 +45,7 @@ public class DataInitializer implements CommandLineRunner {
                     .email(email)
                     .fullName(fullName)
                     .role(role)
-                    .enabled(true)
+                    .active(true)
                     .locked(false)
                     .failedLoginAttempts(0)
                     .build();

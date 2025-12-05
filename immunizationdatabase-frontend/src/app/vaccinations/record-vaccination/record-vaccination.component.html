@@ -1,0 +1,164 @@
+<div class="record-vaccination-container">
+  <mat-card class="record-card">
+    <mat-card-header>
+      <mat-card-title>
+        <h2>
+          <mat-icon>vaccines</mat-icon>
+          Record Vaccination
+        </h2>
+      </mat-card-title>
+      <mat-card-subtitle>
+        Record a new vaccination for a patient
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="vaccinationForm" (ngSubmit)="onSubmit()">
+        <!-- Patient Selection with Autocomplete -->
+        <div class="form-section">
+          <h3>Patient Information</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Search Patient</mat-label>
+            <input
+              matInput
+              formControlName="patientSearch"
+              [matAutocomplete]="patientAuto"
+              placeholder="Type patient name or ID"
+              required>
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-autocomplete
+              #patientAuto="matAutocomplete"
+              [displayWith]="displayPatient"
+              (optionSelected)="onPatientSelected($event.option.value)">
+              <mat-option *ngFor="let patient of filteredPatients | async" [value]="patient">
+                <div class="patient-option">
+                  <strong>{{ patient.fullName }}</strong>
+                  <span class="patient-details">
+                    ID: {{ patient.id }} | Age: {{ patient.age }} years | Guardian: {{ patient.guardianName }}
+                  </span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+            <mat-error *ngIf="vaccinationForm.get('patientSearch')?.invalid && vaccinationForm.get('patientSearch')?.touched">
+              {{ getErrorMessage('patientSearch') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Selected Patient Card -->
+          <div *ngIf="selectedPatient" class="selected-patient-card">
+            <mat-icon>person</mat-icon>
+            <div class="patient-info">
+              <h4>{{ selectedPatient.fullName }}</h4>
+              <p>ID: {{ selectedPatient.id }} | Age: {{ selectedPatient.age }} years</p>
+              <p>Guardian: {{ selectedPatient.guardianName }} | Phone: {{ selectedPatient.phoneNumber || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vaccine Batch Selection -->
+        <div class="form-section">
+          <h3>Vaccine Information</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Vaccine Batch (FEFO - Oldest First)</mat-label>
+            <mat-select formControlName="batchId" required>
+              <mat-option *ngFor="let batch of filteredBatches" [value]="batch.id">
+                <div class="batch-option">
+                  <span class="batch-name">{{ batch.vaccineName }} - {{ batch.batchNumber }}</span>
+                  <span class="batch-details">
+                    {{ batch.manufacturer }} | Stock: {{ batch.quantityRemaining }} | 
+                    Expires: {{ batch.expiryDate | date: 'shortDate' }}
+                    <mat-icon *ngIf="batch.isExpiringSoon" class="warning-icon">warning</mat-icon>
+                  </span>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="vaccinationForm.get('batchId')?.invalid && vaccinationForm.get('batchId')?.touched">
+              {{ getErrorMessage('batchId') }}
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Selected Batch Info -->
+          <div *ngIf="getSelectedBatch()" class="selected-batch-card">
+            <mat-icon [class.warning]="getSelectedBatch()?.isExpiringSoon">inventory</mat-icon>
+            <div class="batch-info">
+              <h4>{{ getSelectedBatch()?.vaccineName }}</h4>
+              <p>Batch: {{ getSelectedBatch()?.batchNumber }} | Manufacturer: {{ getSelectedBatch()?.manufacturer }}</p>
+              <p>Available: {{ getSelectedBatch()?.quantityRemaining }} doses | Expiry: {{ getSelectedBatch()?.expiryDate | date: 'mediumDate' }}</p>
+              <mat-chip *ngIf="getSelectedBatch()?.isExpiringSoon" class="warning-chip">
+                <mat-icon>warning</mat-icon>
+                Expiring Soon
+              </mat-chip>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vaccination Details -->
+        <div class="form-section">
+          <h3>Vaccination Details</h3>
+          <div class="form-row two-columns">
+            <mat-form-field appearance="outline">
+              <mat-label>Dose Number</mat-label>
+              <mat-select formControlName="doseNumber" required>
+                <mat-option *ngFor="let dose of doseOptions" [value]="dose.value">
+                  {{ dose.label }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="vaccinationForm.get('doseNumber')?.invalid && vaccinationForm.get('doseNumber')?.touched">
+                {{ getErrorMessage('doseNumber') }}
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Administered By</mat-label>
+              <input
+                matInput
+                formControlName="administeredBy"
+                placeholder="Healthcare worker name"
+                required>
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error *ngIf="vaccinationForm.get('administeredBy')?.invalid && vaccinationForm.get('administeredBy')?.touched">
+                {{ getErrorMessage('administeredBy') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Notes (Optional)</mat-label>
+            <textarea
+              matInput
+              formControlName="notes"
+              rows="3"
+              placeholder="Any additional notes about the vaccination"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            type="button"
+            (click)="onCancel()"
+            [disabled]="isLoading">
+            Cancel
+          </button>
+          <button
+            mat-raised-button
+            type="button"
+            (click)="resetForm()"
+            [disabled]="isLoading">
+            <mat-icon>refresh</mat-icon>
+            Reset
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="isLoading || vaccinationForm.invalid">
+            <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
+            {{ isLoading ? 'Recording...' : 'Record Vaccination' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

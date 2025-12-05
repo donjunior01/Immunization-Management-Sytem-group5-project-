@@ -1,0 +1,398 @@
+.dashboard-container {
+  padding: 24px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 20px;
+
+  .header-content {
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--primary-color);
+      font-size: 32px;
+      font-weight: 500;
+      margin-bottom: 8px;
+
+      mat-icon {
+        font-size: 36px;
+        width: 36px;
+        height: 36px;
+      }
+    }
+
+    .text-secondary {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-left: 48px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+
+    .view-select {
+      width: 180px;
+    }
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+}
+
+.national-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+
+  &.coverage-highlight {
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    border: 2px solid var(--primary-light);
+  }
+
+  .stat-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: white;
+    }
+
+    &.primary {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    }
+
+    &.success {
+      background: linear-gradient(135deg, var(--success-color), var(--success-light));
+    }
+
+    &.warning {
+      background: linear-gradient(135deg, var(--warning-color), var(--warning-light));
+    }
+
+    &.info {
+      background: linear-gradient(135deg, var(--secondary-color), var(--secondary-light));
+    }
+
+    &.campaign {
+      background: linear-gradient(135deg, #9C27B0, #BA68C8);
+    }
+
+    &.gradient {
+      background: linear-gradient(135deg, #1976D2, #42A5F5);
+    }
+  }
+
+  .stat-content {
+    flex: 1;
+
+    h3 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 4px;
+    }
+
+    p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 0 0 6px;
+    }
+
+    .stat-change {
+      font-size: 12px;
+      font-weight: 500;
+
+      &.positive {
+        color: var(--success-color);
+      }
+
+      &.negative {
+        color: var(--danger-color);
+      }
+
+      &.neutral {
+        color: var(--text-secondary);
+      }
+    }
+  }
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+  margin-bottom: 32px;
+
+  @media (max-width: 1400px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.district-performance,
+.campaigns-overview {
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary-color);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+
+  &:hover {
+    background-color: var(--light-gray);
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.badge {
+  &.coverage-excellent {
+    background-color: var(--success-color);
+  }
+
+  &.coverage-good {
+    background-color: var(--primary-color);
+  }
+
+  &.coverage-fair {
+    background-color: var(--warning-color);
+  }
+
+  &.coverage-poor {
+    background-color: var(--danger-color);
+  }
+}
+
+.campaigns-list {
+  margin-top: 20px;
+}
+
+.campaign-item {
+  padding: 16px;
+  border-bottom: 1px solid var(--gray);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: var(--light-gray);
+    cursor: pointer;
+  }
+
+  .campaign-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+
+    h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text-primary);
+    }
+  }
+
+  .text-secondary {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .campaign-meta {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+
+  .campaign-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background-color: var(--gray);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+
+      .progress-fill {
+        height: 100%;
+        transition: width var(--transition-slow);
+        border-radius: var(--radius-full);
+
+        &.coverage-good {
+          background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+        }
+      }
+    }
+
+    .progress-text {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+  }
+}
+
+.admin-actions {
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    background-color: var(--light-gray);
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+
+    mat-icon {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      color: var(--primary-color);
+    }
+
+    span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      text-align: center;
+    }
+
+    &:hover {
+      background-color: var(--white);
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+
+      mat-icon {
+        color: var(--primary-dark);
+        transform: scale(1.1);
+      }
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--dark-gray);
+    margin-bottom: 16px;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin: 0;
+  }
+}
+
+.card-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gray);
+
+  a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all var(--transition-base);
+
+    &:hover {
+      color: var(--primary-dark);
+      text-decoration: underline;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .national-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admin-actions .action-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

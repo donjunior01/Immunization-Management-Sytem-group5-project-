@@ -1,0 +1,437 @@
+.comparison-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  .header-content {
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 28px;
+      font-weight: 600;
+      color: #1976d2;
+      margin: 0 0 8px 0;
+
+      mat-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 32px;
+      }
+    }
+
+    p {
+      font-size: 14px;
+      color: #666;
+      margin: 0;
+    }
+  }
+
+  button mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.filters-card {
+  margin-bottom: 24px;
+
+  mat-card-content {
+    padding: 16px !important;
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+
+  p {
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+.top-performers-card {
+  margin-bottom: 24px;
+
+  mat-card-header {
+    padding: 20px 20px 0;
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+
+      mat-icon {
+        color: #FFD700;
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+    }
+  }
+
+  mat-card-content {
+    padding: 20px !important;
+
+    .top-performers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+
+      .performer-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        &.rank-1 {
+          border-color: #FFD700;
+          background: linear-gradient(135deg, #fffbea 0%, #fff 100%);
+        }
+
+        &.rank-2 {
+          border-color: #C0C0C0;
+          background: linear-gradient(135deg, #f5f5f5 0%, #fff 100%);
+        }
+
+        &.rank-3 {
+          border-color: #CD7F32;
+          background: linear-gradient(135deg, #fff5f0 0%, #fff 100%);
+        }
+
+        .rank-badge {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 16px;
+
+          mat-icon {
+            font-size: 36px;
+            width: 36px;
+            height: 36px;
+          }
+
+          .rank-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+          }
+        }
+
+        .performer-info {
+          h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 4px 0;
+          }
+
+          .district {
+            font-size: 13px;
+            color: #666;
+            margin: 0 0 16px 0;
+          }
+
+          .metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .metric {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 14px;
+              color: #555;
+
+              mat-icon {
+                font-size: 20px;
+                width: 20px;
+                height: 20px;
+                color: #1976d2;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.comparison-table-card,
+.ranking-card {
+  margin-bottom: 24px;
+
+  mat-card-header {
+    padding: 20px 20px 0;
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+
+      mat-icon {
+        color: #1976d2;
+      }
+    }
+  }
+
+  mat-card-content {
+    padding: 0 !important;
+  }
+
+  .comparison-table,
+  .ranking-table {
+    width: 100%;
+
+    th {
+      background-color: #f5f5f5;
+      font-weight: 600;
+      color: #333;
+      text-align: center;
+
+      .rank-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        vertical-align: middle;
+        margin-left: 4px;
+      }
+    }
+
+    td {
+      text-align: center;
+
+      &.best {
+        background-color: #e8f5e9;
+        font-weight: 700;
+        color: #2e7d32;
+      }
+
+      &.average-cell {
+        background-color: #f5f5f5;
+        font-weight: 600;
+      }
+    }
+
+    .rank-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      .rank-number {
+        font-weight: 600;
+        font-size: 16px;
+      }
+    }
+
+    .highlight {
+      font-weight: 600;
+      color: #1976d2;
+    }
+
+    .staff-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #666;
+      }
+    }
+
+    .performance-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+
+      span {
+        font-weight: 600;
+        font-size: 14px;
+
+        &.success { color: #4caf50; }
+        &.primary { color: #2196f3; }
+        &.accent { color: #ff9800; }
+        &.warn { color: #f44336; }
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 6px;
+        background-color: #e0e0e0;
+        border-radius: 3px;
+        overflow: hidden;
+
+        .progress-fill {
+          height: 100%;
+          transition: width 0.3s ease;
+
+          &.success { background-color: #4caf50; }
+          &.primary { background-color: #2196f3; }
+          &.accent { background-color: #ff9800; }
+          &.warn { background-color: #f44336; }
+        }
+      }
+    }
+
+    .ranking-row {
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #f5f5f5;
+      }
+    }
+  }
+}
+
+.district-summary-card {
+  mat-card-header {
+    padding: 20px 20px 0;
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+
+      mat-icon {
+        color: #1976d2;
+      }
+    }
+  }
+
+  mat-card-content {
+    padding: 20px !important;
+
+    .district-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+
+      .district-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        transition: all 0.2s;
+
+        &:hover {
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .district-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+
+          h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+          }
+        }
+
+        .district-stats {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+
+          .stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #555;
+
+            mat-icon {
+              font-size: 20px;
+              width: 20px;
+              height: 20px;
+              color: #1976d2;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .comparison-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .top-performers {
+    grid-template-columns: 1fr !important;
+  }
+
+  .district-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .comparison-table,
+  .ranking-table {
+    font-size: 12px;
+
+    th, td {
+      padding: 8px 4px !important;
+    }
+  }
+}

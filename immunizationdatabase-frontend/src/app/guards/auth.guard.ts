@@ -36,19 +36,41 @@ export class AuthGuard implements CanActivate {
       });
     }
 
+    // Special handling for /dashboard/default - redirect to role-specific dashboard
+    if (state.url === '/dashboard/default' || state.url === '/dashboard') {
+      const userRole = this.authService.getCurrentUser()?.role;
+      const dashboardRoute = this.getDashboardRouteForRole(userRole);
+      return this.router.createUrlTree([dashboardRoute]);
+    }
+
     // Check for role-based access (User Story 1.2)
     const requiredRoles = route.data['roles'] as User['role'][];
 
     if (requiredRoles && requiredRoles.length > 0) {
       // Check if user has any of the required roles
       if (!this.authService.hasAnyRole(requiredRoles)) {
-        // User doesn't have required role, redirect to unauthorized page
-        return this.router.createUrlTree(['/unauthorized']);
+        // User doesn't have required role, redirect to their appropriate dashboard
+        const userRole = this.authService.getCurrentUser()?.role;
+        const dashboardRoute = this.getDashboardRouteForRole(userRole);
+        return this.router.createUrlTree([dashboardRoute]);
       }
     }
 
     // User is authenticated and has required role (if specified)
     return true;
+  }
+
+  private getDashboardRouteForRole(role: User['role'] | undefined): string {
+    switch (role) {
+      case 'HEALTH_WORKER':
+        return '/dashboard/health-worker';
+      case 'FACILITY_MANAGER':
+        return '/dashboard/facility-manager';
+      case 'GOVERNMENT_OFFICIAL':
+        return '/dashboard/government-official';
+      default:
+        return '/dashboard/health-worker'; // Default fallback
+    }
   }
 }
 

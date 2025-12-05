@@ -1,19 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatListModule } from '@angular/material/list';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { InventoryService, VaccineBatch } from '../../services/inventory.service';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatListModule } from '@angular/material/list';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { RouterModule } from '@angular/router';
+import { InventoryRealService, VaccineBatchResponse } from '../../services/inventory-real.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -25,43 +26,37 @@ import { AuthService } from '../../services/auth.service';
     MatButtonModule,
     MatIconModule,
     MatCardModule,
-    MatToolbarModule,
-    MatSidenavModule,
-    MatListModule,
-    MatMenuModule,
     MatChipsModule,
     MatTooltipModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatMenuModule,
+    MatSidenavModule,
+    MatListModule,
+    MatToolbarModule
   ],
   templateUrl: './view-batch.component.html',
   styleUrls: ['./view-batch.component.scss']
 })
 export class ViewBatchComponent implements OnInit {
-  batch: VaccineBatch | null = null;
-  loading = true;
+  batch: VaccineBatchResponse | null = null;
+  isLoading = true;
   currentUser: any;
   userRole: string = '';
-  sidenavOpened = true;
   batchId: number | null = null;
-
-  // Thresholds
-  private readonly CRITICAL_DAYS = 30;
-  private readonly LOW_STOCK = 1000;
-  private readonly MEDIUM_STOCK = 2000;
+  sidenavOpened = true;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private inventoryService: InventoryService,
+    private inventoryService: InventoryRealService,
     private authService: AuthService,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.loadUserData();
-    this.checkScreenSize();
     this.loadBatchData();
   }
 
@@ -82,23 +77,8 @@ export class ViewBatchComponent implements OnInit {
     return roleMap[role] || role;
   }
 
-  checkScreenSize(): void {
-    if (window.innerWidth < 1024) {
-      this.sidenavOpened = false;
-    }
-  }
-
-  toggleSidenav(): void {
-    this.sidenavOpened = !this.sidenavOpened;
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
-
   loadBatchData(): void {
-    this.loading = true;
+    this.isLoading = true;
     const id = this.route.snapshot.paramMap.get('id');
 
     if (!id) {
@@ -112,12 +92,12 @@ export class ViewBatchComponent implements OnInit {
     this.inventoryService.getBatchById(this.batchId).subscribe({
       next: (batch) => {
         this.batch = batch;
-        this.loading = false;
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading batch:', error);
         this.showError('Failed to load batch details');
-        this.loading = false;
+        this.isLoading = false;
         setTimeout(() => {
           this.router.navigate(['/inventory']);
         }, 2000);
@@ -131,146 +111,157 @@ export class ViewBatchComponent implements OnInit {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  formatDateTime(date: string): string {
+    if (!date) return 'N/A';
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   }
 
-  getDaysUntilExpiry(): number {
-    if (!this.batch) return 0;
-    const expiry = new Date(this.batch.expiry_date);
-    const now = new Date();
-    const diff = expiry.getTime() - now.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  }
-
-  isExpiringSoon(): boolean {
-    return this.getDaysUntilExpiry() < this.CRITICAL_DAYS;
-  }
-
-  getStatusClass(): string {
-    if (!this.batch) return '';
-
-    const daysUntilExpiry = this.getDaysUntilExpiry();
-
-    if (daysUntilExpiry < this.CRITICAL_DAYS) {
-      return 'status-critical';
-    }
-
-    if (this.batch.quantity < this.LOW_STOCK) {
-      return 'status-low';
-    }
-
-    if (this.batch.quantity < this.MEDIUM_STOCK) {
-      return 'status-medium';
-    }
-
-    return 'status-good';
+  getStatusColor(): string {
+    if (!this.batch) return 'primary';
+    
+    if (this.batch.isExpired) return 'warn';
+    if (this.batch.isExpiringSoon) return 'accent';
+    if (this.batch.quantityRemaining === 0) return 'warn';
+    if (this.batch.quantityRemaining <= 10) return 'accent';
+    return 'primary';
   }
 
   getStatusIcon(): string {
-    const statusClass = this.getStatusClass();
-
-    if (statusClass === 'status-critical') return 'warning';
-    if (statusClass === 'status-low') return 'error';
-    if (statusClass === 'status-medium') return 'info';
+    if (!this.batch) return 'info';
+    
+    if (this.batch.isExpired) return 'dangerous';
+    if (this.batch.isExpiringSoon) return 'warning';
+    if (this.batch.quantityRemaining === 0) return 'inventory_2';
+    if (this.batch.quantityRemaining <= 10) return 'trending_down';
     return 'check_circle';
   }
 
   getStatusLabel(): string {
-    const statusClass = this.getStatusClass();
-
-    if (statusClass === 'status-critical') return 'Critical Status';
-    if (statusClass === 'status-low') return 'Low Stock';
-    if (statusClass === 'status-medium') return 'Medium Stock';
-    return 'Optimal Status';
-  }
-
-  getStatusTitle(): string {
-    const statusClass = this.getStatusClass();
-
-    if (statusClass === 'status-critical') return 'Immediate Action Required';
-    if (statusClass === 'status-low') return 'Stock Replenishment Needed';
-    if (statusClass === 'status-medium') return 'Monitor Stock Levels';
-    return 'Batch Status: Optimal';
+    if (!this.batch) return 'Unknown';
+    
+    if (this.batch.isExpired) return 'Expired';
+    if (this.batch.isExpiringSoon) return `Expiring Soon (${this.batch.daysUntilExpiry}d)`;
+    if (this.batch.quantityRemaining === 0) return 'Out of Stock';
+    if (this.batch.quantityRemaining <= 10) return 'Low Stock';
+    return 'Available';
   }
 
   getStatusDescription(): string {
     if (!this.batch) return '';
 
-    const daysUntilExpiry = this.getDaysUntilExpiry();
-    const statusClass = this.getStatusClass();
-
-    if (statusClass === 'status-critical') {
-      return `This batch expires in ${daysUntilExpiry} days. Prioritize usage or transfer to high-demand locations.`;
+    if (this.batch.isExpired) {
+      return 'This batch has expired and should be removed from active inventory immediately.';
     }
 
-    if (statusClass === 'status-low') {
-      return `Stock level is critically low (${this.batch.quantity} doses). Coordinate with supply chain for replenishment.`;
+    if (this.batch.isExpiringSoon) {
+      return `This batch expires in ${this.batch.daysUntilExpiry} days. Prioritize usage or transfer to high-demand locations.`;
     }
 
-    if (statusClass === 'status-medium') {
-      return `Stock level is moderate (${this.batch.quantity} doses). Monitor consumption and plan reordering.`;
+    if (this.batch.quantityRemaining === 0) {
+      return 'This batch is out of stock. Consider reordering or updating inventory records.';
     }
 
-    return `Batch is in optimal condition with ${this.batch.quantity} doses and ${daysUntilExpiry} days until expiry.`;
+    if (this.batch.quantityRemaining <= 10) {
+      return `Stock level is critically low (${this.batch.quantityRemaining} doses). Coordinate with supply chain for replenishment.`;
+    }
+
+    return `Batch is in optimal condition with ${this.batch.quantityRemaining} doses available and ${this.batch.daysUntilExpiry} days until expiry.`;
   }
 
-  getDetailedStatus(): string {
-    if (!this.batch) return '';
-
-    const days = this.getDaysUntilExpiry();
-    const quantity = this.batch.quantity;
-
-    if (days < 30 && quantity < 1000) {
-      return 'Expiring soon with low stock';
-    } else if (days < 30) {
-      return 'Approaching expiry date';
-    } else if (quantity < 1000) {
-      return 'Stock level is low';
-    } else {
-      return 'All parameters within range';
-    }
+  getStockPercentage(): number {
+    if (!this.batch || this.batch.quantityReceived === 0) return 0;
+    return Math.round((this.batch.quantityRemaining / this.batch.quantityReceived) * 100);
   }
 
   getStockLevel(): string {
     if (!this.batch) return 'Unknown';
 
-    if (this.batch.quantity >= this.MEDIUM_STOCK) return 'Optimal';
-    if (this.batch.quantity >= this.LOW_STOCK) return 'Adequate';
+    const percentage = this.getStockPercentage();
+
+    if (percentage >= 75) return 'Optimal';
+    if (percentage >= 50) return 'Good';
+    if (percentage >= 25) return 'Adequate';
     return 'Low';
   }
 
   getExpiryStatus(): string {
-    const days = this.getDaysUntilExpiry();
+    if (!this.batch) return 'Unknown';
 
-    if (days < 30) return 'Critical';
-    if (days < 90) return 'Attention';
+    if (this.batch.isExpired) return 'Expired';
+    if (this.batch.daysUntilExpiry < 30) return 'Critical';
+    if (this.batch.daysUntilExpiry < 90) return 'Attention';
     return 'Safe';
+  }
+
+  getStatusTitle(): string {
+    return this.getStatusLabel();
+  }
+
+  getStatusClass(): string {
+    if (!this.batch) return '';
+    
+    if (this.batch.isExpired) return 'expired';
+    if (this.batch.isExpiringSoon) return 'expiring-soon';
+    if (this.batch.quantityRemaining === 0) return 'out-of-stock';
+    if (this.batch.quantityRemaining <= 10) return 'low-stock';
+    return 'available';
+  }
+
+  getDetailedStatus(): string {
+    return this.getStatusDescription();
+  }
+
+  isExpiringSoon(): boolean {
+    return this.batch?.isExpiringSoon || false;
+  }
+
+  getDaysUntilExpiry(): number {
+    return this.batch?.daysUntilExpiry || 0;
+  }
+
+  exportPDF(): void {
+    this.exportReport();
+  }
+
+  updateQuantity(): void {
+    this.showInfo('Quantity update feature coming soon');
+  }
+
+  reportIssue(): void {
+    this.showInfo('Issue reporting feature coming soon');
   }
 
   // Action Methods
   editBatch(): void {
-    this.showInfo('Edit functionality will be implemented in Sprint 2');
-    // this.router.navigate(['/inventory/edit', this.batchId]);
-  }
-
-  updateQuantity(): void {
-    this.showInfo('Update quantity functionality will be implemented in Sprint 2');
+    if (!this.batchId) return;
+    this.router.navigate(['/inventory/add-batch'], {
+      queryParams: { batchId: this.batchId }
+    });
   }
 
   deleteBatch(): void {
     if (!this.batch || !this.batchId) return;
 
     const confirmed = confirm(
-      `Are you sure you want to delete batch ${this.batch.batch_number}?\n\n` +
-      `This action cannot be undone and will permanently remove:\n` +
-      `- ${this.batch.quantity} doses of ${this.batch.vaccine_name}\n` +
-      `- All associated history and records`
+      `Are you sure you want to delete batch ${this.batch.batchNumber}?\n\n` +
+      `This will permanently remove:\n` +
+      `- ${this.batch.quantityRemaining} remaining doses of ${this.batch.vaccineName}\n` +
+      `- All associated history and records\n\n` +
+      `This action cannot be undone.`
     );
 
     if (confirmed) {
+      this.isLoading = true;
       this.inventoryService.deleteBatch(this.batchId).subscribe({
         next: () => {
           this.showSuccess('Batch deleted successfully');
@@ -280,23 +271,23 @@ export class ViewBatchComponent implements OnInit {
         },
         error: (error) => {
           console.error('Delete error:', error);
-          this.showError('Failed to delete batch. This feature is pending backend implementation.');
+          this.showError('Failed to delete batch: ' + (error.error?.message || error.message || 'Unknown error'));
+          this.isLoading = false;
         }
       });
     }
   }
 
-  exportPDF(): void {
+  exportReport(): void {
     if (!this.batch) return;
 
-    // Create a simple text report (PDF generation would require additional library)
     const report = this.generateReport();
     const blob = new Blob([report], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
 
     link.href = url;
-    link.download = `batch-${this.batch.batch_number}-report.txt`;
+    link.download = `batch-${this.batch.batchNumber}-report-${new Date().toISOString().split('T')[0]}.txt`;
     link.click();
 
     URL.revokeObjectURL(url);
@@ -307,46 +298,67 @@ export class ViewBatchComponent implements OnInit {
     if (!this.batch) return '';
 
     return `
-VACCINE BATCH REPORT
-Generated: ${new Date().toLocaleString()}
+╔═══════════════════════════════════════════════════════════╗
+║           VACCINE BATCH DETAILED REPORT                   ║
+╚═══════════════════════════════════════════════════════════╝
 
-==========================================
-BATCH INFORMATION
-==========================================
+Report Generated: ${new Date().toLocaleString()}
+Generated By: ${this.currentUser?.username || 'Unknown'}
+Facility: ${this.authService.getFacilityId()}
 
-Vaccine Name: ${this.batch.vaccine_name}
-Batch Number: ${this.batch.batch_number}
-Manufacturer: ${this.batch.manufacturer}
+═══════════════════════════════════════════════════════════
+BATCH IDENTIFICATION
+═══════════════════════════════════════════════════════════
 
-Quantity: ${this.batch.quantity} doses
-Expiry Date: ${this.formatDate(this.batch.expiry_date)}
-Days Until Expiry: ${this.getDaysUntilExpiry()}
+Vaccine Name:        ${this.batch.vaccineName}
+Batch Number:        ${this.batch.batchNumber}
+Manufacturer:        ${this.batch.manufacturer}
 
-Storage Location: ${this.batch.storage_location || 'Not specified'}
-Storage Temperature: ${this.batch.temperature ? this.batch.temperature + '°C' : 'Not specified'}
+═══════════════════════════════════════════════════════════
+QUANTITY INFORMATION
+═══════════════════════════════════════════════════════════
 
-Status: ${this.getStatusLabel()}
-Stock Level: ${this.getStockLevel()}
-Expiry Status: ${this.getExpiryStatus()}
+Quantity Received:   ${this.batch.quantityReceived.toLocaleString()} doses
+Quantity Remaining:  ${this.batch.quantityRemaining.toLocaleString()} doses
+Stock Percentage:    ${this.getStockPercentage()}%
+Stock Level:         ${this.getStockLevel()}
 
-==========================================
-ADDITIONAL INFORMATION
-==========================================
+═══════════════════════════════════════════════════════════
+DATE INFORMATION
+═══════════════════════════════════════════════════════════
 
-Notes: ${this.batch.notes || 'None'}
+Receipt Date:        ${this.formatDate(this.batch.receiptDate)}
+Expiry Date:         ${this.formatDate(this.batch.expiryDate)}
+Days Until Expiry:   ${this.batch.daysUntilExpiry} days
+Expiry Status:       ${this.getExpiryStatus()}
 
-Created: ${this.formatDate(this.batch.created_at || '')}
-Created By: ${this.batch.created_by || 'Unknown'}
-Last Updated: ${this.formatDate(this.batch.updated_at || '')}
+═══════════════════════════════════════════════════════════
+STATUS INFORMATION
+═══════════════════════════════════════════════════════════
 
-==========================================
+Overall Status:      ${this.getStatusLabel()}
+Is Expired:          ${this.batch.isExpired ? 'Yes' : 'No'}
+Is Expiring Soon:    ${this.batch.isExpiringSoon ? 'Yes' : 'No'}
+
+Status Description:
+${this.getStatusDescription()}
+
+═══════════════════════════════════════════════════════════
+SYSTEM INFORMATION
+═══════════════════════════════════════════════════════════
+
+Batch ID:            ${this.batch.id}
+Facility ID:         ${this.batch.facilityId}
+Created At:          ${this.formatDateTime(this.batch.createdAt)}
+
+═══════════════════════════════════════════════════════════
 END OF REPORT
-==========================================
+═══════════════════════════════════════════════════════════
     `.trim();
   }
 
-  reportIssue(): void {
-    this.showInfo('Issue reporting will be implemented in Sprint 2');
+  backToList(): void {
+    this.router.navigate(['/inventory']);
   }
 
   // Notification Methods
@@ -375,5 +387,14 @@ END OF REPORT
       horizontalPosition: 'end',
       verticalPosition: 'top'
     });
+  }
+
+  toggleSidenav(): void {
+    this.sidenavOpened = !this.sidenavOpened;
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }

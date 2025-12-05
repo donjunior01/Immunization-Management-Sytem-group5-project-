@@ -23,13 +23,17 @@ public class UserResponse {  // Added 'public' modifier
 
     private Role role;  // Added role field
 
+    @JsonProperty("facilityId")
+    private String facilityId;  // Added facilityId field
+
     public static UserResponse fromUser(User user) {
         return UserResponse.builder()
-                .id(user.getId())
+                .id(String.valueOf(user.getId()))
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .role(user.getRole())  // Changed from .Role() to .role()
                 .fullName(user.getFullName())
+                .role(user.getRole())
+                .facilityId(user.getFacilityId())
                 .build();
     }
 }

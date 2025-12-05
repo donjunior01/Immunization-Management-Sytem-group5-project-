@@ -1,0 +1,190 @@
+<div class="dashboard-container fade-in">
+  <app-loading [show]="loading" message="Loading dashboard..."></app-loading>
+
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>business</mat-icon>
+        Facility Manager Dashboard
+      </h1>
+      <p class="text-secondary">Monitor facility performance and manage campaigns</p>
+    </div>
+    <div class="header-actions">
+      <select [(ngModel)]="selectedPeriod" (change)="onPeriodChange()" class="form-control period-select">
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="year">This Year</option>
+      </select>
+      <button class="btn btn-primary" (click)="exportReport()">
+        <mat-icon>download</mat-icon>
+        Export Report
+      </button>
+    </div>
+  </header>
+
+  <!-- Stats Overview -->
+  <div class="stats-grid" *ngIf="stats">
+    <div class="stat-card card">
+      <div class="stat-icon primary">
+        <mat-icon>people</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.totalPatients || 0 }}</h3>
+        <p>Total Patients</p>
+        <span class="stat-change positive">+12% from last month</span>
+      </div>
+    </div>
+
+    <div class="stat-card card">
+      <div class="stat-icon success">
+        <mat-icon>vaccines</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.vaccinationsThisMonth || 0 }}</h3>
+        <p>Vaccinations This Month</p>
+        <span class="stat-change positive">+8% from last month</span>
+      </div>
+    </div>
+
+    <div class="stat-card card">
+      <div class="stat-icon warning">
+        <mat-icon>campaign</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.activeCampaigns || 0 }}</h3>
+        <p>Active Campaigns</p>
+        <span class="stat-change neutral">Same as last month</span>
+      </div>
+    </div>
+
+    <div class="stat-card card">
+      <div class="stat-icon info">
+        <mat-icon>trending_up</mat-icon>
+      </div>
+      <div class="stat-content">
+        <h3>82%</h3>
+        <p>Avg Coverage Rate</p>
+        <span class="stat-change positive">+5% from last month</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-grid">
+    <!-- Vaccination Coverage -->
+    <div class="card coverage-card">
+      <div class="card-header">
+        <mat-icon>assessment</mat-icon>
+        Vaccination Coverage
+      </div>
+      <div class="coverage-list">
+        <div class="coverage-item" *ngFor="let item of coverageData">
+          <div class="coverage-info">
+            <h4>{{ item.vaccineName }}</h4>
+            <p class="text-secondary">{{ item.administered }} / {{ item.target }} doses</p>
+          </div>
+          <div class="coverage-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" [class]="getCoverageClass(item.percentage)"
+                   [style.width.%]="item.percentage">
+              </div>
+            </div>
+            <span class="coverage-percentage">{{ item.percentage }}%</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a routerLink="/reports/coverage" class="link-primary">View detailed coverage report →</a>
+      </div>
+    </div>
+
+    <!-- Active Campaigns -->
+    <div class="card campaigns-card">
+      <div class="card-header">
+        <mat-icon>campaign</mat-icon>
+        Active Campaigns
+      </div>
+      <div class="campaigns-list" *ngIf="activeCampaigns.length > 0">
+        <div class="campaign-item" *ngFor="let campaign of activeCampaigns">
+          <div class="campaign-header">
+            <h4>{{ campaign.name }}</h4>
+            <span [class]="'badge ' + getCampaignStatusClass(campaign.status)">
+              {{ campaign.status }}
+            </span>
+          </div>
+          <p class="campaign-description">{{ campaign.description }}</p>
+          <div class="campaign-details">
+            <div class="detail-item">
+              <mat-icon>vaccines</mat-icon>
+              <span>{{ campaign.vaccineName }}</span>
+            </div>
+            <div class="detail-item">
+              <mat-icon>calendar_today</mat-icon>
+              <span>{{ campaign.startDate | date: 'MMM d' }} - {{ campaign.endDate | date: 'MMM d' }}</span>
+            </div>
+            <div class="detail-item">
+              <mat-icon>schedule</mat-icon>
+              <span>{{ getDaysRemaining(campaign.endDate) }} days left</span>
+            </div>
+          </div>
+          <div class="campaign-progress">
+            <div class="progress-info">
+              <span>Progress</span>
+              <span>{{ campaign.vaccinatedCount }} / {{ campaign.targetPopulation }}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill coverage-good"
+                   [style.width.%]="campaign.targetPopulation ? (campaign.vaccinatedCount / campaign.targetPopulation * 100) : 0">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="empty-state" *ngIf="activeCampaigns.length === 0">
+        <mat-icon>campaign</mat-icon>
+        <p>No active campaigns</p>
+        <button class="btn btn-primary" routerLink="/campaigns/create">
+          Create Campaign
+        </button>
+      </div>
+      <div class="card-footer" *ngIf="activeCampaigns.length > 0">
+        <a routerLink="/campaigns" class="link-primary">View all campaigns →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions for Managers -->
+  <div class="manager-actions card">
+    <div class="card-header">
+      <mat-icon>settings</mat-icon>
+      Management Actions
+    </div>
+    <div class="action-grid">
+      <button class="action-item" routerLink="/campaigns/create">
+        <mat-icon>add_circle</mat-icon>
+        <span>Create Campaign</span>
+      </button>
+      <button class="action-item" routerLink="/reports/defaulters">
+        <mat-icon>person_search</mat-icon>
+        <span>Defaulter List</span>
+      </button>
+      <button class="action-item" routerLink="/reports/facility">
+        <mat-icon>summarize</mat-icon>
+        <span>Facility Report</span>
+      </button>
+      <button class="action-item" routerLink="/inventory/manage">
+        <mat-icon>inventory</mat-icon>
+        <span>Manage Inventory</span>
+      </button>
+      <button class="action-item" routerLink="/staff">
+        <mat-icon>badge</mat-icon>
+        <span>Staff Management</span>
+      </button>
+      <button class="action-item" routerLink="/settings">
+        <mat-icon>settings</mat-icon>
+        <span>Settings</span>
+      </button>
+    </div>
+  </div>
+</div>

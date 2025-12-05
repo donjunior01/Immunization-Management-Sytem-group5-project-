@@ -11,6 +11,7 @@ export interface User {
   email?: string;
   role: 'HEALTH_WORKER' | 'FACILITY_MANAGER' | 'GOVERNMENT_OFFICIAL';
   fullName?: string;
+  facilityId?: string;
 }
 
 // Login response interface - matches backend LoginResponse
@@ -201,6 +202,55 @@ export class AuthService {
   getUserRole(): User['role'] | null {
     const user = this.getCurrentUser();
     return user?.role || null;
+  }
+
+  /**
+   * Get user facility ID - User Story 1.2
+   * @returns User's facilityId or 'NATIONAL' for government officials
+   */
+  getFacilityId(): string {
+    const user = this.getCurrentUser();
+    
+    // Government officials don't have a specific facility, they oversee all facilities
+    if (user?.role === 'GOVERNMENT_OFFICIAL') {
+      return 'NATIONAL';
+    }
+    
+    // Return the user's facilityId or default to 'FAC001' for testing
+    return user?.facilityId || 'FAC001';
+  }
+
+  /**
+   * Check if user is a government official
+   * @returns True if user is government official
+   */
+  isGovernmentOfficial(): boolean {
+    return this.hasRole('GOVERNMENT_OFFICIAL');
+  }
+
+  /**
+   * Check if user is a facility manager
+   * @returns True if user is facility manager
+   */
+  isFacilityManager(): boolean {
+    return this.hasRole('FACILITY_MANAGER');
+  }
+
+  /**
+   * Check if user is a health worker
+   * @returns True if user is health worker
+   */
+  isHealthWorker(): boolean {
+    return this.hasRole('HEALTH_WORKER');
+  }
+
+  /**
+   * Get user display name
+   * @returns User's full name or username
+   */
+  getUserDisplayName(): string {
+    const user = this.getCurrentUser();
+    return user?.fullName || user?.username || 'User';
   }
 
   /**

@@ -1,0 +1,199 @@
+<div class="vaccination-history-container">
+  <mat-card class="history-card">
+    <mat-card-header>
+      <mat-card-title>
+        <div class="header-content">
+          <h2>
+            <mat-icon>history</mat-icon>
+            Vaccination History
+          </h2>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="refreshData()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>
+        <span *ngIf="selectedPatient">
+          Showing {{ totalVaccinations }} vaccination(s) for {{ selectedPatient.fullName }}
+        </span>
+        <span *ngIf="!selectedPatient">
+          Total Vaccinations: {{ totalVaccinations }}
+        </span>
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Filters Section -->
+      <div class="filters-section">
+        <mat-form-field appearance="outline" class="patient-search">
+          <mat-label>Search Patient</mat-label>
+          <input
+            matInput
+            [formControl]="patientSearchControl"
+            [matAutocomplete]="patientAuto"
+            placeholder="Type patient name or ID">
+          <mat-icon matPrefix>search</mat-icon>
+          <mat-autocomplete
+            #patientAuto="matAutocomplete"
+            [displayWith]="displayPatient"
+            (optionSelected)="onPatientSelected($event.option.value)">
+            <mat-option *ngFor="let patient of filteredPatients | async" [value]="patient">
+              <div class="patient-option">
+                <strong>{{ patient.fullName }}</strong>
+                <span>ID: {{ patient.id }} | Age: {{ patient.age }} years</span>
+              </div>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="vaccine-filter">
+          <mat-label>Vaccine Type</mat-label>
+          <mat-select [formControl]="vaccineTypeControl">
+            <mat-option *ngFor="let type of vaccineTypes" [value]="type.value">
+              {{ type.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="date-filter">
+          <mat-label>Start Date</mat-label>
+          <input
+            matInput
+            [matDatepicker]="startPicker"
+            [formControl]="startDateControl"
+            placeholder="Select start date">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="date-filter">
+          <mat-label>End Date</mat-label>
+          <input
+            matInput
+            [matDatepicker]="endPicker"
+            [formControl]="endDateControl"
+            placeholder="Select end date">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+
+        <button
+          mat-raised-button
+          (click)="clearFilters()"
+          matTooltip="Clear all filters">
+          <mat-icon>clear</mat-icon>
+          Clear
+        </button>
+
+        <button
+          mat-raised-button
+          (click)="exportToCSV()"
+          matTooltip="Export to CSV">
+          <mat-icon>download</mat-icon>
+          Export
+        </button>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div *ngIf="isLoading" class="loading-overlay">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading vaccination history...</p>
+      </div>
+
+      <!-- Vaccinations Table -->
+      <div class="table-container" *ngIf="!isLoading">
+        <table mat-table [dataSource]="dataSource" matSort class="vaccinations-table">
+          <!-- Vaccination Date Column -->
+          <ng-container matColumnDef="vaccinationDate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Date</th>
+            <td mat-cell *matCellDef="let vaccination">
+              {{ vaccination.dateAdministered | date: 'mediumDate' }}
+            </td>
+          </ng-container>
+
+          <!-- Vaccine Name Column -->
+          <ng-container matColumnDef="vaccineName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Vaccine</th>
+            <td mat-cell *matCellDef="let vaccination">
+              <div class="vaccine-info">
+                <strong>{{ vaccination.vaccineName }}</strong>
+                <span class="patient-name">Patient: {{ vaccination.patientName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Dose Number Column -->
+          <ng-container matColumnDef="doseNumber">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Dose</th>
+            <td mat-cell *matCellDef="let vaccination">
+              <span class="dose-badge">Dose {{ vaccination.doseNumber }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Batch Number Column -->
+          <ng-container matColumnDef="batchNumber">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Batch Number</th>
+            <td mat-cell *matCellDef="let vaccination">
+              {{ vaccination.batchNumber || 'Batch ' + vaccination.batchId }}
+            </td>
+          </ng-container>
+
+          <!-- Administered By Column -->
+          <ng-container matColumnDef="administeredBy">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Administered By</th>
+            <td mat-cell *matCellDef="let vaccination">
+              Nurse {{ vaccination.nurseId }}
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let vaccination">
+              <div class="action-buttons">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  (click)="viewVaccinationDetails(vaccination)"
+                  matTooltip="View Details">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  color="accent"
+                  (click)="printVaccinationCard(vaccination)"
+                  matTooltip="Print Vaccination Card">
+                  <mat-icon>print</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="vaccination-row"></tr>
+
+          <!-- No Data Row -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+              <div class="no-data-message">
+                <mat-icon>info</mat-icon>
+                <p>No vaccination records found</p>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Paginator -->
+        <mat-paginator
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          [pageSize]="25"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

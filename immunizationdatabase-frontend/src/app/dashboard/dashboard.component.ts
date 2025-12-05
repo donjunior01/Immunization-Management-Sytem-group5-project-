@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -17,6 +17,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AuthService } from '../services/auth.service';
 import { InventoryService } from '../services/inventory.service';
 import { AddBatchModalComponent } from '../inventory/add-batch/add-batch.component';
+import { StatisticsService, NationalStatistics } from '../services/statistics.service';
 
 interface StockLevel {
   vaccineName: string;
@@ -70,14 +71,18 @@ interface RecentActivity {
     MatDialogModule
   ],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class DashboardComponent implements OnInit {
   currentUser: any;
   userRole: string = '';
+  facilityId: string = '';
+  isGovernmentOfficial: boolean = false;
   currentDate = new Date();
   loading = true;
   sidenavOpened = true;
+  nationalStats: NationalStatistics | null = null;
 
   quickStats: QuickStat[] = [
     {
@@ -127,6 +132,7 @@ export class DashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private inventoryService: InventoryService,
+    private statisticsService: StatisticsService,
     private router: Router,
     private dialog: MatDialog
   ) {}
@@ -148,12 +154,72 @@ export class DashboardComponent implements OnInit {
     if (user) {
       this.currentUser = user;
       this.userRole = this.formatUserRole(user.role || 'Health Worker');
+      this.facilityId = this.authService.getFacilityId();
+      this.isGovernmentOfficial = this.authService.isGovernmentOfficial();
+      
+      console.log('User Data Loaded:', {
+        username: user.username,
+        role: user.role,
+        facilityId: this.facilityId,
+        isGovernmentOfficial: this.isGovernmentOfficial
+      });
     }
   }
 
   loadDashboardData(): void {
     this.loading = true;
 
+    // Government officials see national statistics
+    if (this.isGovernmentOfficial) {
+      this.loadNationalDashboard();
+    } else {
+      // Facility managers and health workers see facility-specific data
+      this.loadFacilityDashboard();
+    }
+  }
+
+  /**
+   * Load national-level dashboard for government officials
+   */
+  loadNationalDashboard(): void {
+    console.log('Loading national dashboard data...');
+    
+    // Try to get real national statistics from the backend
+    this.statisticsService.getNationalStatistics().subscribe({
+      next: (stats) => {
+        this.nationalStats = stats;
+        this.updateQuickStatsFromNational(stats);
+        this.updateActivitiesFromNational(stats);
+        this.loading = false;
+      },
+      error: (error) => {
+        console.warn('Could not load national statistics, using mock data:', error);
+        // Fallback to mock data for government officials
+        this.nationalStats = this.statisticsService.getMockNationalStatistics();
+        this.updateQuickStatsFromNational(this.nationalStats);
+        this.updateActivitiesFromNational(this.nationalStats);
+        this.loading = false;
+      }
+    });
+
+    // Also load aggregate inventory data for the stock table
+    this.inventoryService.getAllBatches().subscribe({
+      next: (batches) => {
+        this.processInventoryData(batches);
+      },
+      error: (error) => {
+        console.error('Error loading inventory data:', error);
+        this.loadMockData();
+      }
+    });
+  }
+
+  /**
+   * Load facility-specific dashboard for facility managers and health workers
+   */
+  loadFacilityDashboard(): void {
+    console.log('Loading facility dashboard data for facility:', this.facilityId);
+    
     this.inventoryService.getAllBatches().subscribe({
       next: (batches) => {
         this.processInventoryData(batches);
@@ -166,6 +232,50 @@ export class DashboardComponent implements OnInit {
         this.loadMockData();
       }
     });
+  }
+
+  /**
+   * Update quick stats from national statistics
+   */
+  updateQuickStatsFromNational(stats: NationalStatistics): void {
+    this.quickStats[0].value = stats.totalVaccineTypes;
+    this.quickStats[0].subtitle = `Across ${stats.totalFacilities} facilities`;
+    
+    this.quickStats[1].value = this.formatNumber(stats.totalDosesAvailable);
+    this.quickStats[1].subtitle = `${this.formatNumber(stats.totalVaccinationsAdministered)} administered`;
+    
+    this.quickStats[2].value = stats.lowStockAlerts;
+    this.quickStats[2].subtitle = `${stats.facilitiesWithAlerts} facilities need attention`;
+    
+    this.quickStats[3].value = stats.expiringBatches;
+    this.quickStats[3].subtitle = `Across all facilities`;
+  }
+
+  /**
+   * Update activities from national statistics
+   */
+  updateActivitiesFromNational(stats: NationalStatistics): void {
+    this.recentActivities = stats.recentActivities.map(activity => ({
+      action: activity.action,
+      vaccine: activity.facilityName,
+      user: 'System',
+      time: this.formatTimeAgo(new Date(activity.timestamp)),
+      icon: this.getActivityIcon(activity.type),
+      type: activity.type
+    }));
+  }
+
+  /**
+   * Get activity icon based on type
+   */
+  getActivityIcon(type: string): string {
+    const icons = {
+      success: 'check_circle',
+      warning: 'warning',
+      error: 'error',
+      info: 'info'
+    };
+    return icons[type as keyof typeof icons] || 'info';
   }
 
   processInventoryData(batches: any[]): void {
@@ -372,6 +482,8 @@ export class DashboardComponent implements OnInit {
   }
 
   navigateToAddBatch(): void {
+    const facilityId = this.authService.getFacilityId();
+    
     const dialogRef = this.dialog.open(AddBatchModalComponent, {
       width: '900px',
       maxWidth: '95vw',
@@ -379,7 +491,11 @@ export class DashboardComponent implements OnInit {
       disableClose: false,
       panelClass: 'custom-dialog-container',
       autoFocus: true,
-      restoreFocus: true
+      restoreFocus: true,
+      data: {
+        facilityId: facilityId,
+        isGovernmentOfficial: this.isGovernmentOfficial
+      }
     });
 
     dialogRef.afterClosed().subscribe(result => {

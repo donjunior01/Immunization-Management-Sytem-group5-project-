@@ -32,12 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Skip filter for auth endpoints
-        final String requestPath = request.getServletPath();
-        if (requestPath.startsWith("/api/auth/login") ||
-                requestPath.startsWith("/api/auth/register") ||
-                requestPath.startsWith("/api/auth/health") ||
-                requestPath.startsWith("/api/auth/refresh")) { // Added refresh endpoint
+        // Skip filter for auth endpoints - check both with and without /api prefix
+        final String servletPath = request.getServletPath();
+        final String requestURI = request.getRequestURI();
+        
+        if (servletPath.equals("/auth/login") || servletPath.equals("/auth/register") ||
+                servletPath.equals("/auth/health") || servletPath.equals("/auth/refresh") ||
+                requestURI.endsWith("/auth/login") || requestURI.endsWith("/auth/register") ||
+                requestURI.endsWith("/auth/health") || requestURI.endsWith("/auth/refresh")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -47,7 +49,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
+        log.debug("Processing request to: {}, Auth header present: {}", servletPath, authHeader != null);
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.debug("No valid Authorization header found");
             filterChain.doFilter(request, response);
             return;
         }
@@ -56,9 +61,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             username = jwtService.extractUsername(jwt);
+            log.debug("Extracted username from token: {}", username);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                log.debug("Loaded user details for: {}, authorities: {}", username, userDetails.getAuthorities());
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -72,11 +79,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    log.debug("User {} authenticated successfully", username);
+                    log.info("User {} authenticated successfully with authorities: {}", username, userDetails.getAuthorities());
+                } else {
+                    log.warn("Token validation failed for user: {}", username);
                 }
             }
         } catch (Exception e) {
-            log.error("Cannot set user authentication: {}", e.getMessage());
+            log.error("Cannot set user authentication: {}", e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);

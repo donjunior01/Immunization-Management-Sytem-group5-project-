@@ -39,10 +39,15 @@ export class LoginComponent {
     private authService: AuthService,
     private router: Router
   ) {
+    // Load saved credentials if "Remember Me" was checked
+    const savedUsername = localStorage.getItem('rememberedUsername');
+    const savedPassword = localStorage.getItem('rememberedPassword');
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
+
     this.loginForm = this.fb.group({
-      username: ['', Validators.required],
-      password: ['', Validators.required],
-      rememberMe: [false] // Added for checkbox
+      username: [savedUsername || '', [Validators.required, Validators.minLength(3)]],
+      password: [savedPassword || '', [Validators.required, Validators.minLength(8)]], // US 1: Password ≥8 chars
+      rememberMe: [rememberMe] // Load saved preference
     });
   }
 
@@ -51,12 +56,26 @@ export class LoginComponent {
       this.isLoading = true;
       this.errorMessage = '';
 
-      const { username, password } = this.loginForm.value;
+      const { username, password, rememberMe } = this.loginForm.value;
+
+      // Handle "Remember Me" functionality
+      if (rememberMe) {
+        localStorage.setItem('rememberedUsername', username);
+        localStorage.setItem('rememberedPassword', password);
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberedUsername');
+        localStorage.removeItem('rememberedPassword');
+        localStorage.removeItem('rememberMe');
+      }
 
       this.authService.login(username, password).subscribe({
-        next: () => {
+        next: (response) => {
           this.isLoading = false;
-          this.router.navigate(['/dashboard']);
+          // Redirect to role-specific dashboard
+          const userRole = response.user.role;
+          const dashboardRoute = this.getDashboardRouteForRole(userRole);
+          this.router.navigate([dashboardRoute]);
         },
         error: (error) => {
           this.isLoading = false;
@@ -73,5 +92,18 @@ export class LoginComponent {
   onForgotPassword(): void {
     // Placeholder: Implement logic to show a dialog or navigate to reset page
     alert('Forgot Password? Feature coming soon!'); // Replace with actual implementation
+  }
+
+  private getDashboardRouteForRole(role: string): string {
+    switch (role) {
+      case 'HEALTH_WORKER':
+        return '/dashboard/health-worker';
+      case 'FACILITY_MANAGER':
+        return '/dashboard/facility-manager';
+      case 'GOVERNMENT_OFFICIAL':
+        return '/dashboard/government-official';
+      default:
+        return '/dashboard/health-worker'; // Default fallback
+    }
   }
 }

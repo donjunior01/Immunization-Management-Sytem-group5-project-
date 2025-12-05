@@ -1,0 +1,232 @@
+<div class="stock-report-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>inventory_2</mat-icon>
+        Stock Status Report
+      </h1>
+      <p>Current vaccine inventory and alerts</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="navigateToInventory()">
+        <mat-icon>list</mat-icon>
+        View Inventory
+      </button>
+      <button mat-raised-button color="primary" (click)="exportReport()">
+        <mat-icon>download</mat-icon>
+        Export Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading stock data...</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading">
+    <!-- Summary Statistics -->
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon total">
+              <mat-icon>vaccines</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ totalVaccines }}</div>
+              <div class="stat-label">Total Vaccines</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon adequate">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ adequateStock }}</div>
+              <div class="stat-label">Adequate Stock</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon low">
+              <mat-icon>warning</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ lowStock }}</div>
+              <div class="stat-label">Low Stock</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon critical">
+              <mat-icon>error</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ criticalStock }}</div>
+              <div class="stat-label">Critical Stock</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-content">
+            <div class="stat-icon expiring">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ expiringBatches }}</div>
+              <div class="stat-label">Expiring Soon</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Alerts Section -->
+    <mat-card class="alerts-card" *ngIf="alerts.length > 0">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>notifications_active</mat-icon>
+          Stock Alerts
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div *ngFor="let alert of alerts" class="alert-item" [class]="alert.severity">
+            <div class="alert-icon">
+              <mat-icon [color]="getAlertColor(alert.severity)">
+                {{ getAlertIcon(alert.type) }}
+              </mat-icon>
+            </div>
+            <div class="alert-content">
+              <div class="alert-vaccine">{{ alert.vaccine }}</div>
+              <div class="alert-message">{{ alert.message }}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Stock Table -->
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>list</mat-icon>
+          Current Stock Levels
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="stockData" class="stock-table">
+          <!-- Vaccine Column -->
+          <ng-container matColumnDef="vaccine">
+            <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="vaccine-cell">
+                <strong>{{ row.vaccine }}</strong>
+                <small>{{ row.manufacturer }}</small>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Batch Number Column -->
+          <ng-container matColumnDef="batchNumber">
+            <th mat-header-cell *matHeaderCellDef>Batch Number</th>
+            <td mat-cell *matCellDef="let row">{{ row.batchNumber }}</td>
+          </ng-container>
+
+          <!-- Quantity Column -->
+          <ng-container matColumnDef="quantity">
+            <th mat-header-cell *matHeaderCellDef>Quantity</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="quantity-value">{{ row.quantity }}</span> doses
+            </td>
+          </ng-container>
+
+          <!-- Expiry Date Column -->
+          <ng-container matColumnDef="expiryDate">
+            <th mat-header-cell *matHeaderCellDef>Expiry Date</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="expiry-cell">
+                <div>{{ row.expiryDate }}</div>
+                <small>{{ row.daysToExpiry }} days left</small>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let row">
+              <mat-chip [color]="getStatusColor(row.status)" selected>
+                <mat-icon>{{ getStatusIcon(row.status) }}</mat-icon>
+                {{ getStatusLabel(row.status) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let row">
+              <button mat-icon-button 
+                      (click)="viewBatchDetails(row)"
+                      matTooltip="View details">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="stock-row"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Stock Movements -->
+    <mat-card class="movements-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>swap_vert</mat-icon>
+          Recent Stock Movements
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="movements-list">
+          <div *ngFor="let movement of recentMovements" class="movement-item">
+            <div class="movement-icon" [class]="movement.type.toLowerCase()">
+              <mat-icon>{{ movement.type === 'In' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+            </div>
+            <div class="movement-details">
+              <div class="movement-vaccine">{{ movement.vaccine }}</div>
+              <div class="movement-meta">
+                {{ movement.type }}: {{ movement.quantity }} doses • {{ movement.date }} • {{ movement.reference }}
+              </div>
+            </div>
+            <div class="movement-badge" [class]="movement.type.toLowerCase()">
+              {{ movement.type }}
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

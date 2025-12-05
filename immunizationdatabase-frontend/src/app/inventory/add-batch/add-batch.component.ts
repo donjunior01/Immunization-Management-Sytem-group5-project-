@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,21 +10,22 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Observable, Subscription } from 'rxjs';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
-import { InventoryService, BatchCreateRequest } from '../../services/inventory.service';
-import { MatProgressBar } from "@angular/material/progress-bar";
+import { InventoryRealService, CreateVaccineBatchRequest, VaccineBatchResponse } from '../../services/inventory-real.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
-  selector: 'app-add-batch-modal',
+  selector: 'app-add-batch',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -33,34 +34,39 @@ import { MatProgressBar } from "@angular/material/progress-bar";
     MatIconModule,
     MatAutocompleteModule,
     MatSnackBarModule,
-    MatStepperModule,
+    MatCardModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    MatProgressBar
-],
+    MatStepperModule,
+    MatProgressBarModule
+  ],
   templateUrl: './add-batch.component.html',
   styleUrls: ['./add-batch.component.scss']
 })
-export class AddBatchModalComponent implements OnInit, OnDestroy {
+export class AddBatchComponent implements OnInit {
+  batchForm: FormGroup;
   basicInfoForm: FormGroup;
   storageForm: FormGroup;
   additionalForm: FormGroup;
-
   submitting = false;
+  editMode = false;
+  batchId: number | null = null;
+  currentBatch: VaccineBatchResponse | null = null;
   currentStep = 0;
+  minDate = new Date();
 
   vaccineNames: string[] = [
-    'COVID-19 (Pfizer-BioNTech)',
-    'COVID-19 (Moderna)',
-    'COVID-19 (AstraZeneca)',
-    'Influenza (Flu)',
-    'MMR (Measles, Mumps, Rubella)',
+    'BCG',
+    'Polio',
+    'DTP',
     'Hepatitis B',
-    'Tetanus (TD)',
-    'Polio (IPV)',
-    'BCG (Tuberculosis)',
-    'Varicella (Chickenpox)',
-    'HPV (Human Papillomavirus)',
+    'Measles',
+    'Rotavirus',
+    'Pneumococcal',
+    'HPV',
+    'Tetanus',
+    'Varicella',
+    'Influenza',
     'Meningococcal'
   ];
 
@@ -74,32 +80,34 @@ export class AddBatchModalComponent implements OnInit, OnDestroy {
     'Merck',
     'Sanofi',
     'Serum Institute of India',
-    'Sinovac Biotech'
+    'Sinovac Biotech',
+    'Bharat Biotech'
   ];
 
   filteredVaccineNames!: Observable<string[]>;
   filteredManufacturers!: Observable<string[]>;
 
-  minDate = new Date();
-  private subscriptions: Subscription = new Subscription();
+  minReceiptDate = new Date(2020, 0, 1); // Jan 1, 2020
+  maxReceiptDate = new Date();
+  minExpiryDate = new Date();
 
   constructor(
     private fb: FormBuilder,
-    private inventoryService: InventoryService,
-    private dialogRef: MatDialogRef<AddBatchModalComponent>,
+    private inventoryService: InventoryRealService,
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute,
     private snackBar: MatSnackBar
   ) {
     this.basicInfoForm = this.createBasicInfoForm();
     this.storageForm = this.createStorageForm();
     this.additionalForm = this.createAdditionalForm();
+    this.batchForm = this.createBatchForm();
   }
 
   ngOnInit(): void {
     this.setupAutocomplete();
-  }
-
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
+    this.checkEditMode();
   }
 
   createBasicInfoForm(): FormGroup {
@@ -114,14 +122,27 @@ export class AddBatchModalComponent implements OnInit, OnDestroy {
   createStorageForm(): FormGroup {
     return this.fb.group({
       expiry_date: ['', Validators.required],
+      receipt_date: [new Date(), Validators.required],
       storage_location: [''],
-      temperature: [null, [Validators.min(-100), Validators.max(50)]]
+      temperature: [null, [Validators.min(-80), Validators.max(25)]],
+      notes: ['']
     });
   }
 
   createAdditionalForm(): FormGroup {
     return this.fb.group({
-      notes: ['', Validators.maxLength(500)]
+      notes: ['', [Validators.maxLength(500)]]
+    });
+  }
+
+  createBatchForm(): FormGroup {
+    return this.fb.group({
+      vaccineName: ['', [Validators.required, Validators.minLength(2)]],
+      batchNumber: ['', [Validators.required, Validators.pattern(/^[A-Z0-9-]+$/)]],
+      manufacturer: ['', [Validators.required, Validators.minLength(2)]],
+      quantityReceived: [null, [Validators.required, Validators.min(1), Validators.max(1000000)]],
+      expiryDate: ['', Validators.required],
+      receiptDate: [new Date(), Validators.required]
     });
   }
 
@@ -145,72 +166,167 @@ export class AddBatchModalComponent implements OnInit, OnDestroy {
     ).slice(0, 8);
   }
 
+  checkEditMode(): void {
+    this.route.queryParams.subscribe(params => {
+      const id = params['batchId'];
+      if (id) {
+        this.editMode = true;
+        this.batchId = parseInt(id, 10);
+        this.loadBatchData();
+      }
+    });
+  }
+
+  loadBatchData(): void {
+    if (!this.batchId) return;
+
+    this.submitting = true;
+    this.inventoryService.getBatchById(this.batchId).subscribe({
+      next: (batch) => {
+        this.currentBatch = batch;
+        // Update basicInfoForm
+        this.basicInfoForm.patchValue({
+          vaccine_name: batch.vaccineName,
+          batch_number: batch.batchNumber,
+          manufacturer: batch.manufacturer,
+          quantity: batch.quantityReceived
+        });
+        // Update storageForm
+        this.storageForm.patchValue({
+          expiry_date: new Date(batch.expiryDate),
+          receipt_date: new Date(batch.receiptDate),
+          storage_location: batch.facilityId,
+          temperature: null,
+          notes: ''
+        });
+        // Update combined form
+        this.batchForm.patchValue({
+          vaccineName: batch.vaccineName,
+          batchNumber: batch.batchNumber,
+          manufacturer: batch.manufacturer,
+          quantityReceived: batch.quantityReceived,
+          expiryDate: new Date(batch.expiryDate),
+          receiptDate: new Date(batch.receiptDate)
+        });
+        this.submitting = false;
+      },
+      error: (error) => {
+        console.error('Error loading batch:', error);
+        this.showError('Failed to load batch data');
+        this.submitting = false;
+        this.router.navigate(['/inventory']);
+      }
+    });
+  }
+
   onSubmit(): void {
-    if (!this.isAllFormsValid()) {
-      this.showError('Please complete all required fields');
+    if (this.basicInfoForm.invalid || this.storageForm.invalid) {
+      this.markFormGroupTouched(this.basicInfoForm);
+      this.markFormGroupTouched(this.storageForm);
+      this.showError('Please complete all required fields correctly');
       return;
     }
 
     this.submitting = true;
 
-    const batch: BatchCreateRequest = {
-      ...this.basicInfoForm.value,
-      ...this.storageForm.value,
-      ...this.additionalForm.value,
-      quantity: Number(this.basicInfoForm.value.quantity),
-      expiry_date: this.storageForm.value.expiry_date ?
-        new Date(this.storageForm.value.expiry_date).toISOString().split('T')[0] : '',
-      temperature: this.storageForm.value.temperature ?
-        Number(this.storageForm.value.temperature) : null
+    const basicInfo = this.basicInfoForm.value;
+    const storageInfo = this.storageForm.value;
+    
+    // Use getFacilityId() which properly returns facilityId from the user object
+    const facilityId = this.authService.getFacilityId();
+
+    // Government officials shouldn't create batches at national level
+    if (facilityId === 'NATIONAL') {
+      this.showError('Government officials cannot add batches - manage at facility level');
+      this.submitting = false;
+      return;
+    }
+
+    if (!facilityId) {
+      this.showError('No facility ID found for current user');
+      this.submitting = false;
+      return;
+    }
+
+    const request: CreateVaccineBatchRequest = {
+      batchNumber: basicInfo.batch_number,
+      vaccineName: basicInfo.vaccine_name,
+      manufacturer: basicInfo.manufacturer,
+      quantityReceived: Number(basicInfo.quantity),
+      expiryDate: this.formatDateForBackend(storageInfo.expiry_date),
+      receiptDate: this.formatDateForBackend(storageInfo.receipt_date),
+      facilityId: facilityId
     };
 
-    const createSub = this.inventoryService.createBatch(batch).subscribe({
-      next: (response) => {
-        this.showSuccess('Vaccine batch registered successfully!');
-        this.dialogRef.close({ success: true, data: response });
-      },
-      error: (error) => {
-        console.error('Batch creation error:', error);
-        this.showError('Failed to register batch: ' + (error.message || 'Unknown error'));
-        this.submitting = false;
-      }
-    });
-
-    this.subscriptions.add(createSub);
-  }
-
-  isAllFormsValid(): boolean {
-    return this.basicInfoForm.valid && this.storageForm.valid && this.additionalForm.valid;
-  }
-
-  getFormCompletionPercentage(): number {
-    const totalFields = 8; // Total required and optional fields
-    let completedFields = 0;
-
-    if (this.basicInfoForm.get('vaccine_name')?.value) completedFields++;
-    if (this.basicInfoForm.get('batch_number')?.value) completedFields++;
-    if (this.basicInfoForm.get('manufacturer')?.value) completedFields++;
-    if (this.basicInfoForm.get('quantity')?.value) completedFields++;
-    if (this.storageForm.get('expiry_date')?.value) completedFields++;
-    if (this.storageForm.get('storage_location')?.value) completedFields++;
-    if (this.storageForm.get('temperature')?.value) completedFields++;
-    if (this.additionalForm.get('notes')?.value) completedFields++;
-
-    return Math.round((completedFields / totalFields) * 100);
-  }
-
-  onCancel(): void {
-    if (this.hasUnsavedChanges()) {
-      if (confirm('You have unsaved changes. Are you sure you want to close?')) {
-        this.dialogRef.close({ success: false });
-      }
+    if (this.editMode && this.batchId) {
+      this.updateBatch(request);
     } else {
-      this.dialogRef.close({ success: false });
+      this.createBatch(request);
     }
   }
 
-  hasUnsavedChanges(): boolean {
-    return this.basicInfoForm.dirty || this.storageForm.dirty || this.additionalForm.dirty;
+  createBatch(request: CreateVaccineBatchRequest): void {
+    this.inventoryService.createBatch(request).subscribe({
+      next: (response) => {
+        this.showSuccess('Vaccine batch registered successfully!');
+        setTimeout(() => {
+          this.router.navigate(['/inventory']);
+        }, 1500);
+      },
+      error: (error) => {
+        console.error('Batch creation error:', error);
+        this.showError('Failed to register batch: ' + (error.error?.message || error.message || 'Unknown error'));
+        this.submitting = false;
+      }
+    });
+  }
+
+  updateBatch(request: CreateVaccineBatchRequest): void {
+    if (!this.batchId) return;
+
+    this.inventoryService.updateBatch(this.batchId, request).subscribe({
+      next: (response) => {
+        this.showSuccess('Vaccine batch updated successfully!');
+        setTimeout(() => {
+          this.router.navigate(['/inventory']);
+        }, 1500);
+      },
+      error: (error) => {
+        console.error('Batch update error:', error);
+        this.showError('Failed to update batch: ' + (error.error?.message || error.message || 'Unknown error'));
+        this.submitting = false;
+      }
+    });
+  }
+
+  formatDateForBackend(date: Date): string {
+    if (!date) return '';
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  markFormGroupTouched(formGroup: FormGroup): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
+  }
+
+  onCancel(): void {
+    if (this.basicInfoForm.dirty || this.storageForm.dirty) {
+      if (confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+        this.router.navigate(['/inventory']);
+      }
+    } else {
+      this.router.navigate(['/inventory']);
+    }
   }
 
   hasError(form: FormGroup, controlName: string, errorType: string): boolean {
@@ -218,11 +334,43 @@ export class AddBatchModalComponent implements OnInit, OnDestroy {
     return control ? control.hasError(errorType) && control.touched : false;
   }
 
+  isAllFormsValid(): boolean {
+    return this.basicInfoForm.valid && this.storageForm.valid;
+  }
+
+  get batchNumberControl() {
+    return this.basicInfoForm.get('batch_number');
+  }
+
+  get notesControl() {
+    return this.additionalForm.get('notes');
+  }
+
+  getFormCompletionPercentage(): number {
+    const basicValid = this.basicInfoForm.valid ? 40 : 0;
+    const storageValid = this.storageForm.valid ? 40 : 0;
+    const additionalValid = this.additionalForm.valid ? 20 : 0;
+    return basicValid + storageValid + additionalValid;
+  }
+
+  getErrorMessage(controlName: string): string {
+    const control = this.batchForm.get(controlName);
+    if (!control || !control.errors || !control.touched) return '';
+
+    if (control.hasError('required')) return 'This field is required';
+    if (control.hasError('minlength')) return `Minimum length is ${control.errors['minlength'].requiredLength}`;
+    if (control.hasError('min')) return `Minimum value is ${control.errors['min'].min}`;
+    if (control.hasError('max')) return `Maximum value is ${control.errors['max'].max}`;
+    if (control.hasError('pattern')) return 'Invalid format (use uppercase letters, numbers, and hyphens)';
+
+    return 'Invalid value';
+  }
+
   showSuccess(message: string): void {
     this.snackBar.open(message, 'Close', {
       duration: 3000,
       panelClass: ['success-snackbar'],
-      horizontalPosition: 'center',
+      horizontalPosition: 'end',
       verticalPosition: 'top'
     });
   }
@@ -231,14 +379,8 @@ export class AddBatchModalComponent implements OnInit, OnDestroy {
     this.snackBar.open(message, 'Close', {
       duration: 5000,
       panelClass: ['error-snackbar'],
-      horizontalPosition: 'center',
+      horizontalPosition: 'end',
       verticalPosition: 'top'
     });
   }
-
-  // Helper methods for template
-  get batchNumberControl() { return this.basicInfoForm.get('batch_number'); }
-  get quantityControl() { return this.basicInfoForm.get('quantity'); }
-  get temperatureControl() { return this.storageForm.get('temperature'); }
-  get notesControl() { return this.additionalForm.get('notes'); }
 }

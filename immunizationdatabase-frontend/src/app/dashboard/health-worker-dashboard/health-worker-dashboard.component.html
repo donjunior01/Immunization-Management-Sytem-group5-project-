@@ -1,0 +1,226 @@
+<div class="dashboard-container">
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Welcome Header -->
+  <div class="welcome-section">
+    <h1 class="welcome-title">Welcome back, {{ currentUser?.fullName }}!</h1>
+    <p class="welcome-subtitle">{{ currentUser?.facilityId }} • Health Worker Dashboard</p>
+  </div>
+
+  <!-- Quick Stats Cards -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper blue">
+          <mat-icon class="stat-icon">people</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.totalPatientsRegistered }}</h3>
+          <p class="stat-label">Total Patients</p>
+        </div>
+      </div>
+      <button mat-button color="primary" (click)="navigateToRegisterPatient()">
+        <mat-icon>add</mat-icon> Register New
+      </button>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper green">
+          <mat-icon class="stat-icon">vaccines</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.vaccinationsToday }}</h3>
+          <p class="stat-label">Vaccinations Today</p>
+        </div>
+      </div>
+      <button mat-button color="primary" (click)="navigateToRecordVaccination()">
+        <mat-icon>add_circle</mat-icon> Record New
+      </button>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper orange">
+          <mat-icon class="stat-icon" [matBadge]="stats.defaulters" matBadgeColor="warn" aria-hidden="false">warning</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.defaulters }}</h3>
+          <p class="stat-label">Defaulters</p>
+        </div>
+      </div>
+      <button mat-button color="warn" (click)="navigateToDefaulters()">
+        <mat-icon>list</mat-icon> View List
+      </button>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <div class="stat-content">
+        <div class="stat-icon-wrapper red">
+          <mat-icon class="stat-icon" [matBadge]="stats.lowStockVaccines" matBadgeColor="warn" aria-hidden="false">inventory_2</mat-icon>
+        </div>
+        <div class="stat-details">
+          <h3 class="stat-value">{{ stats.lowStockVaccines }}</h3>
+          <p class="stat-label">Low Stock Alerts</p>
+        </div>
+      </div>
+      <button mat-button color="warn" (click)="navigateToStockManagement()">
+        <mat-icon>arrow_forward</mat-icon> Manage
+      </button>
+    </mat-card>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="content-grid">
+    <!-- Stock Alerts Card -->
+    <mat-card class="content-card stock-alerts-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="header-icon">notifications_active</mat-icon>
+          Stock Alerts
+        </mat-card-title>
+        <button mat-icon-button color="primary" (click)="navigateToStockManagement()">
+          <mat-icon>open_in_new</mat-icon>
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stock-alerts-list">
+          <div class="stock-alert-item" *ngFor="let alert of stockAlerts" [class]="getStockStatusClass(alert.status)">
+            <div class="alert-header">
+              <h4 class="vaccine-name">{{ alert.vaccineName }}</h4>
+              <mat-chip [class]="getStockStatusClass(alert.status)">
+                {{ alert.status === 'critical' ? 'Critical' : 'Low Stock' }}
+              </mat-chip>
+            </div>
+            <div class="alert-details">
+              <div class="stock-info">
+                <span class="label">Current Stock:</span>
+                <span class="value">{{ alert.currentStock }} doses</span>
+              </div>
+              <div class="stock-info">
+                <span class="label">Required:</span>
+                <span class="value">{{ alert.minRequired }} doses</span>
+              </div>
+              <div class="stock-info">
+                <span class="label">Expires:</span>
+                <span class="value expiry">{{ alert.expiryDate }}</span>
+              </div>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="getStockPercentage(alert)"
+              [class]="getStockStatusClass(alert.status)">
+            </mat-progress-bar>
+          </div>
+
+          <div class="empty-state" *ngIf="stockAlerts.length === 0">
+            <mat-icon>check_circle</mat-icon>
+            <p>All vaccine stocks are at optimal levels</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Vaccinations Card -->
+    <mat-card class="content-card recent-vaccinations-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="header-icon">history</mat-icon>
+          Recent Vaccinations
+        </mat-card-title>
+        <button mat-icon-button color="primary" routerLink="/vaccinations/history">
+          <mat-icon>open_in_new</mat-icon>
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="recentVaccinations" class="vaccinations-table">
+          <!-- Patient Name Column -->
+          <ng-container matColumnDef="patientName">
+            <th mat-header-cell *matHeaderCellDef>Patient</th>
+            <td mat-cell *matCellDef="let vaccination">{{ vaccination.patientName }}</td>
+          </ng-container>
+
+          <!-- Vaccine Name Column -->
+          <ng-container matColumnDef="vaccineName">
+            <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+            <td mat-cell *matCellDef="let vaccination">
+              <div class="vaccine-cell">
+                <strong>{{ vaccination.vaccineName }}</strong>
+                <span class="dose-badge">Dose {{ vaccination.doseNumber }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Dose Number Column -->
+          <ng-container matColumnDef="doseNumber">
+            <th mat-header-cell *matHeaderCellDef>Batch</th>
+            <td mat-cell *matCellDef="let vaccination">
+              <span class="batch-number">{{ vaccination.batchNumber }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Date Column -->
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Date & Time</th>
+            <td mat-cell *matCellDef="let vaccination">{{ vaccination.dateAdministered }}</td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let vaccination">
+              <button mat-icon-button color="primary"
+                      (click)="viewPatientRecord(vaccination)"
+                      matTooltip="View Patient Record">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button color="accent"
+                      (click)="printVaccinationCard(vaccination)"
+                      matTooltip="Print Card">
+                <mat-icon>print</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <div class="empty-state" *ngIf="recentVaccinations.length === 0">
+          <mat-icon>vaccines</mat-icon>
+          <p>No vaccinations recorded today</p>
+          <button mat-raised-button color="primary" (click)="navigateToRecordVaccination()">
+            <mat-icon>add</mat-icon> Record First Vaccination
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="actions-grid">
+      <button mat-raised-button color="primary" class="action-button" (click)="navigateToRegisterPatient()">
+        <mat-icon>person_add</mat-icon>
+        <span>Register Patient</span>
+      </button>
+      <button mat-raised-button color="primary" class="action-button" (click)="navigateToRecordVaccination()">
+        <mat-icon>vaccines</mat-icon>
+        <span>Record Vaccination</span>
+      </button>
+      <button mat-raised-button color="primary" class="action-button" routerLink="/patients/list">
+        <mat-icon>search</mat-icon>
+        <span>Search Patient</span>
+      </button>
+      <button mat-raised-button color="primary" class="action-button" routerLink="/vaccinations/print">
+        <mat-icon>print</mat-icon>
+        <span>Print Card</span>
+      </button>
+    </div>
+  </div>
+</div>

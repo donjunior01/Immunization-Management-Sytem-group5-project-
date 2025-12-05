@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "http://localhost:4200")
@@ -121,8 +121,8 @@ public class AuthController {
     ) {
         try {
             // Extract user ID from UserDetails (assuming it's a User entity)
-            String userId = ((com.immunizationdb.auth.entity.User) userDetails).getId();
-            UserResponse response = authService.updateProfile(userId, request);
+            Long userId = ((com.immunizationdb.auth.entity.User) userDetails).getId();
+            UserResponse response = authService.updateProfile(String.valueOf(userId), request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity

@@ -135,7 +135,7 @@
     </mat-toolbar>
 
     <!-- Batch Details Content -->
-    <div class="details-container" *ngIf="!loading && batch; else loadingState">
+    <div class="details-container" *ngIf="!isLoading && batch; else loadingState">
 
       <!-- Status Banner -->
       <div class="status-banner" [class]="getStatusClass()">
@@ -192,7 +192,7 @@
                     <mat-icon>medication</mat-icon>
                     Vaccine Name
                   </div>
-                  <div class="detail-value">{{ batch.vaccine_name }}</div>
+                  <div class="detail-value">{{ batch.vaccineName }}</div>
                 </div>
 
                 <div class="detail-item">
@@ -200,7 +200,7 @@
                     <mat-icon>tag</mat-icon>
                     Batch Number
                   </div>
-                  <div class="detail-value batch-number">{{ batch.batch_number }}</div>
+                  <div class="detail-value batch-number">{{ batch.batchNumber }}</div>
                 </div>
 
                 <div class="detail-item">
@@ -217,7 +217,7 @@
                     Available Quantity
                   </div>
                   <div class="detail-value quantity">
-                    {{ batch.quantity | number }}
+                    {{ batch.quantityRemaining | number }}
                     <span class="unit">doses</span>
                   </div>
                 </div>
@@ -228,7 +228,7 @@
                     Expiry Date
                   </div>
                   <div class="detail-value">
-                    <div class="expiry-date">{{ formatDate(batch.expiry_date) }}</div>
+                    <div class="expiry-date">{{ formatDate(batch.expiryDate) }}</div>
                     <div class="expiry-countdown">
                       {{ getDaysUntilExpiry() }} days remaining
                     </div>
@@ -240,26 +240,10 @@
                     <mat-icon>location_on</mat-icon>
                     Storage Location
                   </div>
-                  <div class="detail-value">{{ batch.storage_location || 'Not specified' }}</div>
+                  <div class="detail-value">{{ batch.facilityId || 'Not specified' }}</div>
                 </div>
 
-                <div class="detail-item">
-                  <div class="detail-label">
-                    <mat-icon>thermostat</mat-icon>
-                    Storage Temperature
-                  </div>
-                  <div class="detail-value">
-                    {{ batch.temperature ? (batch.temperature + '°C') : 'Not specified' }}
-                  </div>
-                </div>
-
-                <div class="detail-item full-width" *ngIf="batch.notes">
-                  <div class="detail-label">
-                    <mat-icon>description</mat-icon>
-                    Additional Notes
-                  </div>
-                  <div class="detail-value notes">{{ batch.notes }}</div>
-                </div>
+                <!-- Temperature and notes fields not available in API -->
               </div>
             </mat-card-content>
           </mat-card>
@@ -284,23 +268,15 @@
                   </div>
                   <div class="timeline-content">
                     <h4>Batch Registered</h4>
-                    <p class="timeline-date">{{ formatDate(batch.created_at || '') }}</p>
+                    <p class="timeline-date">{{ formatDate(batch.createdAt || '') }}</p>
                     <p class="timeline-user">
                       <mat-icon>person</mat-icon>
-                      {{ batch.created_by || 'System' }}
+                      System
                     </p>
                   </div>
                 </div>
 
-                <div class="timeline-item" *ngIf="batch.updated_at && batch.updated_at !== batch.created_at">
-                  <div class="timeline-marker updated">
-                    <mat-icon>update</mat-icon>
-                  </div>
-                  <div class="timeline-content">
-                    <h4>Last Updated</h4>
-                    <p class="timeline-date">{{ formatDate(batch.updated_at) }}</p>
-                  </div>
-                </div>
+                <!-- Last Updated info not available from API -->
               </div>
             </mat-card-content>
           </mat-card>

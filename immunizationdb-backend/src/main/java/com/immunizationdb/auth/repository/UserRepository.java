@@ -7,11 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsername(String username);
 
@@ -23,13 +22,9 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     @Modifying
     @Query("UPDATE User u SET u.failedLoginAttempts = :attempts WHERE u.id = :userId")
-    void updateFailedLoginAttempts(@Param("userId") String userId, @Param("attempts") int attempts);
+    void updateFailedLoginAttempts(@Param("userId") Long userId, @Param("attempts") int attempts);
 
     @Modifying
     @Query("UPDATE User u SET u.locked = :locked WHERE u.id = :userId")
-    void updateLockedStatus(@Param("userId") String userId, @Param("locked") boolean locked);
-
-    @Modifying
-    @Query("UPDATE User u SET u.lastLogin = :lastLogin WHERE u.id = :userId")
-    void updateLastLogin(@Param("userId") String userId, @Param("lastLogin") LocalDateTime lastLogin);
+    void updateLockedStatus(@Param("userId") Long userId, @Param("locked") boolean locked);
 }

@@ -14,7 +14,11 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+    @Index(name = "idx_username", columnList = "username"),
+    @Index(name = "idx_role", columnList = "role"),
+    @Index(name = "idx_facility_id", columnList = "facility_id")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -22,8 +26,8 @@ import java.util.List;
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, unique = true, length = 50)
     private String username;
@@ -31,43 +35,61 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private Role role;
+
+    @Column(name = "facility_id", length = 50)
+    private String facilityId;
+
+    @Column(name = "district_id", length = 50)
+    private String districtId;
+
+    @Column(name = "national_id", length = 50)
+    private String nationalId;
+
     @Column(unique = true, length = 100)
     private String email;
 
     @Column(name = "full_name", length = 100)
     private String fullName;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private Role role;
+    @Column(nullable = false)
+    private Boolean active = true;
 
-    @Column(name = "is_enabled")
-    private boolean enabled = true;
+    @Column(nullable = false)
+    private Boolean locked = false;
 
-    @Column(name = "is_locked")
-    private boolean locked = false;
-
-    @Column(name = "failed_login_attempts")
-    private int failedLoginAttempts = 0;
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    @Column(name = "failed_login_attempts", nullable = false)
+    private Integer failedLoginAttempts = 0;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "created_by")
+    private Long createdBy;
+
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        if (deleted == null) {
+            deleted = false;
+        }
+        if (active == null) {
+            active = true;
+        }
+        if (locked == null) {
+            locked = false;
+        }
+        if (failedLoginAttempts == null) {
+            failedLoginAttempts = 0;
+        }
     }
 
     // UserDetails implementation
@@ -93,7 +115,35 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !locked;
+        return !locked && !deleted;
+    }
+    
+    public boolean isLocked() {
+        return locked;
+    }
+    
+    public Integer getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    public String getFullName() {
+        return fullName;
+    }
+    
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+    
+    public Long getId() {
+        return id;
     }
 
     @Override
@@ -103,6 +153,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return active;
     }
 }

@@ -1,0 +1,83 @@
+<mat-toolbar color="primary" class="header-toolbar">
+  <div class="header-container">
+    <div class="header-left">
+      <button mat-icon-button class="menu-button" (click)="toggleSidebar()">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <h1 class="app-title">
+        <mat-icon class="app-icon">vaccines</mat-icon>
+        Immunization Management System
+      </h1>
+    </div>
+
+    <div class="header-right">
+      <!-- Offline Indicator -->
+      <div class="offline-badge" *ngIf="isOffline">
+        <mat-icon>cloud_off</mat-icon>
+        <span>Offline Mode</span>
+      </div>
+
+      <!-- Notifications -->
+      <button mat-icon-button [matMenuTriggerFor]="notificationMenu" class="notification-button">
+        <mat-icon [matBadge]="notificationCount" [matBadgeHidden]="notificationCount === 0" matBadgeColor="warn" aria-hidden="false">
+          notifications
+        </mat-icon>
+      </button>
+      <mat-menu #notificationMenu="matMenu">
+        <div class="notification-header">
+          <h3>Notifications</h3>
+        </div>
+        <mat-divider></mat-divider>
+        <div class="notification-list" *ngIf="notificationCount > 0; else noNotifications">
+          <button mat-menu-item>
+            <mat-icon color="warn">warning</mat-icon>
+            <span>5 vaccines expiring soon</span>
+          </button>
+          <button mat-menu-item>
+            <mat-icon color="accent">info</mat-icon>
+            <span>10 patients overdue for vaccination</span>
+          </button>
+        </div>
+        <ng-template #noNotifications>
+          <div class="no-notifications">
+            <p>No new notifications</p>
+          </div>
+        </ng-template>
+      </mat-menu>
+
+      <!-- User Menu -->
+      <button mat-button [matMenuTriggerFor]="userMenu" class="user-button">
+        <div class="user-avatar">{{ getUserInitials() }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ currentUser?.fullName }}</span>
+          <span class="user-role">{{ getUserRole() }}</span>
+        </div>
+        <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #userMenu="matMenu">
+        <div class="user-menu-header">
+          <div class="user-avatar-large">{{ getUserInitials() }}</div>
+          <div class="user-details">
+            <div class="user-name-large">{{ currentUser?.fullName }}</div>
+            <div class="user-email">{{ currentUser?.email }}</div>
+            <div class="user-role-badge">{{ getUserRole() }}</div>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="navigateToProfile()">
+          <mat-icon>person</mat-icon>
+          <span>My Profile</span>
+        </button>
+        <button mat-menu-item (click)="navigateToNotifications()">
+          <mat-icon>settings</mat-icon>
+          <span>Settings</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon color="warn">logout</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+</mat-toolbar>
