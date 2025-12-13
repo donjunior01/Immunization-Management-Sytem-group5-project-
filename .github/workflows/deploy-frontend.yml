@@ -56,10 +56,10 @@ jobs:
           echo "Build failed — see uploaded artifact 'build-log'"
           exit 1
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          branch: gh-pages
-          folder: dist
-          clean: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
