@@ -32,7 +32,10 @@ jobs:
         run: npm ci --legacy-peer-deps --no-audit --no-fund
 
       - name: Build Angular app
-        run: npm run build -- --configuration production --output-path=dist --base-href "/Immunization-Management-Sytem-group5-project/"
+        run: |
+          node -v
+          npm -v
+          npx --yes @angular/cli@19.1.7 build --configuration production --output-path=dist --base-href "/Immunization-Management-Sytem-group5-project/"
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
