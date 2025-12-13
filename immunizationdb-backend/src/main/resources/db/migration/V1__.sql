@@ -152,7 +152,6 @@ VALUES
     ('gov.official', '$2a$12$.4qFisHXCJZsQog8d8iYveyZJg7dVasFEy1/zJzShHvvkDubdpwqi', 'gov.official@immunization.com', 'Government Official', 'GOVERNMENT_OFFICIAL', NULL, NULL, true, false, 0, CURRENT_TIMESTAMP, false);
 
 -- Add comprehensive test data for all facilities and users
--- V4__Add_Test_Data.sql
 
 -- =====================================================
 -- 1. ADD MORE FACILITIES AND DISTRICTS
@@ -356,13 +355,3 @@ WHERE batch_number = 'DTP-2024-001' AND quantity_remaining >= 30;
 -- Update BCG-2024-FAC2-001 (used 30 doses)
 UPDATE vaccine_batches SET quantity_remaining = quantity_remaining - 30 
 WHERE batch_number = 'BCG-2024-FAC2-001' AND quantity_remaining >= 30;
-
--- =====================================================
--- SUMMARY OF TEST DATA ADDED
--- =====================================================
--- Users: 2 additional (1 manager + 1 worker for FAC002)
--- Vaccine Batches: 15 total (10 for FAC001, 5 for FAC002)
--- Patients: 15 total (10 for FAC001, 5 for FAC002)
--- Vaccinations: ~15 records across facilities
--- Campaigns: 7 total (Active, Scheduled, Completed)
--- =====================================================

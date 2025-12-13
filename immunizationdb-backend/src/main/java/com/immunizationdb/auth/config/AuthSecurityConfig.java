@@ -30,7 +30,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class AuthSecurityConfig {
 
     private final UserRepository userRepository;
@@ -55,18 +55,11 @@ public class AuthSecurityConfig {
                                 "/auth/login",
                                 "/auth/register",
                                 "/auth/health",
-                                "/auth/refresh"
+                                "/auth/refresh",
+                                "/auth/logout"
                         ).permitAll()
 
-                        // Role-based access (User Story 1.2)
-                        .requestMatchers("/admin/**").hasRole("GOVERNMENT_OFFICIAL")
-                        .requestMatchers("/patients/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
-                        .requestMatchers("/inventory/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
-                        .requestMatchers("/vaccinations/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
-                        .requestMatchers("/campaigns/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
-                        .requestMatchers("/reports/**").hasAnyRole("HEALTH_WORKER", "FACILITY_MANAGER", "GOVERNMENT_OFFICIAL")
-
-                        // All other requests require authentication
+                        // All other requests require authentication (rely on @PreAuthorize for fine-grained control)
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -84,7 +77,7 @@ public class AuthSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Angular app
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:*")); // Allow all localhost ports
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Authorization"));

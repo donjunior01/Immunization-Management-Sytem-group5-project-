@@ -1,0 +1,803 @@
+<div class="vaccine-allocation-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-wrapper">
+        <mat-icon>local_shipping</mat-icon>
+      </div>
+      <div class="header-text">
+        <h1>Vaccine Allocation</h1>
+        <p>Manage and track vaccine distribution to facilities</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openCreateForm()" class="create-button">
+        <mat-icon>add</mat-icon>
+        Create Allocation
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="exportMenu" class="export-button">
+        <mat-icon>get_app</mat-icon>
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportAllocations('csv')">
+          <mat-icon>description</mat-icon>
+          <span>Export as CSV</span>
+        </button>
+        <button mat-menu-item (click)="exportAllocations('json')">
+          <mat-icon>code</mat-icon>
+          <span>Export as JSON</span>
+        </button>
+        <button mat-menu-item (click)="exportAllocations('pdf')">
+          <mat-icon>picture_as_pdf</mat-icon>
+          <span>Export as PDF</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <div class="stat-icon total">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.totalAllocations }}</div>
+          <div class="stat-label">Total Allocations</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon pending">
+          <mat-icon>hourglass_empty</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.pending }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon transit">
+          <mat-icon>local_shipping</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.inTransit }}</div>
+          <div class="stat-label">In Transit</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon delivered">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.delivered }}</div>
+          <div class="stat-label">Delivered</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon quantity">
+          <mat-icon>medication</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.totalQuantity | number }}</div>
+          <div class="stat-label">Total Doses</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon delivery">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <div class="stat-details">
+          <div class="stat-value">{{ stats.avgDeliveryTime }}</div>
+          <div class="stat-label">Avg. Days to Deliver</div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <h3 class="filters-title">
+      <mat-icon>filter_list</mat-icon>
+      Filters
+    </h3>
+    <form [formGroup]="filterForm" class="filters-form">
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Search</mat-label>
+          <input matInput formControlName="search" placeholder="Search allocations...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Vaccine Type</mat-label>
+          <mat-select formControlName="vaccine">
+            <mat-option value="">All Vaccines</mat-option>
+            <mat-option *ngFor="let vaccine of vaccineTypes" [value]="vaccine">{{ vaccine }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="">All Statuses</mat-option>
+            <mat-option *ngFor="let status of statusOptions" [value]="status">{{ status }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Priority</mat-label>
+          <mat-select formControlName="priority">
+            <mat-option value="">All Priorities</mat-option>
+            <mat-option *ngFor="let priority of priorityOptions" [value]="priority">{{ priority }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Source Facility</mat-label>
+          <mat-select formControlName="sourceFacility">
+            <mat-option value="">All Sources</mat-option>
+            <mat-option *ngFor="let facility of getUniqueFacilities()" [value]="facility">{{ facility }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Destination Facility</mat-label>
+          <mat-select formControlName="destinationFacility">
+            <mat-option value="">All Destinations</mat-option>
+            <mat-option *ngFor="let facility of getUniqueFacilities()" [value]="facility">{{ facility }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Date From</mat-label>
+          <input matInput [matDatepicker]="pickerFrom" formControlName="dateFrom" placeholder="Select start date">
+          <mat-datepicker-toggle matSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFrom></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Date To</mat-label>
+          <input matInput [matDatepicker]="pickerTo" formControlName="dateTo" placeholder="Select end date">
+          <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
+          <mat-datepicker #pickerTo></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button mat-raised-button type="button" (click)="resetFilters()" class="reset-button">
+          <mat-icon>clear</mat-icon>
+          Reset Filters
+        </button>
+        <div class="results-count">
+          <mat-icon>info</mat-icon>
+          Showing {{ getPaginatedAllocations().length }} of {{ filteredAllocations.length }} allocations
+        </div>
+      </div>
+    </form>
+  </mat-card>
+
+  <!-- Allocations Table -->
+  <mat-card class="table-card">
+    <div class="table-container">
+      <table mat-table [dataSource]="getPaginatedAllocations()" class="allocations-table">
+        <!-- Allocation Number Column -->
+        <ng-container matColumnDef="allocationNumber">
+          <th mat-header-cell *matHeaderCellDef>Allocation #</th>
+          <td mat-cell *matCellDef="let allocation">
+            <div class="allocation-number">
+              {{ allocation.allocationNumber }}
+              <div class="tracking-info" *ngIf="allocation.trackingNumber">
+                <mat-icon matTooltip="Tracking: {{ allocation.trackingNumber }}">local_shipping</mat-icon>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Vaccine Column -->
+        <ng-container matColumnDef="vaccine">
+          <th mat-header-cell *matHeaderCellDef>Vaccine Details</th>
+          <td mat-cell *matCellDef="let allocation">
+            <div class="vaccine-info">
+              <div class="vaccine-name">{{ allocation.vaccineName }}</div>
+              <div class="batch-number">Batch: {{ allocation.batchNumber }}</div>
+              <div class="manufacturer">{{ allocation.manufacturer }}</div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Quantity Column -->
+        <ng-container matColumnDef="quantity">
+          <th mat-header-cell *matHeaderCellDef>Quantity</th>
+          <td mat-cell *matCellDef="let allocation">
+            <div class="quantity-info">
+              <mat-icon>medication</mat-icon>
+              <span>{{ allocation.quantity | number }} doses</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Route Column -->
+        <ng-container matColumnDef="route">
+          <th mat-header-cell *matHeaderCellDef>Route</th>
+          <td mat-cell *matCellDef="let allocation">
+            <div class="route-info">
+              <div class="facility-row">
+                <mat-icon class="source">home</mat-icon>
+                <span class="facility-name">{{ allocation.sourceFacility }}</span>
+              </div>
+              <div class="route-arrow">
+                <mat-icon>arrow_downward</mat-icon>
+              </div>
+              <div class="facility-row">
+                <mat-icon class="destination">location_on</mat-icon>
+                <span class="facility-name">{{ allocation.destinationFacility }}</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Dates Column -->
+        <ng-container matColumnDef="dates">
+          <th mat-header-cell *matHeaderCellDef>Timeline</th>
+          <td mat-cell *matCellDef="let allocation">
+            <div class="dates-info">
+              <div class="date-row">
+                <mat-icon>event</mat-icon>
+                <span>Allocated: {{ formatDate(allocation.allocationDate) }}</span>
+              </div>
+              <div class="date-row">
+                <mat-icon>schedule</mat-icon>
+                <span>Expected: {{ formatDate(allocation.expectedDelivery) }}</span>
+              </div>
+              <div class="date-row" *ngIf="allocation.actualDelivery">
+                <mat-icon class="delivered-icon">check_circle</mat-icon>
+                <span>Delivered: {{ formatDate(allocation.actualDelivery) }}</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priority</th>
+          <td mat-cell *matCellDef="let allocation">
+            <mat-chip [style.background-color]="getPriorityColor(allocation.priority)" class="priority-chip">
+              {{ allocation.priority }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let allocation">
+            <mat-chip [style.background-color]="getStatusColor(allocation.status)" class="status-chip">
+              <mat-icon *ngIf="allocation.status === 'Delivered'">check</mat-icon>
+              <mat-icon *ngIf="allocation.status === 'In Transit'">local_shipping</mat-icon>
+              <mat-icon *ngIf="allocation.status === 'Pending'">hourglass_empty</mat-icon>
+              <mat-icon *ngIf="allocation.status === 'Cancelled'">cancel</mat-icon>
+              <mat-icon *ngIf="allocation.status === 'Delayed'">warning</mat-icon>
+              {{ allocation.status }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let allocation">
+            <button mat-icon-button [matMenuTriggerFor]="actionMenu" class="action-button">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #actionMenu="matMenu">
+              <button mat-menu-item (click)="viewDetails(allocation)">
+                <mat-icon>visibility</mat-icon>
+                <span>View Details</span>
+              </button>
+              <button mat-menu-item (click)="openEditForm(allocation)" [disabled]="allocation.status === 'Delivered' || allocation.status === 'Cancelled'">
+                <mat-icon>edit</mat-icon>
+                <span>Edit Allocation</span>
+              </button>
+              <button mat-menu-item (click)="openTrackingDialog(allocation)">
+                <mat-icon>track_changes</mat-icon>
+                <span>Update Tracking</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="approveAllocation(allocation)" [disabled]="allocation.status !== 'Pending'">
+                <mat-icon>check_circle</mat-icon>
+                <span>Approve & Dispatch</span>
+              </button>
+              <button mat-menu-item (click)="cancelAllocation(allocation)" [disabled]="allocation.status === 'Delivered' || allocation.status === 'Cancelled'">
+                <mat-icon>cancel</mat-icon>
+                <span>Cancel Allocation</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="deleteAllocation(allocation)" class="delete-action">
+                <mat-icon>delete</mat-icon>
+                <span>Delete</span>
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            <div class="no-data">
+              <mat-icon>search_off</mat-icon>
+              <p>No allocations found matching your criteria</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="totalItems"
+      [pageSize]="pageSize"
+      [pageIndex]="pageIndex"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      (page)="handlePageEvent($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  </mat-card>
+
+  <!-- Create/Edit Allocation Form Dialog -->
+  <div class="dialog-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>
+          <mat-icon>{{ isEditMode ? 'edit' : 'add' }}</mat-icon>
+          {{ isEditMode ? 'Edit Allocation' : 'Create New Allocation' }}
+        </h2>
+        <button mat-icon-button (click)="closeForm()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="dialog-content">
+        <mat-stepper [linear]="true" #stepper [(selectedIndex)]="currentStep">
+          <!-- Step 1: Vaccine Information -->
+          <mat-step [stepControl]="allocationForm" label="Vaccine Information">
+            <form [formGroup]="allocationForm">
+              <div class="form-section">
+                <h3>Vaccine Details</h3>
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Vaccine Name</mat-label>
+                    <mat-select formControlName="vaccineName">
+                      <mat-option *ngFor="let vaccine of vaccineTypes" [value]="vaccine">{{ vaccine }}</mat-option>
+                    </mat-select>
+                    <mat-error>{{ getFieldError('vaccineName') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Batch Number</mat-label>
+                    <input matInput formControlName="batchNumber" placeholder="e.g., BATCH-ABC123">
+                    <mat-error>{{ getFieldError('batchNumber') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Manufacturer</mat-label>
+                    <input matInput formControlName="manufacturer" placeholder="Manufacturer name">
+                    <mat-error>{{ getFieldError('manufacturer') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Quantity (doses)</mat-label>
+                    <input matInput type="number" formControlName="quantity" placeholder="Number of doses">
+                    <mat-icon matSuffix>medication</mat-icon>
+                    <mat-error>{{ getFieldError('quantity') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="step-actions">
+                  <button mat-button matStepperNext type="button">Next</button>
+                </div>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Step 2: Route & Facilities -->
+          <mat-step [stepControl]="allocationForm" label="Route & Facilities">
+            <form [formGroup]="allocationForm">
+              <div class="form-section">
+                <h3>Allocation Route</h3>
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Source Facility</mat-label>
+                    <mat-select formControlName="sourceFacility">
+                      <mat-option *ngFor="let facility of facilities" [value]="facility.name">
+                        {{ facility.name }} ({{ facility.type }})
+                      </mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>home</mat-icon>
+                    <mat-error>{{ getFieldError('sourceFacility') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Destination Facility</mat-label>
+                    <mat-select formControlName="destinationFacility">
+                      <mat-option *ngFor="let facility of facilities" [value]="facility.name">
+                        {{ facility.name }} ({{ facility.type }})
+                      </mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>location_on</mat-icon>
+                    <mat-error>{{ getFieldError('destinationFacility') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Transport Method</mat-label>
+                    <mat-select formControlName="transportMethod">
+                      <mat-option *ngFor="let method of transportMethods" [value]="method">{{ method }}</mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>local_shipping</mat-icon>
+                    <mat-error>{{ getFieldError('transportMethod') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Storage Conditions</mat-label>
+                    <mat-select formControlName="storageConditions">
+                      <mat-option *ngFor="let condition of storageConditions" [value]="condition">{{ condition }}</mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>ac_unit</mat-icon>
+                    <mat-error>{{ getFieldError('storageConditions') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="step-actions">
+                  <button mat-button matStepperPrevious type="button">Back</button>
+                  <button mat-button matStepperNext type="button">Next</button>
+                </div>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Step 3: Schedule & Priority -->
+          <mat-step [stepControl]="allocationForm" label="Schedule & Priority">
+            <form [formGroup]="allocationForm">
+              <div class="form-section">
+                <h3>Scheduling Information</h3>
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Allocation Date</mat-label>
+                    <input matInput [matDatepicker]="allocPicker" formControlName="allocationDate" placeholder="Select allocation date">
+                    <mat-datepicker-toggle matSuffix [for]="allocPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #allocPicker></mat-datepicker>
+                    <mat-error>{{ getFieldError('allocationDate') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Expected Delivery Date</mat-label>
+                    <input matInput [matDatepicker]="deliveryPicker" formControlName="expectedDelivery" placeholder="Select expected delivery">
+                    <mat-datepicker-toggle matSuffix [for]="deliveryPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #deliveryPicker></mat-datepicker>
+                    <mat-error>{{ getFieldError('expectedDelivery') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Priority Level</mat-label>
+                    <mat-select formControlName="priority">
+                      <mat-option *ngFor="let priority of priorityOptions" [value]="priority">{{ priority }}</mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>flag</mat-icon>
+                    <mat-error>{{ getFieldError('priority') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Target Temperature (°C)</mat-label>
+                    <input matInput type="number" formControlName="temperature" placeholder="e.g., 2-8">
+                    <mat-icon matSuffix>thermostat</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row full-width">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Notes</mat-label>
+                    <textarea matInput formControlName="notes" rows="3" placeholder="Additional notes or special instructions"></textarea>
+                  </mat-form-field>
+                </div>
+
+                <div class="step-actions">
+                  <button mat-button matStepperPrevious type="button">Back</button>
+                  <button mat-button matStepperNext type="button">Next</button>
+                </div>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Step 4: Review & Submit -->
+          <mat-step label="Review & Submit">
+            <div class="form-section review-section">
+              <h3>Review Allocation Details</h3>
+              
+              <div class="review-grid">
+                <div class="review-item">
+                  <strong>Vaccine:</strong>
+                  <span>{{ allocationForm.get('vaccineName')?.value }}</span>
+                </div>
+                <div class="review-item">
+                  <strong>Batch Number:</strong>
+                  <span>{{ allocationForm.get('batchNumber')?.value }}</span>
+                </div>
+                <div class="review-item">
+                  <strong>Manufacturer:</strong>
+                  <span>{{ allocationForm.get('manufacturer')?.value }}</span>
+                </div>
+                <div class="review-item">
+                  <strong>Quantity:</strong>
+                  <span>{{ allocationForm.get('quantity')?.value | number }} doses</span>
+                </div>
+                <div class="review-item">
+                  <strong>Source:</strong>
+                  <span>{{ allocationForm.get('sourceFacility')?.value }}</span>
+                </div>
+                <div class="review-item">
+                  <strong>Destination:</strong>
+                  <span>{{ allocationForm.get('destinationFacility')?.value }}</span>
+                </div>
+                <div class="review-item">
+                  <strong>Transport:</strong>
+                  <span>{{ allocationForm.get('transportMethod')?.value }}</span>
+                </div>
+                <div class="review-item">
+                  <strong>Storage:</strong>
+                  <span>{{ allocationForm.get('storageConditions')?.value }}</span>
+                </div>
+                <div class="review-item">
+                  <strong>Priority:</strong>
+                  <span>{{ allocationForm.get('priority')?.value }}</span>
+                </div>
+                <div class="review-item">
+                  <strong>Expected Delivery:</strong>
+                  <span>{{ allocationForm.get('expectedDelivery')?.value | date }}</span>
+                </div>
+              </div>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious type="button">Back</button>
+                <button mat-raised-button color="primary" (click)="saveAllocation()" class="save-button">
+                  <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+                  {{ isEditMode ? 'Update Allocation' : 'Create Allocation' }}
+                </button>
+              </div>
+            </div>
+          </mat-step>
+        </mat-stepper>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tracking Update Dialog -->
+  <div class="dialog-overlay" *ngIf="showTrackingDialog" (click)="closeTrackingDialog()">
+    <div class="dialog-container tracking-dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>
+          <mat-icon>track_changes</mat-icon>
+          Update Tracking Information
+        </h2>
+        <button mat-icon-button (click)="closeTrackingDialog()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="dialog-content">
+        <form [formGroup]="trackingForm">
+          <div class="form-section">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Tracking Number</mat-label>
+                <input matInput formControlName="trackingNumber" placeholder="Enter tracking number">
+                <mat-icon matSuffix>qr_code</mat-icon>
+                <mat-error>{{ getFieldError('trackingNumber') }}</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option *ngFor="let status of statusOptions" [value]="status">{{ status }}</mat-option>
+                </mat-select>
+                <mat-error>{{ getFieldError('status') }}</mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Actual Delivery Date</mat-label>
+                <input matInput [matDatepicker]="actualPicker" formControlName="actualDelivery" placeholder="Select actual delivery date">
+                <mat-datepicker-toggle matSuffix [for]="actualPicker"></mat-datepicker-toggle>
+                <mat-datepicker #actualPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Current Temperature (°C)</mat-label>
+                <input matInput type="number" formControlName="temperature" placeholder="Temperature reading">
+                <mat-icon matSuffix>thermostat</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row full-width">
+              <mat-form-field appearance="outline">
+                <mat-label>Tracking Notes</mat-label>
+                <textarea matInput formControlName="notes" rows="3" placeholder="Updates or observations"></textarea>
+              </mat-form-field>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="dialog-actions">
+        <button mat-button (click)="closeTrackingDialog()">Cancel</button>
+        <button mat-raised-button color="primary" (click)="updateTracking()" class="save-button">
+          <mat-icon>save</mat-icon>
+          Update Tracking
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail View Dialog -->
+  <div class="dialog-overlay" *ngIf="showDetailDialog" (click)="closeDetailDialog()">
+    <div class="dialog-container detail-dialog" (click)="$event.stopPropagation()">
+      <div class="dialog-header detail-header">
+        <h2>
+          <mat-icon>visibility</mat-icon>
+          Allocation Details
+        </h2>
+        <button mat-icon-button (click)="closeDetailDialog()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="dialog-content" *ngIf="detailAllocation">
+        <div class="detail-grid">
+          <div class="detail-section">
+            <h3>
+              <mat-icon>inventory_2</mat-icon>
+              Allocation Information
+            </h3>
+            <div class="detail-item">
+              <strong>Allocation Number:</strong>
+              <span>{{ detailAllocation.allocationNumber }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Status:</strong>
+              <mat-chip [style.background-color]="getStatusColor(detailAllocation.status)">
+                {{ detailAllocation.status }}
+              </mat-chip>
+            </div>
+            <div class="detail-item">
+              <strong>Priority:</strong>
+              <mat-chip [style.background-color]="getPriorityColor(detailAllocation.priority)">
+                {{ detailAllocation.priority }}
+              </mat-chip>
+            </div>
+            <div class="detail-item" *ngIf="detailAllocation.trackingNumber">
+              <strong>Tracking Number:</strong>
+              <span>{{ detailAllocation.trackingNumber }}</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>
+              <mat-icon>medication</mat-icon>
+              Vaccine Details
+            </h3>
+            <div class="detail-item">
+              <strong>Vaccine Name:</strong>
+              <span>{{ detailAllocation.vaccineName }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Batch Number:</strong>
+              <span>{{ detailAllocation.batchNumber }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Manufacturer:</strong>
+              <span>{{ detailAllocation.manufacturer }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Quantity:</strong>
+              <span>{{ detailAllocation.quantity | number }} doses</span>
+            </div>
+            <div class="detail-item">
+              <strong>Storage Conditions:</strong>
+              <span>{{ detailAllocation.storageConditions }}</span>
+            </div>
+            <div class="detail-item" *ngIf="detailAllocation.temperature">
+              <strong>Temperature:</strong>
+              <span>{{ detailAllocation.temperature }}°C</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>
+              <mat-icon>local_shipping</mat-icon>
+              Route & Transport
+            </h3>
+            <div class="detail-item">
+              <strong>Source Facility:</strong>
+              <span>{{ detailAllocation.sourceFacility }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Destination Facility:</strong>
+              <span>{{ detailAllocation.destinationFacility }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Transport Method:</strong>
+              <span>{{ detailAllocation.transportMethod }}</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>
+              <mat-icon>schedule</mat-icon>
+              Timeline
+            </h3>
+            <div class="detail-item">
+              <strong>Allocation Date:</strong>
+              <span>{{ formatDate(detailAllocation.allocationDate) }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Expected Delivery:</strong>
+              <span>{{ formatDate(detailAllocation.expectedDelivery) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="detailAllocation.actualDelivery">
+              <strong>Actual Delivery:</strong>
+              <span>{{ formatDate(detailAllocation.actualDelivery) }}</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>
+              <mat-icon>person</mat-icon>
+              Personnel
+            </h3>
+            <div class="detail-item">
+              <strong>Requested By:</strong>
+              <span>{{ detailAllocation.requestedBy }}</span>
+            </div>
+            <div class="detail-item" *ngIf="detailAllocation.approvedBy">
+              <strong>Approved By:</strong>
+              <span>{{ detailAllocation.approvedBy }}</span>
+            </div>
+          </div>
+
+          <div class="detail-section full-width" *ngIf="detailAllocation.notes">
+            <h3>
+              <mat-icon>notes</mat-icon>
+              Notes
+            </h3>
+            <div class="detail-item">
+              <p>{{ detailAllocation.notes }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button mat-raised-button (click)="closeDetailDialog()">Close</button>
+        <button mat-raised-button color="primary" (click)="openEditForm(detailAllocation!); closeDetailDialog()" 
+                [disabled]="detailAllocation?.status === 'Delivered' || detailAllocation?.status === 'Cancelled'">
+          <mat-icon>edit</mat-icon>
+          Edit Allocation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

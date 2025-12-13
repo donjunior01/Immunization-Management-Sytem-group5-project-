@@ -1,12 +1,30 @@
+// Role-based color themes
+.role-health-worker {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.role-facility-manager {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+}
+
+.role-government {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+}
+
+.role-default {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
 .header-toolbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  height: 64px;
-  padding: 0 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 70px;
+  padding: 0 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
 }
 
 .header-container {
@@ -15,34 +33,71 @@
   align-items: center;
   width: 100%;
   max-width: 100%;
+  height: 100%;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
 .menu-button {
+  color: white;
+  
   mat-icon {
-    font-size: 24px;
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
   }
 }
 
-.app-title {
+.app-branding {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 20px;
-  font-weight: 500;
-  margin: 0;
-  color: white;
+  gap: 16px;
+}
+
+.app-logo {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 
   .app-icon {
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: white;
   }
+}
+
+.app-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+  line-height: 1;
+  letter-spacing: 0.5px;
+}
+
+.app-subtitle {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .header-right {
@@ -88,16 +143,30 @@
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background-color: #fff;
-  color: #1976d2;
+  background-color: rgba(255, 255, 255, 0.25);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  
+  &.role-health-worker {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  &.role-facility-manager {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+  
+  &.role-government {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
 }
 
 .user-info {
@@ -108,14 +177,25 @@
 
   .user-name {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.2;
+    color: white;
   }
 
   .user-role {
     font-size: 11px;
-    opacity: 0.8;
+    opacity: 0.95;
     line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.95);
+    
+    .role-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
   }
 }
 
@@ -198,15 +278,43 @@
 }
 
 @media (max-width: 768px) {
-  .app-title {
-    font-size: 16px;
-
-    span {
-      display: none;
+  .header-toolbar {
+    height: 64px;
+    padding: 0 12px;
+  }
+  
+  .app-logo {
+    width: 40px;
+    height: 40px;
+    
+    .app-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
     }
+  }
+  
+  .app-title {
+    font-size: 18px;
+  }
+  
+  .app-subtitle {
+    display: none;
   }
 
   .user-info {
     display: none;
+  }
+  
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  .offline-badge {
+    span {
+      display: none;
+    }
   }
 }

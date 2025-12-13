@@ -18,7 +18,11 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { PatientService } from '../../services/patient.service';
 import { AuthService } from '../../services/auth.service';
+import { LoaderService } from '../../services/loader.service';
+import { NotificationService } from '../../services/notification.service';
 import { Patient } from '../../models/patient.model';
+import { PatientDetailsDialogComponent } from '../patient-details-dialog/patient-details-dialog.component';
+import { DeleteConfirmationDialogComponent } from '../../shared/delete-confirmation-dialog/delete-confirmation-dialog.component';
 
 @Component({
   selector: 'app-patient-list',
@@ -69,10 +73,13 @@ export class PatientListComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
+    this.loaderService.show(); // Show loader for 1000ms
     const currentUser = this.authService.getCurrentUser();
     this.facilityId = this.authService.getFacilityId();
 
@@ -152,50 +159,84 @@ export class PatientListComponent implements OnInit {
   }
 
   viewPatient(patient: Patient): void {
-    // Navigate to patient details view
-    this.router.navigate(['/patients/view', patient.id]);
+    this.loaderService.show(); // Show loader for 1000ms
+    
+    setTimeout(() => {
+      const dialogRef = this.dialog.open(PatientDetailsDialogComponent, {
+        width: '800px',
+        maxWidth: '90vw',
+        data: patient,
+        disableClose: false
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result && result.action === 'edit') {
+          this.editPatient(patient);
+        }
+      });
+    }, 1000);
   }
 
   editPatient(patient: Patient): void {
-    // Navigate to edit patient form
-    this.router.navigate(['/patients/edit', patient.id]);
+    this.loaderService.show(); // Show loader for 1000ms
+    setTimeout(() => {
+      // Navigate to edit patient form
+      this.router.navigate(['/patients/edit', patient.id]);
+    }, 1000);
   }
 
   deletePatient(patient: Patient): void {
-    const confirmDelete = confirm(
-      `Are you sure you want to delete patient "${patient.fullName}"?\n\nThis action cannot be undone.`
-    );
+    const dialogRef = this.dialog.open(DeleteConfirmationDialogComponent, {
+      width: '500px',
+      data: {
+        title: 'Delete Patient',
+        message: 'Are you sure you want to delete this patient?',
+        entityName: patient.fullName
+      }
+    });
 
-    if (confirmDelete) {
-      this.patientService.deletePatient(patient.id).subscribe({
-        next: () => {
-          this.snackBar.open('Patient deleted successfully', 'Close', {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          });
-          this.loadPatients(); // Reload the list
-        },
-        error: (error) => {
-          console.error('Error deleting patient:', error);
-          this.showError('Failed to delete patient');
-        }
-      });
-    }
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.loaderService.show(); // Show loader for 1000ms
+        
+        this.patientService.deletePatient(patient.id).subscribe({
+          next: () => {
+            this.notificationService.success(`Patient "${patient.fullName}" deleted successfully`);
+            setTimeout(() => {
+              this.loadPatients(); // Reload the list
+            }, 1000);
+          },
+          error: (error) => {
+            console.error('Error deleting patient:', error);
+            this.notificationService.error('Failed to delete patient');
+          }
+        });
+      }
+    });
   }
 
   registerNewPatient(): void {
-    this.router.navigate(['/patients/register']);
+    this.loaderService.show(); // Show loader for 1000ms
+    setTimeout(() => {
+      this.router.navigate(['/patients/register']);
+    }, 1000);
   }
 
   exportToCSV(): void {
-    const csvData = this.convertToCSV(this.dataSource.data);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `patients_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    this.loaderService.show(); // Show loader for 1000ms
+    
+    setTimeout(() => {
+      const csvData = this.convertToCSV(this.dataSource.data);
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `patients_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      
+      this.notificationService.success(`Exported ${this.dataSource.data.length} patients to CSV`);
+    }, 1000);
   }
 
   private convertToCSV(data: Patient[]): string {

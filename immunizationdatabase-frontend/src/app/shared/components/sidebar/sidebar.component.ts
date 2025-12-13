@@ -12,7 +12,7 @@ import { AuthService } from '../../../services/auth.service';
 interface MenuItem {
   label: string;
   icon: string;
-  route: string;
+  route?: string;
   badge?: number;
   badgeColor?: 'primary' | 'accent' | 'warn';
   roles: string[];
@@ -47,7 +47,7 @@ export class SidebarComponent implements OnInit {
     {
       label: 'Dashboard',
       icon: 'dashboard',
-      route: '/dashboard',
+      route: '/dashboard/default',
       roles: ['HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
     },
 
@@ -119,7 +119,7 @@ export class SidebarComponent implements OnInit {
         {
           label: 'Stock Levels',
           icon: 'assessment',
-          route: '/inventory/stock',
+          route: '/inventory/stock-levels',
           badge: 3,
           badgeColor: 'warn',
           roles: ['HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
@@ -133,7 +133,7 @@ export class SidebarComponent implements OnInit {
         {
           label: 'View Batches',
           icon: 'view_list',
-          route: '/inventory/batches',
+          route: '/inventory',
           roles: ['HEALTH_WORKER', 'FACILITY_MANAGER']
         },
         {
@@ -142,7 +142,7 @@ export class SidebarComponent implements OnInit {
           route: '/inventory/expiry-alerts',
           badge: 5,
           badgeColor: 'warn',
-          roles: ['FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
+          roles: ['HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
         }
       ]
     },
@@ -151,26 +151,23 @@ export class SidebarComponent implements OnInit {
     {
       label: 'Campaigns',
       icon: 'campaign',
-      route: '/campaigns',
       roles: ['FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL'],
       children: [
         {
-          label: 'Active Campaigns',
-          icon: 'play_circle',
-          route: '/campaigns/active',
-          badge: 2,
-          badgeColor: 'accent',
-          roles: ['FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
-        },
-        {
           label: 'Create Campaign',
-          icon: 'add_circle_outline',
+          icon: 'add_circle',
           route: '/campaigns/create',
           roles: ['FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
         },
         {
+          label: 'Active Campaigns',
+          icon: 'list',
+          route: '/campaigns/active',
+          roles: ['FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
+        },
+        {
           label: 'Campaign Progress',
-          icon: 'trending_up',
+          icon: 'analytics',
           route: '/campaigns/progress',
           roles: ['FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
         }
@@ -199,19 +196,35 @@ export class SidebarComponent implements OnInit {
         {
           label: 'Facility Comparison',
           icon: 'compare_arrows',
-          route: '/reports/facilities',
+          route: '/reports/facility-comparison',
           roles: ['GOVERNMENT_OFFICIAL']
         }
       ]
+    },
+
+    // System Monitoring (Government Official only)
+    {
+      label: 'System Monitoring',
+      icon: 'monitor_heart',
+      route: '/monitoring/system',
+      roles: ['GOVERNMENT_OFFICIAL']
     },
 
     // Sync Status
     {
       label: 'Sync Status',
       icon: 'sync',
-      route: '/sync',
+      route: '/sync-status',
       badge: 12,
       badgeColor: 'accent',
+      roles: ['HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
+    },
+
+    // My Profile
+    {
+      label: 'My Profile',
+      icon: 'person',
+      route: '/my-profile',
       roles: ['HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL']
     },
 

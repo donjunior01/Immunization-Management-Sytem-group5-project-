@@ -82,18 +82,16 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
+		<optional>true</optional>
+	</dependency>
 
-		<!-- Spring Boot DevTools -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-
-		<!-- Spring Boot Actuator (for monitoring) -->
+	<!-- Spring Boot DevTools -->
+	<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-devtools</artifactId>
+		<scope>runtime</scope>
+		<optional>true</optional>
+	</dependency>		<!-- Spring Boot Actuator (for monitoring) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>

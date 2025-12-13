@@ -392,3 +392,211 @@ body {
     font-size: 12px;
   }
 }
+
+/* =====================================================
+   NOTIFICATION STYLES (Snackbar)
+   ===================================================== */
+
+.notification-success {
+  .mdc-snackbar__surface {
+    background-color: #28A745 !important;
+    color: white !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-weight: 600;
+  }
+}
+
+.notification-error {
+  .mdc-snackbar__surface {
+    background-color: #DC3545 !important;
+    color: white !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-weight: 600;
+  }
+}
+
+.notification-warning {
+  .mdc-snackbar__surface {
+    background-color: #FFA500 !important;
+    color: white !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-weight: 600;
+  }
+}
+
+.notification-info {
+  .mdc-snackbar__surface {
+    background-color: #0066CC !important;
+    color: white !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-weight: 600;
+  }
+}
+
+.notification-confirm {
+  .mdc-snackbar__surface {
+    background: linear-gradient(135deg, #28A745 0%, #5CB85C 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3) !important;
+  }
+
+  .mat-mdc-snack-bar-label {
+    color: white !important;
+    font-weight: 500;
+  }
+
+  .mat-mdc-button {
+    color: white !important;
+    font-weight: 700;
+  }
+}
+
+/* ===================== RESPONSIVE DESIGN ===================== */
+
+/* Global responsive table styles */
+.table-container {
+  @media (max-width: 768px) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    mat-table,
+    .mat-mdc-table {
+      min-width: 600px;
+    }
+  }
+}
+
+/* Responsive card layouts */
+.card-grid,
+.kpi-grid,
+.stats-grid,
+.content-grid {
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Touch-friendly buttons on mobile */
+@media (max-width: 768px) {
+  button,
+  .mat-mdc-button,
+  .mat-mdc-raised-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .mat-mdc-icon-button {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Responsive padding for containers */
+@media (max-width: 768px) {
+  .container,
+  .dashboard-main,
+  .page-container {
+    padding: 16px !important;
+  }
+
+  mat-card,
+  .mat-mdc-card {
+    padding: 16px !important;
+  }
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+  h1,
+  .mat-h1,
+  .mat-headline-5 {
+    font-size: 20px !important;
+  }
+
+  h2,
+  .mat-h2,
+  .mat-headline-6 {
+    font-size: 18px !important;
+  }
+
+  h3,
+  .mat-h3,
+  .mat-subtitle-1 {
+    font-size: 16px !important;
+  }
+
+  .page-title {
+    font-size: 20px !important;
+  }
+
+  .section-title {
+    font-size: 16px !important;
+  }
+}
+
+/* Stack form fields on mobile */
+@media (max-width: 768px) {
+  .form-row,
+  .form-grid {
+    flex-direction: column;
+
+    mat-form-field,
+    .mat-mdc-form-field {
+      width: 100% !important;
+      margin-bottom: 12px;
+    }
+  }
+}
+
+/* Hide non-essential columns on mobile */
+@media (max-width: 768px) {
+  .mat-mdc-table {
+    .mat-column-actions {
+      position: sticky;
+      right: 0;
+      background: white;
+      box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+/* Responsive dialog/modal */
+@media (max-width: 768px) {
+  .mat-mdc-dialog-container {
+    max-width: 95vw !important;
+    width: 95vw !important;
+  }
+}

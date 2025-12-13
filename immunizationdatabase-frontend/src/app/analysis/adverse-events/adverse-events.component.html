@@ -1,0 +1,807 @@
+<div class="adverse-events-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="icon-wrapper">
+      <mat-icon>warning</mat-icon>
+    </div>
+    <div class="header-content">
+      <h1>Adverse Events Following Immunization (AEFI)</h1>
+      <p>Monitor, investigate, and analyze vaccine safety data</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openEventDialog()" type="button">
+        <mat-icon>add</mat-icon>
+        Report Event
+      </button>
+      <button mat-raised-button [matMenuTriggerFor]="exportMenu" type="button">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportData('csv')" type="button">
+          <mat-icon>description</mat-icon>
+          <span>Export as CSV</span>
+        </button>
+        <button mat-menu-item (click)="exportData('json')" type="button">
+          <mat-icon>code</mat-icon>
+          <span>Export as JSON</span>
+        </button>
+        <button mat-menu-item (click)="exportData('pdf')" type="button">
+          <mat-icon>picture_as_pdf</mat-icon>
+          <span>Export as PDF</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          <mat-icon>list</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ analytics.totalEvents }}</div>
+          <div class="stat-label">Total Events</div>
+          <div class="stat-detail">All reported cases</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ analytics.mildEvents }}</div>
+          <div class="stat-label">Mild Events</div>
+          <div class="stat-detail">{{ formatPercentage((analytics.mildEvents / analytics.totalEvents) * 100) }} of total</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ analytics.moderateEvents }}</div>
+          <div class="stat-label">Moderate Events</div>
+          <div class="stat-detail">{{ formatPercentage((analytics.moderateEvents / analytics.totalEvents) * 100) }} of total</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon error">
+          <mat-icon>error</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ analytics.severeEvents }}</div>
+          <div class="stat-label">Severe Events</div>
+          <div class="stat-detail">Requires immediate attention</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon critical">
+          <mat-icon>dangerous</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ analytics.fatalEvents }}</div>
+          <div class="stat-label">Fatal Events</div>
+          <div class="stat-detail">Critical cases</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon accent">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatHours(analytics.averageOnsetTime) }}</div>
+          <div class="stat-label">Avg Onset Time</div>
+          <div class="stat-detail">From vaccination</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon info">
+          <mat-icon>local_hospital</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatPercentage(analytics.hospitalizationRate) }}</div>
+          <div class="stat-label">Hospitalization Rate</div>
+          <div class="stat-detail">Cases requiring admission</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <mat-icon>healing</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ formatPercentage(analytics.recoveryRate) }}</div>
+          <div class="stat-label">Recovery Rate</div>
+          <div class="stat-detail">Full recovery achieved</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <mat-icon>search</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ analytics.underInvestigation }}</div>
+          <div class="stat-label">Under Investigation</div>
+          <div class="stat-detail">Active cases</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon info">
+          <mat-icon>fact_check</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ analytics.investigated }}</div>
+          <div class="stat-label">Investigated</div>
+          <div class="stat-detail">Assessment completed</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <mat-icon>done_all</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ analytics.closed }}</div>
+          <div class="stat-label">Closed Cases</div>
+          <div class="stat-detail">Resolved events</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Tabs -->
+  <mat-tab-group class="tab-container">
+    <!-- Events List Tab -->
+    <mat-tab label="Events List">
+      <div class="tab-content">
+        <!-- Filters -->
+        <mat-card class="filters-card">
+          <div class="filters-header">
+            <mat-icon>filter_list</mat-icon>
+            <h3>Filter Events</h3>
+          </div>
+          <form [formGroup]="filterForm" class="filters-form">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Search</mat-label>
+                <input matInput formControlName="search" placeholder="Patient name, event ID, vaccine...">
+                <mat-icon matPrefix>search</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Vaccine</mat-label>
+                <mat-select formControlName="vaccineName" placeholder="All vaccines">
+                  <mat-option value="">All Vaccines</mat-option>
+                  <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">
+                    {{ vaccine }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Severity</mat-label>
+                <mat-select formControlName="severity" placeholder="All severities">
+                  <mat-option value="">All Severities</mat-option>
+                  <mat-option *ngFor="let severity of severities" [value]="severity">
+                    {{ severity }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Outcome</mat-label>
+                <mat-select formControlName="outcome" placeholder="All outcomes">
+                  <mat-option value="">All Outcomes</mat-option>
+                  <mat-option *ngFor="let outcome of outcomes" [value]="outcome">
+                    {{ outcome }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Causality</mat-label>
+                <mat-select formControlName="causality" placeholder="All categories">
+                  <mat-option value="">All Categories</mat-option>
+                  <mat-option *ngFor="let cat of causalityCategories" [value]="cat">
+                    {{ cat }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status" placeholder="All statuses">
+                  <mat-option value="">All Statuses</mat-option>
+                  <mat-option *ngFor="let status of statuses" [value]="status">
+                    {{ status }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="date-range" formGroupName="dateRange">
+                <mat-form-field appearance="outline">
+                  <mat-label>Start Date</mat-label>
+                  <input matInput [matDatepicker]="startPicker" formControlName="start" placeholder="Start Date">
+                  <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #startPicker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>End Date</mat-label>
+                  <input matInput [matDatepicker]="endPicker" formControlName="end" placeholder="End Date">
+                  <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #endPicker></mat-datepicker>
+                </mat-form-field>
+              </div>
+
+              <button mat-raised-button color="accent" (click)="resetFilters()" type="button">
+                <mat-icon>clear</mat-icon>
+                Reset
+              </button>
+            </div>
+          </form>
+        </mat-card>
+
+        <!-- Events Table -->
+        <mat-card class="table-card">
+          <table mat-table [dataSource]="displayedEvents" class="events-table">
+            <!-- Report Date Column -->
+            <ng-container matColumnDef="reportDate">
+              <th mat-header-cell *matHeaderCellDef>Report Date</th>
+              <td mat-cell *matCellDef="let event">{{ formatDate(event.reportDate) }}</td>
+            </ng-container>
+
+            <!-- Patient Name Column -->
+            <ng-container matColumnDef="patientName">
+              <th mat-header-cell *matHeaderCellDef>Patient</th>
+              <td mat-cell *matCellDef="let event">
+                <div class="patient-info">
+                  <div class="patient-name">{{ event.patientName }}</div>
+                  <div class="patient-details">{{ event.patientAge }}y, {{ event.patientGender }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Vaccine Column -->
+            <ng-container matColumnDef="vaccineName">
+              <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+              <td mat-cell *matCellDef="let event">
+                <div class="vaccine-info">
+                  <div class="vaccine-name">{{ event.vaccineName }}</div>
+                  <div class="batch-number">{{ event.batchNumber }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Event Type Column -->
+            <ng-container matColumnDef="eventType">
+              <th mat-header-cell *matHeaderCellDef>Event Type</th>
+              <td mat-cell *matCellDef="let event">
+                <div class="event-type">{{ event.eventType }}</div>
+                <div class="onset-time">Onset: {{ formatHours(event.onsetTime) }}</div>
+              </td>
+            </ng-container>
+
+            <!-- Severity Column -->
+            <ng-container matColumnDef="severity">
+              <th mat-header-cell *matHeaderCellDef>Severity</th>
+              <td mat-cell *matCellDef="let event">
+                <mat-chip [style.background-color]="getSeverityColor(event.severity)" [style.color]="'white'">
+                  {{ event.severity }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Outcome Column -->
+            <ng-container matColumnDef="outcome">
+              <th mat-header-cell *matHeaderCellDef>Outcome</th>
+              <td mat-cell *matCellDef="let event">
+                <mat-chip [style.background-color]="getOutcomeColor(event.outcome)" [style.color]="'white'">
+                  {{ event.outcome }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Causality Column -->
+            <ng-container matColumnDef="causality">
+              <th mat-header-cell *matHeaderCellDef>Causality</th>
+              <td mat-cell *matCellDef="let event">
+                <mat-chip [style.background-color]="getCausalityColor(event.causalityCategory)" [style.color]="'white'">
+                  {{ event.causalityCategory }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let event">
+                <mat-chip [style.background-color]="getStatusColor(event.status)" [style.color]="'white'">
+                  {{ event.status }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let event">
+                <button mat-icon-button [matMenuTriggerFor]="actionsMenu" type="button">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #actionsMenu="matMenu">
+                  <button mat-menu-item (click)="openEventDialog(event)" type="button">
+                    <mat-icon>edit</mat-icon>
+                    <span>Edit</span>
+                  </button>
+                  <button mat-menu-item (click)="openCausalityDialog(event)" type="button">
+                    <mat-icon>assessment</mat-icon>
+                    <span>Assess Causality</span>
+                  </button>
+                  <button mat-menu-item (click)="deleteEvent(event)" type="button">
+                    <mat-icon>delete</mat-icon>
+                    <span>Delete</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="eventColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: eventColumns;"></tr>
+          </table>
+
+          <mat-paginator
+            [length]="filteredEvents.length"
+            [pageSize]="pageSize"
+            [pageIndex]="pageIndex"
+            [pageSizeOptions]="pageSizeOptions"
+            (page)="onPageChange($event)">
+          </mat-paginator>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Analytics Tab -->
+    <mat-tab label="Analytics">
+      <div class="tab-content">
+        <!-- Events by Vaccine -->
+        <mat-card class="analysis-card">
+          <div class="card-header">
+            <mat-icon>vaccines</mat-icon>
+            <h3>Events by Vaccine</h3>
+          </div>
+          <div class="vaccine-chart">
+            <div class="vaccine-bar-item" *ngFor="let item of analytics.eventsByVaccine">
+              <div class="vaccine-label">{{ item.vaccineName }}</div>
+              <div class="vaccine-bar-container">
+                <div class="vaccine-bar" [style.width.%]="item.rate"></div>
+                <div class="vaccine-count">{{ item.count }} ({{ formatPercentage(item.rate) }})</div>
+              </div>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- Events by Age Group -->
+        <mat-card class="analysis-card">
+          <div class="card-header">
+            <mat-icon>groups</mat-icon>
+            <h3>Events by Age Group</h3>
+          </div>
+          <div class="age-chart">
+            <div class="age-bar-item" *ngFor="let item of analytics.eventsByAge">
+              <div class="age-label">{{ item.ageGroup }} years</div>
+              <div class="age-bar-container">
+                <div class="age-bar" [style.width.%]="(item.count / analytics.totalEvents) * 100"></div>
+                <div class="age-count">{{ item.count }}</div>
+              </div>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- Top Symptoms -->
+        <mat-card class="analysis-card">
+          <div class="card-header">
+            <mat-icon>medical_services</mat-icon>
+            <h3>Most Common Symptoms</h3>
+          </div>
+          <div class="symptoms-grid">
+            <div class="symptom-card" *ngFor="let symptom of analytics.topSymptoms">
+              <div class="symptom-count">{{ symptom.count }}</div>
+              <div class="symptom-name">{{ symptom.symptom }}</div>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Trends Tab -->
+    <mat-tab label="Trends">
+      <div class="tab-content">
+        <mat-card class="trends-card">
+          <div class="card-header">
+            <mat-icon>trending_up</mat-icon>
+            <h3>Event Trends Over Time</h3>
+          </div>
+          <div class="trends-chart">
+            <div class="trend-item" *ngFor="let trend of trendData">
+              <div class="trend-month">{{ trend.month }}</div>
+              <div class="trend-bars">
+                <div class="severity-bar mild-bar" 
+                     [style.height.%]="(trend.mildEvents / trend.totalEvents) * 100"
+                     [matTooltip]="'Mild: ' + trend.mildEvents">
+                </div>
+                <div class="severity-bar moderate-bar" 
+                     [style.height.%]="(trend.moderateEvents / trend.totalEvents) * 100"
+                     [matTooltip]="'Moderate: ' + trend.moderateEvents">
+                </div>
+                <div class="severity-bar severe-bar" 
+                     [style.height.%]="(trend.severeEvents / trend.totalEvents) * 100"
+                     [matTooltip]="'Severe: ' + trend.severeEvents">
+                </div>
+                <div class="severity-bar fatal-bar" 
+                     [style.height.%]="(trend.fatalEvents / trend.totalEvents) * 100"
+                     [matTooltip]="'Fatal: ' + trend.fatalEvents">
+                </div>
+              </div>
+              <div class="trend-total">{{ trend.totalEvents }}</div>
+              <div class="trend-rate">{{ trend.reportingRate.toFixed(1) }}/100k</div>
+            </div>
+          </div>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- Event Report Dialog -->
+  <div class="dialog-overlay" *ngIf="showEventDialog" (click)="closeEventDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>{{ isEditMode ? 'Edit' : 'Report' }} Adverse Event</h2>
+        <button mat-icon-button (click)="closeEventDialog()" type="button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="dialog-content">
+        <form [formGroup]="eventForm">
+          <!-- Patient Information -->
+          <h3 class="section-title">Patient Information</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Patient Name</mat-label>
+              <input matInput formControlName="patientName" placeholder="Full name">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Age</mat-label>
+              <input matInput type="number" formControlName="patientAge" placeholder="Years">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Gender</mat-label>
+              <mat-select formControlName="patientGender" placeholder="Select gender">
+                <mat-option value="Male">Male</mat-option>
+                <mat-option value="Female">Female</mat-option>
+                <mat-option value="Other">Other</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Vaccination Details -->
+          <h3 class="section-title">Vaccination Details</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Vaccine Name</mat-label>
+              <mat-select formControlName="vaccineName" placeholder="Select vaccine">
+                <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">
+                  {{ vaccine }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Manufacturer</mat-label>
+              <input matInput formControlName="vaccineManufacturer" placeholder="Manufacturer">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Batch Number</mat-label>
+              <input matInput formControlName="batchNumber" placeholder="Batch ID">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Vaccination Date</mat-label>
+              <input matInput [matDatepicker]="vaccineDatePicker" formControlName="vaccinationDate" placeholder="Date">
+              <mat-datepicker-toggle matSuffix [for]="vaccineDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #vaccineDatePicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Event Date</mat-label>
+              <input matInput [matDatepicker]="eventDatePicker" formControlName="eventDate" placeholder="Date">
+              <mat-datepicker-toggle matSuffix [for]="eventDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #eventDatePicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Report Date</mat-label>
+              <input matInput [matDatepicker]="reportDatePicker" formControlName="reportDate" placeholder="Date">
+              <mat-datepicker-toggle matSuffix [for]="reportDatePicker"></mat-datepicker-toggle>
+              <mat-datepicker #reportDatePicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <!-- Reporter Information -->
+          <h3 class="section-title">Reporter Information</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Reported By</mat-label>
+              <input matInput formControlName="reportedBy" placeholder="Name">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Reporter Type</mat-label>
+              <mat-select formControlName="reporterType" placeholder="Select type">
+                <mat-option *ngFor="let type of reporterTypes" [value]="type">
+                  {{ type }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Event Classification -->
+          <h3 class="section-title">Event Classification</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Severity</mat-label>
+              <mat-select formControlName="severity" placeholder="Select severity">
+                <mat-option *ngFor="let severity of severities" [value]="severity">
+                  {{ severity }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Event Type</mat-label>
+              <input matInput formControlName="eventType" placeholder="e.g., Local reaction">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Symptoms</mat-label>
+            <mat-select formControlName="symptoms" multiple placeholder="Select symptoms">
+              <mat-option *ngFor="let symptom of commonSymptoms" [value]="symptom">
+                {{ symptom }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Detailed description of the event"></textarea>
+          </mat-form-field>
+
+          <!-- Medical History -->
+          <h3 class="section-title">Medical History</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Medical History</mat-label>
+            <textarea matInput formControlName="medicalHistory" rows="2" placeholder="Relevant medical history"></textarea>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Concomitant Medications</mat-label>
+            <input matInput formControlName="concomitantMedications" placeholder="Other medications">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Allergies</mat-label>
+            <input matInput formControlName="allergies" placeholder="Known allergies">
+          </mat-form-field>
+
+          <mat-checkbox formControlName="previousReactions">
+            Previous adverse reactions to vaccines
+          </mat-checkbox>
+
+          <!-- Outcome -->
+          <h3 class="section-title">Outcome</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Outcome</mat-label>
+              <mat-select formControlName="outcome" placeholder="Select outcome">
+                <mat-option *ngFor="let outcome of outcomes" [value]="outcome">
+                  {{ outcome }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Treatment Provided</mat-label>
+              <input matInput formControlName="treatmentProvided" placeholder="Treatment details">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-checkbox formControlName="hospitalized">
+              Hospitalized
+            </mat-checkbox>
+
+            <mat-form-field appearance="outline" *ngIf="eventForm.get('hospitalized')?.value">
+              <mat-label>Hospitalization Days</mat-label>
+              <input matInput type="number" formControlName="hospitalizationDays" placeholder="Number of days">
+            </mat-form-field>
+          </div>
+
+          <!-- Follow-up -->
+          <h3 class="section-title">Follow-up</h3>
+          <mat-checkbox formControlName="followUpRequired">
+            Follow-up required
+          </mat-checkbox>
+
+          <div class="form-row" *ngIf="eventForm.get('followUpRequired')?.value">
+            <mat-form-field appearance="outline">
+              <mat-label>Follow-up Date</mat-label>
+              <input matInput [matDatepicker]="followUpPicker" formControlName="followUpDate" placeholder="Date">
+              <mat-datepicker-toggle matSuffix [for]="followUpPicker"></mat-datepicker-toggle>
+              <mat-datepicker #followUpPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Follow-up Notes</mat-label>
+              <input matInput formControlName="followUpNotes" placeholder="Notes">
+            </mat-form-field>
+          </div>
+
+          <!-- Regulatory -->
+          <h3 class="section-title">Regulatory Reporting</h3>
+          <mat-checkbox formControlName="reportedToAuthority">
+            Reported to regulatory authority
+          </mat-checkbox>
+
+          <div class="form-row" *ngIf="eventForm.get('reportedToAuthority')?.value">
+            <mat-form-field appearance="outline">
+              <mat-label>Authority Report Date</mat-label>
+              <input matInput [matDatepicker]="authorityPicker" formControlName="authorityReportDate" placeholder="Date">
+              <mat-datepicker-toggle matSuffix [for]="authorityPicker"></mat-datepicker-toggle>
+              <mat-datepicker #authorityPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Regulatory Action</mat-label>
+              <input matInput formControlName="regulatoryActionTaken" placeholder="Action taken">
+            </mat-form-field>
+          </div>
+        </form>
+      </div>
+
+      <div class="dialog-actions">
+        <button mat-button (click)="closeEventDialog()" type="button">Cancel</button>
+        <button mat-raised-button color="primary" (click)="saveEvent()" type="button">
+          {{ isEditMode ? 'Update' : 'Report' }} Event
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Causality Assessment Dialog -->
+  <div class="dialog-overlay" *ngIf="showCausalityDialog" (click)="closeCausalityDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Causality Assessment (WHO Criteria)</h2>
+        <button mat-icon-button (click)="closeCausalityDialog()" type="button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="dialog-content">
+        <div class="patient-summary" *ngIf="selectedEvent">
+          <p><strong>Patient:</strong> {{ selectedEvent.patientName }}</p>
+          <p><strong>Vaccine:</strong> {{ selectedEvent.vaccineName }}</p>
+          <p><strong>Event:</strong> {{ selectedEvent.eventType }}</p>
+        </div>
+
+        <form [formGroup]="causalityForm">
+          <h3 class="section-title">Assessment Criteria (0-3 each)</h3>
+          <p class="criteria-info">0 = None, 1 = Low, 2 = Moderate, 3 = High</p>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Temporal Relationship</mat-label>
+            <mat-select formControlName="temporalRelationship" placeholder="Score 0-3">
+              <mat-option [value]="0">0 - No temporal relationship</mat-option>
+              <mat-option [value]="1">1 - Weak temporal relationship</mat-option>
+              <mat-option [value]="2">2 - Good temporal relationship</mat-option>
+              <mat-option [value]="3">3 - Strong temporal relationship</mat-option>
+            </mat-select>
+            <mat-hint>Time between vaccination and event onset</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Biological Plausibility</mat-label>
+            <mat-select formControlName="biologicalPlausibility" placeholder="Score 0-3">
+              <mat-option [value]="0">0 - Not plausible</mat-option>
+              <mat-option [value]="1">1 - Low plausibility</mat-option>
+              <mat-option [value]="2">2 - Moderate plausibility</mat-option>
+              <mat-option [value]="3">3 - High plausibility</mat-option>
+            </mat-select>
+            <mat-hint>Known mechanism or similar events reported</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Previous Exposure</mat-label>
+            <mat-select formControlName="previousExposure" placeholder="Score 0-3">
+              <mat-option [value]="0">0 - No history</mat-option>
+              <mat-option [value]="1">1 - Unclear history</mat-option>
+              <mat-option [value]="2">2 - Similar reaction before</mat-option>
+              <mat-option [value]="3">3 - Documented previous reaction</mat-option>
+            </mat-select>
+            <mat-hint>History of similar reactions to this vaccine</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Other Causes Ruled Out</mat-label>
+            <mat-select formControlName="otherCauses" placeholder="Score 0-3">
+              <mat-option [value]="0">0 - Other causes likely</mat-option>
+              <mat-option [value]="1">1 - Other causes possible</mat-option>
+              <mat-option [value]="2">2 - Other causes unlikely</mat-option>
+              <mat-option [value]="3">3 - Other causes ruled out</mat-option>
+            </mat-select>
+            <mat-hint>Alternative explanations considered and excluded</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Rechallenge</mat-label>
+            <mat-select formControlName="rechallenge" placeholder="Score 0-3">
+              <mat-option [value]="0">0 - Not done/negative</mat-option>
+              <mat-option [value]="1">1 - Not applicable</mat-option>
+              <mat-option [value]="2">2 - Rechallenge positive</mat-option>
+              <mat-option [value]="3">3 - Rechallenge strongly positive</mat-option>
+            </mat-select>
+            <mat-hint>Re-exposure to vaccine produced similar event</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Specificity</mat-label>
+            <mat-select formControlName="specificity" placeholder="Score 0-3">
+              <mat-option [value]="0">0 - Non-specific</mat-option>
+              <mat-option [value]="1">1 - Low specificity</mat-option>
+              <mat-option [value]="2">2 - Moderate specificity</mat-option>
+              <mat-option [value]="3">3 - High specificity</mat-option>
+            </mat-select>
+            <mat-hint>Event specific to this vaccine</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Assessment Notes</mat-label>
+            <textarea matInput formControlName="notes" rows="3" placeholder="Detailed assessment notes"></textarea>
+          </mat-form-field>
+
+          <div class="causality-result">
+            <p><strong>Total Score:</strong> {{ calculateCausalityScore().totalScore }}/18</p>
+            <p><strong>Category:</strong> {{ calculateCausalityScore().category }}</p>
+          </div>
+        </form>
+      </div>
+
+      <div class="dialog-actions">
+        <button mat-button (click)="closeCausalityDialog()" type="button">Cancel</button>
+        <button mat-raised-button color="primary" (click)="saveCausality()" type="button">
+          Save Assessment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

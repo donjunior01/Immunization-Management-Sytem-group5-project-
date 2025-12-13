@@ -1,0 +1,711 @@
+<div class="coverage-gap-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-wrapper">
+        <mat-icon>analytics</mat-icon>
+      </div>
+      <div class="header-text">
+        <h1>Coverage Gap Analysis</h1>
+        <p>Identify immunization gaps and plan targeted interventions</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="generateCoverageReport()">
+        <mat-icon>assessment</mat-icon>
+        Generate Report
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="actionsMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #actionsMenu="matMenu">
+        <button mat-menu-item [matMenuTriggerFor]="exportMenu">
+          <mat-icon>download</mat-icon>
+          <span>Export</span>
+        </button>
+      </mat-menu>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportGaps('csv')">
+          <mat-icon>table_chart</mat-icon>
+          <span>Export as CSV</span>
+        </button>
+        <button mat-menu-item (click)="exportGaps('json')">
+          <mat-icon>code</mat-icon>
+          <span>Export as JSON</span>
+        </button>
+        <button mat-menu-item (click)="exportGaps('pdf')">
+          <mat-icon>picture_as_pdf</mat-icon>
+          <span>Export as PDF</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>domain</mat-icon>
+          </div>
+          <div class="stat-details">
+            <h3>Total Facilities</h3>
+            <p class="stat-value">{{ coverageStats.totalFacilities }}</p>
+            <span class="stat-subtitle">{{ coverageStats.facilitiesWithGaps }} with gaps</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>show_chart</mat-icon>
+          </div>
+          <div class="stat-details">
+            <h3>Avg Coverage Rate</h3>
+            <p class="stat-value" 
+               [class.excellent]="coverageStats.averageCoverageRate >= 85"
+               [class.good]="coverageStats.averageCoverageRate >= 70 && coverageStats.averageCoverageRate < 85"
+               [class.fair]="coverageStats.averageCoverageRate >= 50 && coverageStats.averageCoverageRate < 70"
+               [class.poor]="coverageStats.averageCoverageRate < 50">
+              {{ coverageStats.averageCoverageRate }}%
+            </p>
+            <span class="stat-subtitle">Across all programs</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card warning">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>priority_high</mat-icon>
+          </div>
+          <div class="stat-details">
+            <h3>Critical Gaps</h3>
+            <p class="stat-value">{{ coverageStats.criticalGaps }}</p>
+            <span class="stat-subtitle">Require immediate action</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card info">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>groups</mat-icon>
+          </div>
+          <div class="stat-details">
+            <h3>Target Population</h3>
+            <p class="stat-value">{{ formatNumber(coverageStats.totalTargetPopulation) }}</p>
+            <span class="stat-subtitle">{{ formatNumber(coverageStats.totalVaccinated) }} vaccinated</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>people_outline</mat-icon>
+          </div>
+          <div class="stat-details">
+            <h3>Unvaccinated</h3>
+            <p class="stat-value">{{ formatNumber(coverageStats.totalUnvaccinated) }}</p>
+            <span class="stat-subtitle">Need intervention</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card success">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>task_alt</mat-icon>
+          </div>
+          <div class="stat-details">
+            <h3>High Priority Gaps</h3>
+            <p class="stat-value">{{ coverageStats.highPriorityGaps }}</p>
+            <span class="stat-subtitle">Action required soon</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Geographic Coverage Analysis -->
+  <mat-card class="geographic-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>map</mat-icon>
+        Geographic Coverage Analysis
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="geographic-analysis">
+        <div class="district-list">
+          <div class="district-item" *ngFor="let district of geographicCoverage">
+            <div class="district-header">
+              <div class="district-info">
+                <h3>{{ district.districtName }}</h3>
+                <span class="district-id">{{ district.districtId }}</span>
+              </div>
+              <mat-chip [color]="getPriorityColor(district.priority)" selected>
+                {{ district.priority }}
+              </mat-chip>
+            </div>
+            <div class="district-metrics">
+              <div class="metric">
+                <span class="metric-label">Facilities</span>
+                <span class="metric-value">{{ district.facilities }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Target Population</span>
+                <span class="metric-value">{{ formatNumber(district.targetPopulation) }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Vaccinated</span>
+                <span class="metric-value">{{ formatNumber(district.vaccinated) }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Coverage Rate</span>
+                <span class="metric-value"
+                      [class.excellent]="district.coverageRate >= 85"
+                      [class.good]="district.coverageRate >= 70 && district.coverageRate < 85"
+                      [class.fair]="district.coverageRate >= 50 && district.coverageRate < 70"
+                      [class.poor]="district.coverageRate < 50">
+                  {{ district.coverageRate }}%
+                </span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Gaps</span>
+                <span class="metric-value">{{ district.gapCount }}</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Critical</span>
+                <span class="metric-value critical">{{ district.criticalGaps }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Vaccine Coverage Analysis -->
+  <mat-card class="vaccine-coverage-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>vaccines</mat-icon>
+        Vaccine Coverage Analysis
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="vaccine-coverage-grid">
+        <div class="vaccine-item" *ngFor="let vaccine of vaccineCoverage.slice(0, 6)">
+          <div class="vaccine-header">
+            <h3>{{ vaccine.vaccineName }}</h3>
+            <mat-chip [color]="getTrendColor(vaccine.trend)" selected>
+              <mat-icon>{{ vaccine.trend === 'Improving' ? 'trending_up' : vaccine.trend === 'Declining' ? 'trending_down' : 'trending_flat' }}</mat-icon>
+              {{ vaccine.trend }}
+            </mat-chip>
+          </div>
+          <div class="vaccine-metrics">
+            <div class="metric-row">
+              <span class="label">Coverage Rate:</span>
+              <span class="value"
+                    [class.excellent]="vaccine.coverageRate >= 85"
+                    [class.good]="vaccine.coverageRate >= 70 && vaccine.coverageRate < 85"
+                    [class.fair]="vaccine.coverageRate >= 50 && vaccine.coverageRate < 70"
+                    [class.poor]="vaccine.coverageRate < 50">
+                {{ vaccine.coverageRate }}%
+              </span>
+            </div>
+            <div class="metric-row">
+              <span class="label">Gap Percentage:</span>
+              <span class="value"
+                    [class.excellent]="vaccine.gapPercentage <= 15"
+                    [class.good]="vaccine.gapPercentage > 15 && vaccine.gapPercentage <= 30"
+                    [class.fair]="vaccine.gapPercentage > 30 && vaccine.gapPercentage <= 50"
+                    [class.poor]="vaccine.gapPercentage > 50">
+                {{ vaccine.gapPercentage }}%
+              </span>
+            </div>
+            <div class="metric-row">
+              <span class="label">Facilities Affected:</span>
+              <span class="value">{{ vaccine.facilitiesAffected }}</span>
+            </div>
+            <div class="metric-row">
+              <span class="label">Target Population:</span>
+              <span class="value">{{ formatNumber(vaccine.targetPopulation) }}</span>
+            </div>
+          </div>
+          <div class="vaccine-recommendations" *ngIf="vaccine.recommendations.length > 0">
+            <mat-icon>lightbulb</mat-icon>
+            <div class="recommendations-list">
+              <p *ngFor="let rec of vaccine.recommendations">{{ rec }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>Filter Coverage Gaps</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filter-form">
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Search</mat-label>
+            <input matInput formControlName="search" placeholder="Search by facility, vaccine, or district...">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Vaccine</mat-label>
+            <mat-select formControlName="vaccineName">
+              <mat-option value="">All Vaccines</mat-option>
+              <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">{{ vaccine }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Age Group</mat-label>
+            <mat-select formControlName="ageGroup">
+              <mat-option value="">All Age Groups</mat-option>
+              <mat-option *ngFor="let group of ageGroups" [value]="group">{{ group }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>District</mat-label>
+            <mat-select formControlName="districtId">
+              <mat-option value="">All Districts</mat-option>
+              <mat-option *ngFor="let district of districts" [value]="district">{{ district }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Facility</mat-label>
+            <mat-select formControlName="facilityId">
+              <mat-option value="">All Facilities</mat-option>
+              <mat-option *ngFor="let facility of facilities" [value]="facility">{{ facility }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select formControlName="priority">
+              <mat-option value="">All Priorities</mat-option>
+              <mat-option value="Critical">Critical</mat-option>
+              <mat-option value="High">High</mat-option>
+              <mat-option value="Medium">Medium</mat-option>
+              <mat-option value="Low">Low</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Intervention Status</mat-label>
+            <mat-select formControlName="interventionStatus">
+              <mat-option value="">All Statuses</mat-option>
+              <mat-option value="Not Started">Not Started</mat-option>
+              <mat-option value="Planned">Planned</mat-option>
+              <mat-option value="Ongoing">Ongoing</mat-option>
+              <mat-option value="Completed">Completed</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Min Coverage Rate (%)</mat-label>
+            <input matInput type="number" formControlName="coverageRateMin" placeholder="0">
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Max Coverage Rate (%)</mat-label>
+            <input matInput type="number" formControlName="coverageRateMax" placeholder="100">
+          </mat-form-field>
+
+          <div class="filter-actions">
+            <button mat-raised-button type="button" class="reset-button" (click)="resetFilters()">
+              <mat-icon>refresh</mat-icon>
+              Reset Filters
+            </button>
+            <div class="filter-results">
+              <span>{{ filteredGaps.length }} gaps found</span>
+            </div>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Coverage Gaps Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>Coverage Gaps</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="getPaginatedGaps()" class="coverage-gap-table">
+          <!-- Facility Column -->
+          <ng-container matColumnDef="facility">
+            <th mat-header-cell *matHeaderCellDef>Facility</th>
+            <td mat-cell *matCellDef="let gap">
+              <div class="facility-info">
+                <span class="facility-name">{{ gap.facilityName }}</span>
+                <span class="district-name">{{ gap.districtName }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Vaccine Column -->
+          <ng-container matColumnDef="vaccine">
+            <th mat-header-cell *matHeaderCellDef>Vaccine & Age Group</th>
+            <td mat-cell *matCellDef="let gap">
+              <div class="vaccine-info">
+                <span class="vaccine-name">{{ gap.vaccineName }}</span>
+                <span class="age-group">{{ gap.ageGroup }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Age Group Column -->
+          <ng-container matColumnDef="ageGroup">
+            <th mat-header-cell *matHeaderCellDef>Population</th>
+            <td mat-cell *matCellDef="let gap">
+              <div class="population-info">
+                <div class="population-detail">
+                  <span class="label">Target:</span>
+                  <span class="value">{{ formatNumber(gap.targetPopulation) }}</span>
+                </div>
+                <div class="population-detail">
+                  <span class="label">Vaccinated:</span>
+                  <span class="value success">{{ formatNumber(gap.vaccinated) }}</span>
+                </div>
+                <div class="population-detail">
+                  <span class="label">Unvaccinated:</span>
+                  <span class="value warning">{{ formatNumber(gap.unvaccinated) }}</span>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Coverage Column -->
+          <ng-container matColumnDef="coverage">
+            <th mat-header-cell *matHeaderCellDef>Coverage Rate</th>
+            <td mat-cell *matCellDef="let gap">
+              <div class="coverage-rate"
+                   [class.excellent]="gap.coverageRate >= 85"
+                   [class.good]="gap.coverageRate >= 70 && gap.coverageRate < 85"
+                   [class.fair]="gap.coverageRate >= 50 && gap.coverageRate < 70"
+                   [class.poor]="gap.coverageRate < 50">
+                {{ gap.coverageRate }}%
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Gap Column -->
+          <ng-container matColumnDef="gap">
+            <th mat-header-cell *matHeaderCellDef>Gap</th>
+            <td mat-cell *matCellDef="let gap">
+              <div class="gap-percentage"
+                   [class.excellent]="gap.gapPercentage <= 15"
+                   [class.good]="gap.gapPercentage > 15 && gap.gapPercentage <= 30"
+                   [class.fair]="gap.gapPercentage > 30 && gap.gapPercentage <= 50"
+                   [class.poor]="gap.gapPercentage > 50">
+                {{ gap.gapPercentage }}%
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Priority Column -->
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef>Priority</th>
+            <td mat-cell *matCellDef="let gap">
+              <mat-chip [color]="getPriorityColor(gap.priority)" selected>
+                {{ gap.priority }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Last Campaign Column -->
+          <ng-container matColumnDef="lastCampaign">
+            <th mat-header-cell *matHeaderCellDef>Last Campaign</th>
+            <td mat-cell *matCellDef="let gap">
+              <div class="campaign-info">
+                <span class="date">{{ formatDate(gap.lastCampaignDate) }}</span>
+                <span class="days-ago" *ngIf="gap.daysSinceLastCampaign">
+                  ({{ gap.daysSinceLastCampaign }} days ago)
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Intervention Column -->
+          <ng-container matColumnDef="intervention">
+            <th mat-header-cell *matHeaderCellDef>Intervention</th>
+            <td mat-cell *matCellDef="let gap">
+              <mat-chip [color]="getInterventionStatusColor(gap.interventionStatus)" selected>
+                {{ gap.interventionStatus }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let gap">
+              <button mat-icon-button [matMenuTriggerFor]="actionsMenu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #actionsMenu="matMenu">
+                <button mat-menu-item (click)="viewGapDetails(gap)">
+                  <mat-icon>visibility</mat-icon>
+                  <span>View Details</span>
+                </button>
+                <button mat-menu-item (click)="planIntervention(gap)">
+                  <mat-icon>event</mat-icon>
+                  <span>Plan Intervention</span>
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="filteredGaps.length"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Gap Detail Dialog -->
+<div class="dialog-overlay" *ngIf="showDetailDialog" (click)="closeDetailDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>Coverage Gap Details</h2>
+      <button mat-icon-button (click)="closeDetailDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="dialog-content" *ngIf="selectedGap">
+      <div class="detail-section">
+        <h3>Facility Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Facility:</span>
+            <span class="value">{{ selectedGap.facilityName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">District:</span>
+            <span class="value">{{ selectedGap.districtName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Vaccine:</span>
+            <span class="value">{{ selectedGap.vaccineName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Age Group:</span>
+            <span class="value">{{ selectedGap.ageGroup }}</span>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="detail-section">
+        <h3>Coverage Statistics</h3>
+        <div class="metrics-display">
+          <div class="metric-card">
+            <mat-icon>groups</mat-icon>
+            <div class="metric-content">
+              <span class="metric-label">Target Population</span>
+              <span class="metric-value">{{ formatNumber(selectedGap.targetPopulation) }}</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <mat-icon>check_circle</mat-icon>
+            <div class="metric-content">
+              <span class="metric-label">Vaccinated</span>
+              <span class="metric-value success">{{ formatNumber(selectedGap.vaccinated) }}</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <mat-icon>people_outline</mat-icon>
+            <div class="metric-content">
+              <span class="metric-label">Unvaccinated</span>
+              <span class="metric-value warning">{{ formatNumber(selectedGap.unvaccinated) }}</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <mat-icon>show_chart</mat-icon>
+            <div class="metric-content">
+              <span class="metric-label">Coverage Rate</span>
+              <span class="metric-value"
+                    [class.excellent]="selectedGap.coverageRate >= 85"
+                    [class.good]="selectedGap.coverageRate >= 70 && selectedGap.coverageRate < 85"
+                    [class.fair]="selectedGap.coverageRate >= 50 && selectedGap.coverageRate < 70"
+                    [class.poor]="selectedGap.coverageRate < 50">
+                {{ selectedGap.coverageRate }}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="detail-section">
+        <h3>Priority & Status</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Priority Level:</span>
+            <mat-chip [color]="getPriorityColor(selectedGap.priority)" selected>
+              {{ selectedGap.priority }}
+            </mat-chip>
+          </div>
+          <div class="detail-item">
+            <span class="label">Intervention Status:</span>
+            <mat-chip [color]="getInterventionStatusColor(selectedGap.interventionStatus)" selected>
+              {{ selectedGap.interventionStatus }}
+            </mat-chip>
+          </div>
+          <div class="detail-item">
+            <span class="label">Last Campaign:</span>
+            <span class="value">{{ formatDate(selectedGap.lastCampaignDate) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedGap.daysSinceLastCampaign">
+            <span class="label">Days Since Campaign:</span>
+            <span class="value">{{ selectedGap.daysSinceLastCampaign }} days</span>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="detail-section" *ngIf="selectedGap.recommendations.length > 0">
+        <h3>Recommendations</h3>
+        <div class="recommendations-list">
+          <div class="recommendation-item" *ngFor="let recommendation of selectedGap.recommendations">
+            <mat-icon>lightbulb</mat-icon>
+            <p>{{ recommendation }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button mat-button (click)="closeDetailDialog()">Close</button>
+      <button mat-raised-button color="primary" (click)="planIntervention(selectedGap!)">
+        <mat-icon>event</mat-icon>
+        Plan Intervention
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Intervention Planning Dialog -->
+<div class="dialog-overlay" *ngIf="showInterventionDialog" (click)="closeInterventionDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>Plan Intervention</h2>
+      <button mat-icon-button (click)="closeInterventionDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="dialog-content" *ngIf="selectedGap">
+      <form [formGroup]="interventionForm" class="intervention-form">
+        <div class="form-section">
+          <h3>Gap Information</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Facility:</span>
+              <span class="value">{{ selectedGap.facilityName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Vaccine:</span>
+              <span class="value">{{ selectedGap.vaccineName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Age Group:</span>
+              <span class="value">{{ selectedGap.ageGroup }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Unvaccinated:</span>
+              <span class="value">{{ formatNumber(selectedGap.unvaccinated) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="form-section">
+          <h3>Intervention Details</h3>
+          <div class="form-fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Intervention Type</mat-label>
+              <mat-select formControlName="interventionType">
+                <mat-option value="Outreach Campaign">Outreach Campaign</mat-option>
+                <mat-option value="Mobile Vaccination Team">Mobile Vaccination Team</mat-option>
+                <mat-option value="Community Awareness Program">Community Awareness Program</mat-option>
+                <mat-option value="House-to-House Vaccination">House-to-House Vaccination</mat-option>
+                <mat-option value="School-based Campaign">School-based Campaign</mat-option>
+                <mat-option value="Market Day Vaccination">Market Day Vaccination</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Start Date</mat-label>
+              <input matInput [matDatepicker]="startPicker" formControlName="startDate" placeholder="Select start date">
+              <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>End Date</mat-label>
+              <input matInput [matDatepicker]="endPicker" formControlName="endDate" placeholder="Select end date">
+              <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Budget</mat-label>
+              <input matInput type="number" formControlName="budget" placeholder="0.00">
+              <span matPrefix>$</span>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Expected Coverage (%)</mat-label>
+              <input matInput type="number" formControlName="expectedCoverage" min="0" max="100" placeholder="0-100">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Notes</mat-label>
+              <textarea matInput formControlName="notes" rows="4" placeholder="Enter intervention notes..."></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="dialog-actions">
+      <button mat-button (click)="closeInterventionDialog()">Cancel</button>
+      <button mat-raised-button color="primary" (click)="submitIntervention()">
+        <mat-icon>save</mat-icon>
+        Create Intervention Plan
+      </button>
+    </div>
+  </div>
+</div>

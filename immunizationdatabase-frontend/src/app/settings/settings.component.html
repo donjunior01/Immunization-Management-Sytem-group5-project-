@@ -1,0 +1,152 @@
+<div class="settings-container">
+  <div class="header">
+    <h1><mat-icon>settings</mat-icon> Settings</h1>
+    <div class="actions">
+      <button mat-raised-button color="warn" (click)="resetSettings()">
+        <mat-icon>restore</mat-icon> Reset to Defaults
+      </button>
+      <button mat-raised-button color="primary" (click)="saveSettings()">
+        <mat-icon>save</mat-icon> Save Changes
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="settingsForm">
+    <!-- Appearance Settings -->
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>palette</mat-icon>
+        <mat-card-title>Appearance</mat-card-title>
+        <mat-card-subtitle>Customize the look and feel</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Theme</mat-label>
+            <mat-select formControlName="theme">
+              <mat-option *ngFor="let theme of themes" [value]="theme.value">
+                {{ theme.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>dark_mode</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Language</mat-label>
+            <mat-select formControlName="language">
+              <mat-option *ngFor="let lang of languages" [value]="lang.value">
+                {{ lang.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>language</mat-icon>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Notifications -->
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>notifications</mat-icon>
+        <mat-card-title>Notifications</mat-card-title>
+        <mat-card-subtitle>Choose how you want to be notified</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          <mat-list-item>
+            <mat-icon matListItemIcon>email</mat-icon>
+            <div matListItemTitle>Email Notifications</div>
+            <div matListItemLine>Receive updates via email</div>
+            <mat-slide-toggle matListItemMeta formControlName="emailNotifications"></mat-slide-toggle>
+          </mat-list-item>
+          <mat-divider></mat-divider>
+          <mat-list-item>
+            <mat-icon matListItemIcon>notifications_active</mat-icon>
+            <div matListItemTitle>Push Notifications</div>
+            <div matListItemLine>Browser push notifications</div>
+            <mat-slide-toggle matListItemMeta formControlName="pushNotifications"></mat-slide-toggle>
+          </mat-list-item>
+          <mat-divider></mat-divider>
+          <mat-list-item>
+            <mat-icon matListItemIcon>sms</mat-icon>
+            <div matListItemTitle>SMS Notifications</div>
+            <div matListItemLine>Receive text messages</div>
+            <mat-slide-toggle matListItemMeta formControlName="smsNotifications"></mat-slide-toggle>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Data & Sync -->
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>sync</mat-icon>
+        <mat-card-title>Data & Sync</mat-card-title>
+        <mat-card-subtitle>Manage data synchronization</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          <mat-list-item>
+            <mat-icon matListItemIcon>cloud_sync</mat-icon>
+            <div matListItemTitle>Auto Sync</div>
+            <div matListItemLine>Automatically sync data in background</div>
+            <mat-slide-toggle matListItemMeta formControlName="autoSync"></mat-slide-toggle>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Display Preferences -->
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>view_module</mat-icon>
+        <mat-card-title>Display Preferences</mat-card-title>
+        <mat-card-subtitle>Customize your viewing experience</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Default View</mat-label>
+            <mat-select formControlName="defaultView">
+              <mat-option *ngFor="let view of defaultViews" [value]="view.value">
+                {{ view.label }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>dashboard</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Items Per Page</mat-label>
+            <mat-select formControlName="itemsPerPage">
+              <mat-option *ngFor="let count of itemsPerPageOptions" [value]="count">
+                {{ count }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>format_list_numbered</mat-icon>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Advanced -->
+    <mat-card class="settings-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>build</mat-icon>
+        <mat-card-title>Advanced</mat-card-title>
+        <mat-card-subtitle>Advanced settings and actions</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="advanced-actions">
+          <button mat-stroked-button (click)="exportSettings()" type="button">
+            <mat-icon>download</mat-icon>
+            Export Settings
+          </button>
+          <button mat-stroked-button color="warn" (click)="clearCache()" type="button">
+            <mat-icon>delete_sweep</mat-icon>
+            Clear Cache
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </form>
+</div>

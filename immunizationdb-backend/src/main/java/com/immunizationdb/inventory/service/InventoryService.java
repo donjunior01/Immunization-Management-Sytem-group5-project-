@@ -56,6 +56,57 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
+    public List<VaccineBatchResponse> getAllBatches() {
+        return vaccineBatchRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public VaccineBatchResponse getBatchById(Long id) {
+        VaccineBatch batch = vaccineBatchRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Batch not found with ID: " + id));
+        return mapToResponse(batch);
+    }
+
+    @Transactional
+    public VaccineBatchResponse updateBatch(Long id, CreateVaccineBatchRequest request) {
+        log.info("Updating vaccine batch with ID: {}", id);
+        
+        VaccineBatch batch = vaccineBatchRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Batch not found with ID: " + id));
+
+        // Check for duplicate batch number if changed
+        if (!batch.getBatchNumber().equals(request.getBatchNumber())) {
+            vaccineBatchRepository.findByBatchNumberAndFacilityId(
+                    request.getBatchNumber(), request.getFacilityId()
+            ).ifPresent(existing -> {
+                if (!existing.getId().equals(id)) {
+                    throw new RuntimeException("Batch number already exists in this facility");
+                }
+            });
+        }
+
+        // Update fields
+        batch.setBatchNumber(request.getBatchNumber());
+        batch.setVaccineName(request.getVaccineName());
+        batch.setManufacturer(request.getManufacturer());
+        batch.setQuantityReceived(request.getQuantityReceived());
+        // Calculate remaining quantity based on the difference
+        int difference = request.getQuantityReceived() - batch.getQuantityReceived();
+        batch.setQuantityRemaining(batch.getQuantityRemaining() + difference);
+        batch.setExpiryDate(request.getExpiryDate());
+        batch.setReceiptDate(request.getReceiptDate());
+        batch.setFacilityId(request.getFacilityId());
+
+        VaccineBatch updatedBatch = vaccineBatchRepository.save(batch);
+        log.info("Vaccine batch updated successfully");
+
+        return mapToResponse(updatedBatch);
+    }
+
+    @Transactional(readOnly = true)
     public List<VaccineBatchResponse> getBatchesByFacility(String facilityId) {
         return vaccineBatchRepository.findByFacilityId(facilityId)
                 .stream()

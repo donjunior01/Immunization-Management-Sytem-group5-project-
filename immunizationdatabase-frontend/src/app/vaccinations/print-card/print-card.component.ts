@@ -11,6 +11,8 @@ import { QRCodeModule } from 'angularx-qrcode';
 import { PatientService } from '../../services/patient.service';
 import { VaccinationRealService, VaccinationResponse } from '../../services/vaccination-real.service';
 import { Patient } from '../../models/patient.model';
+import { LoaderService } from '../../services/loader.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-print-card',
@@ -41,16 +43,21 @@ export class PrintCardComponent implements OnInit {
     private router: Router,
     private patientService: PatientService,
     private vaccinationService: VaccinationRealService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
+    this.loaderService.show(); // Show loader for 1000ms
     const patientId = this.route.snapshot.paramMap.get('patientId');
     if (patientId) {
       this.loadPatientData(patientId);
     } else {
-      this.showError('No patient ID provided');
-      this.router.navigate(['/vaccinations/history']);
+      this.notificationService.error('No patient ID provided');
+      setTimeout(() => {
+        this.router.navigate(['/vaccinations/history']);
+      }, 1500);
     }
   }
 
@@ -68,7 +75,7 @@ export class PrintCardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading patient:', error);
-        this.showError('Failed to load patient information');
+        this.notificationService.error('Failed to load patient information');
         this.isLoading = false;
       }
     });
@@ -85,20 +92,27 @@ export class PrintCardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading vaccinations:', error);
-        this.showError('Failed to load vaccination history');
+        this.notificationService.error('Failed to load vaccination history');
         this.isLoading = false;
       }
     });
   }
 
   printCard(): void {
-    window.print();
+    this.loaderService.show(); // Show loader for 1000ms
+    setTimeout(() => {
+      window.print();
+      this.notificationService.success('Print dialog opened');
+    }, 1000);
   }
 
   goBack(): void {
-    this.router.navigate(['/vaccinations/history'], {
-      queryParams: { patientId: this.patient?.id }
-    });
+    this.loaderService.show(); // Show loader for 1000ms
+    setTimeout(() => {
+      this.router.navigate(['/vaccinations/history'], {
+        queryParams: { patientId: this.patient?.id }
+      });
+    }, 1000);
   }
 
   getAge(dateOfBirth: string): string {
@@ -145,12 +159,5 @@ export class PrintCardComponent implements OnInit {
     }
 
     return 'Contact health facility for schedule';
-  }
-
-  private showError(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 5000,
-      panelClass: ['error-snackbar']
-    });
   }
 }

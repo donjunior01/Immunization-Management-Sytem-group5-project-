@@ -15,7 +15,7 @@
       <div class="header-controls">
         <mat-form-field appearance="outline" class="time-range-selector">
           <mat-label>Time Range</mat-label>
-          <mat-select [(value)]="selectedTimeRange" (selectionChange)="onTimeRangeChange($event.value)">
+          <mat-select [(ngModel)]="selectedTimeRange" (selectionChange)="onTimeRangeChange($event.value)">
             <mat-option value="week">This Week</mat-option>
             <mat-option value="month">This Month</mat-option>
             <mat-option value="quarter">This Quarter</mat-option>

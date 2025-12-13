@@ -108,44 +108,7 @@ export class FacilityManagerDashboardComponent implements OnInit {
     lowStockItems: 0
   };
 
-  staffMembers: StaffMember[] = [
-    {
-      id: 'HW001',
-      name: 'Sarah Johnson',
-      role: 'Health Worker',
-      patientsRegistered: 145,
-      vaccinationsToday: 12,
-      status: 'active',
-      lastActive: '2025-12-04 10:30'
-    },
-    {
-      id: 'HW002',
-      name: 'John Kamau',
-      role: 'Health Worker',
-      patientsRegistered: 132,
-      vaccinationsToday: 8,
-      status: 'active',
-      lastActive: '2025-12-04 09:45'
-    },
-    {
-      id: 'HW003',
-      name: 'Mary Wanjiku',
-      role: 'Health Worker',
-      patientsRegistered: 98,
-      vaccinationsToday: 0,
-      status: 'on-leave',
-      lastActive: '2025-12-01 16:00'
-    },
-    {
-      id: 'HW004',
-      name: 'David Ochieng',
-      role: 'Health Worker',
-      patientsRegistered: 156,
-      vaccinationsToday: 15,
-      status: 'active',
-      lastActive: '2025-12-04 11:00'
-    }
-  ];
+  staffMembers: StaffMember[] = []; // Will be populated when user management API is implemented
 
   campaigns: CampaignSummary[] = [
     {
@@ -174,71 +137,9 @@ export class FacilityManagerDashboardComponent implements OnInit {
     }
   ];
 
-  facilityComparisons: FacilityComparison[] = [
-    {
-      facilityName: 'City Health Center',
-      district: 'Nairobi Central',
-      coverageRate: 92.3,
-      totalVaccinations: 1850,
-      stockStatus: 'optimal',
-      rank: 1
-    },
-    {
-      facilityName: 'Westlands Clinic',
-      district: 'Nairobi West',
-      coverageRate: 87.5,
-      totalVaccinations: 1247,
-      stockStatus: 'low',
-      rank: 2
-    },
-    {
-      facilityName: 'Eastlands Medical Center',
-      district: 'Nairobi East',
-      coverageRate: 78.2,
-      totalVaccinations: 950,
-      stockStatus: 'critical',
-      rank: 3
-    }
-  ];
+  facilityComparisons: FacilityComparison[] = []; // Will be populated from facility service
 
-  inventoryItems: InventoryItem[] = [
-    {
-      vaccineName: 'BCG Vaccine',
-      totalStock: 850,
-      allocated: 200,
-      available: 650,
-      expiringIn30Days: 45,
-      reorderLevel: 500,
-      status: 'optimal'
-    },
-    {
-      vaccineName: 'Polio Vaccine (OPV)',
-      totalStock: 320,
-      allocated: 150,
-      available: 170,
-      expiringIn30Days: 12,
-      reorderLevel: 400,
-      status: 'low'
-    },
-    {
-      vaccineName: 'Measles Vaccine',
-      totalStock: 180,
-      allocated: 120,
-      available: 60,
-      expiringIn30Days: 8,
-      reorderLevel: 300,
-      status: 'critical'
-    },
-    {
-      vaccineName: 'DPT Vaccine',
-      totalStock: 1200,
-      allocated: 300,
-      available: 900,
-      expiringIn30Days: 0,
-      reorderLevel: 600,
-      status: 'optimal'
-    }
-  ];
+  inventoryItems: InventoryItem[] = []; // Will be populated from inventory service
 
   staffColumns: string[] = ['id', 'name', 'role', 'patientsRegistered', 'vaccinationsToday', 'status', 'actions'];
   campaignColumns: string[] = ['name', 'progress', 'coverage', 'dates', 'vaccines', 'actions'];

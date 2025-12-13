@@ -41,6 +41,15 @@ export class InventoryRealService {
     return this.http.post<VaccineBatchResponse>(`${this.apiUrl}/batches`, request);
   }
 
+  getBatches(facilityId?: string): Observable<VaccineBatchResponse[]> {
+    // If no facilityId provided, use a default or fetch all batches
+    if (facilityId) {
+      return this.getBatchesByFacility(facilityId);
+    }
+    // Fetch all batches across facilities (you may need to add this endpoint in backend)
+    return this.http.get<VaccineBatchResponse[]>(`${this.apiUrl}/batches`);
+  }
+
   getBatchesByFacility(facilityId: string): Observable<VaccineBatchResponse[]> {
     return this.http.get<VaccineBatchResponse[]>(`${this.apiUrl}/batches/facility/${facilityId}`);
   }

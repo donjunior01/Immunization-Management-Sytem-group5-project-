@@ -8,12 +8,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
+import { LoaderService } from '../../services/loader.service';
+import { NotificationService } from '../../services/notification.service';
 import { InventoryRealService, VaccineBatchResponse } from '../../services/inventory-real.service';
 import { AuthService } from '../../services/auth.service';
 
@@ -52,10 +54,12 @@ export class ViewBatchComponent implements OnInit {
     private router: Router,
     private inventoryService: InventoryRealService,
     private authService: AuthService,
-    private snackBar: MatSnackBar
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
+    this.loaderService.show(); // Show loader for 1000ms
     this.loadUserData();
     this.loadBatchData();
   }
@@ -82,8 +86,11 @@ export class ViewBatchComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
 
     if (!id) {
-      this.showError('Invalid batch ID');
-      this.router.navigate(['/inventory']);
+      this.notificationService.error('Invalid batch ID');
+      this.loaderService.show(); // Show loader before navigation
+      setTimeout(() => {
+        this.router.navigate(['/inventory']);
+      }, 1000);
       return;
     }
 
@@ -96,7 +103,7 @@ export class ViewBatchComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading batch:', error);
-        this.showError('Failed to load batch details');
+        this.notificationService.error('Failed to load batch details');
         this.isLoading = false;
         setTimeout(() => {
           this.router.navigate(['/inventory']);
@@ -234,19 +241,22 @@ export class ViewBatchComponent implements OnInit {
   }
 
   updateQuantity(): void {
-    this.showInfo('Quantity update feature coming soon');
+    this.notificationService.info('Quantity update feature coming soon');
   }
 
   reportIssue(): void {
-    this.showInfo('Issue reporting feature coming soon');
+    this.notificationService.info('Issue reporting feature coming soon');
   }
 
   // Action Methods
   editBatch(): void {
     if (!this.batchId) return;
-    this.router.navigate(['/inventory/add-batch'], {
-      queryParams: { batchId: this.batchId }
-    });
+    this.loaderService.show();
+    setTimeout(() => {
+      this.router.navigate(['/inventory/add-batch'], {
+        queryParams: { batchId: this.batchId }
+      });
+    }, 1000);
   }
 
   deleteBatch(): void {
@@ -261,37 +271,44 @@ export class ViewBatchComponent implements OnInit {
     );
 
     if (confirmed) {
-      this.isLoading = true;
-      this.inventoryService.deleteBatch(this.batchId).subscribe({
-        next: () => {
-          this.showSuccess('Batch deleted successfully');
-          setTimeout(() => {
-            this.router.navigate(['/inventory']);
-          }, 1500);
-        },
-        error: (error) => {
-          console.error('Delete error:', error);
-          this.showError('Failed to delete batch: ' + (error.error?.message || error.message || 'Unknown error'));
-          this.isLoading = false;
-        }
-      });
+      this.loaderService.show();
+      setTimeout(() => {
+        this.isLoading = true;
+        this.inventoryService.deleteBatch(this.batchId!).subscribe({
+          next: () => {
+            this.notificationService.success('Batch deleted successfully');
+            this.loaderService.show();
+            setTimeout(() => {
+              this.router.navigate(['/inventory']);
+            }, 1000);
+          },
+          error: (error) => {
+            console.error('Delete error:', error);
+            this.notificationService.error('Failed to delete batch: ' + (error.error?.message || error.message || 'Unknown error'));
+            this.isLoading = false;
+          }
+        });
+      }, 1000);
     }
   }
 
   exportReport(): void {
     if (!this.batch) return;
 
-    const report = this.generateReport();
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    this.loaderService.show();
+    setTimeout(() => {
+      const report = this.generateReport();
+      const blob = new Blob([report], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
 
-    link.href = url;
-    link.download = `batch-${this.batch.batchNumber}-report-${new Date().toISOString().split('T')[0]}.txt`;
-    link.click();
+      link.href = url;
+      link.download = `batch-${this.batch!.batchNumber}-report-${new Date().toISOString().split('T')[0]}.txt`;
+      link.click();
 
-    URL.revokeObjectURL(url);
-    this.showSuccess('Report exported successfully');
+      URL.revokeObjectURL(url);
+      this.notificationService.success('Report exported successfully');
+    }, 1000);
   }
 
   private generateReport(): string {
@@ -358,35 +375,10 @@ END OF REPORT
   }
 
   backToList(): void {
-    this.router.navigate(['/inventory']);
-  }
-
-  // Notification Methods
-  showSuccess(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      panelClass: ['success-snackbar'],
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
-    });
-  }
-
-  showError(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 5000,
-      panelClass: ['error-snackbar'],
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
-    });
-  }
-
-  showInfo(message: string): void {
-    this.snackBar.open(message, 'Close', {
-      duration: 3000,
-      panelClass: ['info-snackbar'],
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
-    });
+    this.loaderService.show();
+    setTimeout(() => {
+      this.router.navigate(['/inventory']);
+    }, 1000);
   }
 
   toggleSidenav(): void {
@@ -394,7 +386,10 @@ END OF REPORT
   }
 
   logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.loaderService.show();
+    setTimeout(() => {
+      this.authService.logout();
+      this.router.navigate(['/login']);
+    }, 1000);
   }
 }

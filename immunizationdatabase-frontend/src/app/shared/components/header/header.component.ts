@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatDividerModule } from '@angular/material/divider';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
@@ -14,6 +14,7 @@ import { AuthService } from '../../../services/auth.service';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatToolbarModule,
     MatIconModule,
     MatButtonModule,
@@ -71,6 +72,24 @@ export class HeaderComponent implements OnInit {
 
   getUserRole(): string {
     return this.currentUser?.role?.replace('_', ' ') || 'User';
+  }
+
+  getRoleClass(): string {
+    if (!this.currentUser?.role) return 'role-default';
+    const role = this.currentUser.role.toLowerCase();
+    if (role.includes('health_worker')) return 'role-health-worker';
+    if (role.includes('facility_manager')) return 'role-facility-manager';
+    if (role.includes('government_official')) return 'role-government';
+    return 'role-default';
+  }
+
+  getRoleIconSmall(): string {
+    if (!this.currentUser?.role) return 'person';
+    const role = this.currentUser.role.toLowerCase();
+    if (role.includes('health_worker')) return 'local_hospital';
+    if (role.includes('facility_manager')) return 'business';
+    if (role.includes('government_official')) return 'account_balance';
+    return 'person';
   }
 
   toggleSidebar(): void {

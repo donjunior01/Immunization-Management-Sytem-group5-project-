@@ -1,0 +1,723 @@
+<div class="forecast-planning-container">
+  <!-- Page Header -->
+  <mat-card class="page-header">
+    <div class="header-content">
+      <div class="icon-wrapper">
+        <mat-icon>insights</mat-icon>
+      </div>
+      <div class="header-text">
+        <h1>Forecast & Planning</h1>
+        <p>Demand prediction and resource allocation for vaccine management</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openForecastDialog()">
+        <mat-icon>add</mat-icon>
+        Create Forecast
+      </button>
+      <button mat-raised-button color="accent" (click)="openScenarioDialog()">
+        <mat-icon>analytics</mat-icon>
+        New Scenario
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="exportMenu" matTooltip="Export">
+        <mat-icon>download</mat-icon>
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportForecasts('csv')">
+          <mat-icon>description</mat-icon>
+          Export as CSV
+        </button>
+        <button mat-menu-item (click)="exportForecasts('json')">
+          <mat-icon>code</mat-icon>
+          Export as JSON
+        </button>
+        <button mat-menu-item (click)="exportForecasts('pdf')">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Export as PDF
+        </button>
+      </mat-menu>
+    </div>
+  </mat-card>
+
+  <!-- Statistics Overview -->
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ stats.totalPredictedDemand | number }}</div>
+            <div class="stat-label">Predicted Demand</div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>shopping_cart</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ stats.totalRecommendedOrder | number }}</div>
+            <div class="stat-label">Recommended Order</div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>attach_money</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ formatCurrency(stats.totalEstimatedCost) }}</div>
+            <div class="stat-label">Estimated Cost</div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card" [class.warning]="stats.averageAccuracy < 80">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>percent</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value" [class.high]="stats.averageAccuracy >= 90" [class.medium]="stats.averageAccuracy >= 80 && stats.averageAccuracy < 90">
+              {{ stats.averageAccuracy }}%
+            </div>
+            <div class="stat-label">Forecast Accuracy</div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card" [class.warning]="stats.highRiskVaccines > 3">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value" [class.critical]="stats.highRiskVaccines > 3">
+              {{ stats.highRiskVaccines }}
+            </div>
+            <div class="stat-label">High Risk Vaccines</div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card" [class.warning]="stats.daysUntilStockout < 14">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>calendar_today</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value" [class.critical]="stats.daysUntilStockout < 7">
+              {{ stats.daysUntilStockout }}
+            </div>
+            <div class="stat-label">Days Until Stockout</div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Demand Predictions Chart -->
+  <mat-card class="predictions-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>show_chart</mat-icon>
+        Demand Predictions vs Actual
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="predictions-chart">
+        <div class="chart-bar" *ngFor="let prediction of demandPredictions">
+          <div class="bar-group">
+            <div class="bar predicted" [style.height.%]="(prediction.predicted / 1200) * 100">
+              <span class="bar-label">P</span>
+            </div>
+            <div class="bar actual" [style.height.%]="(prediction.actual / 1200) * 100">
+              <span class="bar-label">A</span>
+            </div>
+          </div>
+          <div class="bar-month">{{ prediction.month }}</div>
+          <div class="bar-accuracy" [class.high]="prediction.accuracy >= 90" [class.medium]="prediction.accuracy >= 75 && prediction.accuracy < 90">
+            {{ prediction.accuracy }}%
+          </div>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-color predicted"></div>
+          <span>Predicted</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color actual"></div>
+          <span>Actual</span>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Resource Allocations -->
+  <mat-card class="allocations-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>account_balance</mat-icon>
+        Resource Allocations by Facility
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="allocations-grid">
+        <div class="allocation-item" *ngFor="let allocation of resourceAllocations">
+          <div class="allocation-header">
+            <h3>{{ allocation.facilityName }}</h3>
+            <mat-chip [color]="getPriorityColor(allocation.priority)">{{ allocation.priority }}</mat-chip>
+          </div>
+          <div class="allocation-details">
+            <div class="detail-row">
+              <span class="label">Budget:</span>
+              <span class="value">{{ formatCurrency(allocation.allocatedBudget) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Utilization:</span>
+              <span class="value">{{ allocation.utilizationRate }}%</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Staffing:</span>
+              <span class="value">{{ allocation.staffing }} workers</span>
+            </div>
+          </div>
+          <div class="utilization-bar">
+            <div class="utilization-fill" [style.width.%]="allocation.utilizationRate" 
+                 [class.high]="allocation.utilizationRate > 85"
+                 [class.medium]="allocation.utilizationRate > 70 && allocation.utilizationRate <= 85"></div>
+          </div>
+          <div class="allocation-vaccines">
+            <div class="vaccine-tag" *ngFor="let vaccine of allocation.vaccines">
+              {{ vaccine.name }}: {{ vaccine.quantity }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Scenario Analysis -->
+  <mat-card class="scenarios-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>science</mat-icon>
+        Scenario Analysis
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="scenarios-grid">
+        <div class="scenario-item" *ngFor="let scenario of scenarios">
+          <div class="scenario-header">
+            <h3>{{ scenario.name }}</h3>
+            <mat-chip [color]="getFeasibilityColor(scenario.feasibility)">{{ scenario.feasibility }}</mat-chip>
+          </div>
+          <p class="scenario-description">{{ scenario.description }}</p>
+          <div class="scenario-metrics">
+            <div class="metric">
+              <mat-icon>trending_up</mat-icon>
+              <span>Demand: {{ scenario.demandIncrease > 0 ? '+' : '' }}{{ scenario.demandIncrease }}%</span>
+            </div>
+            <div class="metric">
+              <mat-icon>account_balance_wallet</mat-icon>
+              <span>Budget: {{ formatCurrency(scenario.budgetConstraint) }}</span>
+            </div>
+            <div class="metric">
+              <mat-icon>assessment</mat-icon>
+              <span>Impact: {{ scenario.impactScore }}/100</span>
+            </div>
+          </div>
+          <div class="scenario-recommendations">
+            <h4>Recommendations:</h4>
+            <ul>
+              <li *ngFor="let rec of scenario.recommendations">{{ rec }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_list</mat-icon>
+        Filter Forecasts
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filter-form">
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Search</mat-label>
+            <input matInput formControlName="search" placeholder="Search forecasts...">
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Vaccine</mat-label>
+            <mat-select formControlName="vaccineName">
+              <mat-option value="">All Vaccines</mat-option>
+              <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">{{ vaccine }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Stockout Risk</mat-label>
+            <mat-select formControlName="stockoutRisk">
+              <mat-option value="">All Risk Levels</mat-option>
+              <mat-option *ngFor="let risk of riskOptions" [value]="risk">{{ risk }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Supplier</mat-label>
+            <mat-select formControlName="supplier">
+              <mat-option value="">All Suppliers</mat-option>
+              <mat-option *ngFor="let supplier of suppliers" [value]="supplier">{{ supplier }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filter-actions">
+          <button type="button" mat-raised-button color="accent" (click)="resetFilters()" class="reset-button">
+            <mat-icon>refresh</mat-icon>
+            Reset Filters
+          </button>
+          <div class="filter-results">
+            {{ filteredForecasts.length }} forecasts found
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Forecasts Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>table_chart</mat-icon>
+        Vaccine Forecasts
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="getPaginatedForecasts()" class="forecasts-table">
+          
+          <!-- Vaccine Column -->
+          <ng-container matColumnDef="vaccine">
+            <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+            <td mat-cell *matCellDef="let forecast">
+              <div class="vaccine-info">
+                <div class="vaccine-name">{{ forecast.vaccineName }}</div>
+                <div class="confidence">Confidence: {{ forecast.confidenceLevel }}%</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Current Stock Column -->
+          <ng-container matColumnDef="currentStock">
+            <th mat-header-cell *matHeaderCellDef>Current Stock</th>
+            <td mat-cell *matCellDef="let forecast">
+              <div class="stock-info">
+                <div class="stock-value">{{ forecast.currentStock | number }} doses</div>
+                <div class="usage">{{ forecast.averageDailyUsage }}/day</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Predicted Demand Column -->
+          <ng-container matColumnDef="predictedDemand">
+            <th mat-header-cell *matHeaderCellDef>Predicted Demand</th>
+            <td mat-cell *matCellDef="let forecast">
+              <div class="demand-info">
+                <div class="demand-value">{{ forecast.predictedDemand | number }} doses</div>
+                <div class="period">{{ forecast.forecastPeriod }} days</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Recommended Order Column -->
+          <ng-container matColumnDef="recommendedOrder">
+            <th mat-header-cell *matHeaderCellDef>Recommended Order</th>
+            <td mat-cell *matCellDef="let forecast">
+              <div class="order-value">{{ forecast.recommendedOrder | number }} doses</div>
+            </td>
+          </ng-container>
+
+          <!-- Stockout Risk Column -->
+          <ng-container matColumnDef="stockoutRisk">
+            <th mat-header-cell *matHeaderCellDef>Stockout Risk</th>
+            <td mat-cell *matCellDef="let forecast">
+              <mat-chip [color]="getRiskColor(forecast.stockoutRisk)">
+                <mat-icon>{{ forecast.stockoutRisk === 'Critical' ? 'error' : forecast.stockoutRisk === 'High' ? 'warning' : 'check_circle' }}</mat-icon>
+                {{ forecast.stockoutRisk }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Cost Column -->
+          <ng-container matColumnDef="cost">
+            <th mat-header-cell *matHeaderCellDef>Estimated Cost</th>
+            <td mat-cell *matCellDef="let forecast">
+              <div class="cost-value">{{ formatCurrency(forecast.estimatedCost) }}</div>
+            </td>
+          </ng-container>
+
+          <!-- Supplier Column -->
+          <ng-container matColumnDef="supplier">
+            <th mat-header-cell *matHeaderCellDef>Supplier</th>
+            <td mat-cell *matCellDef="let forecast">
+              <div class="supplier-info">
+                <div class="supplier-name">{{ forecast.supplier }}</div>
+                <div class="lead-time">Lead: {{ forecast.leadTime }} days</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let forecast">
+              <button mat-icon-button [matMenuTriggerFor]="menu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="viewForecastDetails(forecast)">
+                  <mat-icon>visibility</mat-icon>
+                  View Details
+                </button>
+                <button mat-menu-item (click)="openForecastDialog(forecast)">
+                  <mat-icon>edit</mat-icon>
+                  Edit
+                </button>
+                <button mat-menu-item (click)="deleteForecast(forecast)" class="danger-action">
+                  <mat-icon>delete</mat-icon>
+                  Delete
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="filteredForecasts.length"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        [pageIndex]="pageIndex"
+        (page)="handlePageEvent($event)">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Forecast Dialog -->
+<div class="dialog-overlay" *ngIf="showForecastDialog" (click)="closeForecastDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>{{ isEditMode ? 'Edit Forecast' : 'Create New Forecast' }}</h2>
+      <button mat-icon-button (click)="closeForecastDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="dialog-content">
+      <form [formGroup]="forecastForm">
+        <div class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Vaccine Name</mat-label>
+              <mat-select formControlName="vaccineName">
+                <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">{{ vaccine }}</mat-option>
+              </mat-select>
+              <mat-error *ngIf="forecastForm.get('vaccineName')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Supplier</mat-label>
+              <mat-select formControlName="supplier">
+                <mat-option *ngFor="let supplier of suppliers" [value]="supplier">{{ supplier }}</mat-option>
+              </mat-select>
+              <mat-error *ngIf="forecastForm.get('supplier')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Current Stock</mat-label>
+              <input matInput type="number" formControlName="currentStock" placeholder="Enter current stock">
+              <span matSuffix>doses</span>
+              <mat-error *ngIf="forecastForm.get('currentStock')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="forecastForm.get('currentStock')?.hasError('min')">Must be at least 0</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Average Daily Usage</mat-label>
+              <input matInput type="number" formControlName="averageDailyUsage" placeholder="Enter average usage">
+              <span matSuffix>doses/day</span>
+              <mat-error *ngIf="forecastForm.get('averageDailyUsage')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="forecastForm.get('averageDailyUsage')?.hasError('min')">Must be at least 0</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="form-section">
+          <h3>Forecast Parameters</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Forecast Period</mat-label>
+              <input matInput type="number" formControlName="forecastPeriod" placeholder="Enter period">
+              <span matSuffix>days</span>
+              <mat-error *ngIf="forecastForm.get('forecastPeriod')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="forecastForm.get('forecastPeriod')?.hasError('min')">Must be at least 1</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Lead Time</mat-label>
+              <input matInput type="number" formControlName="leadTime" placeholder="Enter lead time">
+              <span matSuffix>days</span>
+              <mat-error *ngIf="forecastForm.get('leadTime')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="forecastForm.get('leadTime')?.hasError('min')">Must be at least 1</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Expiry Buffer</mat-label>
+              <input matInput type="number" formControlName="expiryBuffer" placeholder="Enter buffer">
+              <span matSuffix>days</span>
+              <mat-error *ngIf="forecastForm.get('expiryBuffer')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Seasonal Factor</mat-label>
+              <input matInput type="number" step="0.1" formControlName="seasonalFactor" placeholder="1.0 = normal">
+              <mat-hint>Multiplier for seasonal variation (0.5 - 2.0)</mat-hint>
+              <mat-error *ngIf="forecastForm.get('seasonalFactor')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Trend Factor</mat-label>
+              <input matInput type="number" step="0.1" formControlName="trendFactor" placeholder="1.0 = stable">
+              <mat-hint>Multiplier for demand trend (0.5 - 2.0)</mat-hint>
+              <mat-error *ngIf="forecastForm.get('trendFactor')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Campaign Impact</mat-label>
+              <input matInput type="number" formControlName="campaignImpact" placeholder="Additional doses">
+              <span matSuffix>doses</span>
+              <mat-hint>Extra doses needed for campaigns</mat-hint>
+              <mat-error *ngIf="forecastForm.get('campaignImpact')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-button (click)="closeForecastDialog()">Cancel</button>
+      <button mat-raised-button color="primary" (click)="saveForecast()" class="save-button">
+        {{ isEditMode ? 'Update' : 'Create' }} Forecast
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Dialog -->
+<div class="dialog-overlay" *ngIf="showDetailDialog" (click)="closeDetailDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>Forecast Details</h2>
+      <button mat-icon-button (click)="closeDetailDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="dialog-content" *ngIf="selectedForecast">
+      <div class="detail-section">
+        <h3>Vaccine Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Vaccine Name:</span>
+            <span class="value">{{ selectedForecast.vaccineName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Supplier:</span>
+            <span class="value">{{ selectedForecast.supplier }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Lead Time:</span>
+            <span class="value">{{ selectedForecast.leadTime }} days</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Last Order:</span>
+            <span class="value">{{ formatDate(selectedForecast.lastOrderDate) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="detail-section">
+        <h3>Stock & Demand</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Current Stock:</span>
+            <span class="value stock-highlight">{{ selectedForecast.currentStock | number }} doses</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Daily Usage:</span>
+            <span class="value">{{ selectedForecast.averageDailyUsage }} doses</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Forecast Period:</span>
+            <span class="value">{{ selectedForecast.forecastPeriod }} days</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Predicted Demand:</span>
+            <span class="value demand-highlight">{{ selectedForecast.predictedDemand | number }} doses</span>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="detail-section">
+        <h3>Forecast Analysis</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Recommended Order:</span>
+            <span class="value order-highlight">{{ selectedForecast.recommendedOrder | number }} doses</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Estimated Cost:</span>
+            <span class="value cost-highlight">{{ formatCurrency(selectedForecast.estimatedCost) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Stockout Risk:</span>
+            <mat-chip [color]="getRiskColor(selectedForecast.stockoutRisk)">{{ selectedForecast.stockoutRisk }}</mat-chip>
+          </div>
+          <div class="detail-item">
+            <span class="label">Confidence Level:</span>
+            <span class="value">{{ selectedForecast.confidenceLevel }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="detail-section">
+        <h3>Forecast Factors</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Seasonal Factor:</span>
+            <span class="value">{{ selectedForecast.seasonalFactor }}x</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Trend Factor:</span>
+            <span class="value">{{ selectedForecast.trendFactor }}x</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Campaign Impact:</span>
+            <span class="value">{{ selectedForecast.campaignImpact }} doses</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Expiry Buffer:</span>
+            <span class="value">{{ selectedForecast.expiryBuffer }} days</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-raised-button color="primary" (click)="closeDetailDialog()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scenario Dialog -->
+<div class="dialog-overlay" *ngIf="showScenarioDialog" (click)="closeScenarioDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>{{ isEditMode ? 'Edit Scenario' : 'Create New Scenario' }}</h2>
+      <button mat-icon-button (click)="closeScenarioDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="dialog-content">
+      <form [formGroup]="scenarioForm">
+        <div class="form-section">
+          <h3>Scenario Information</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Scenario Name</mat-label>
+            <input matInput formControlName="name" placeholder="Enter scenario name">
+            <mat-error *ngIf="scenarioForm.get('name')?.hasError('required')">Required</mat-error>
+            <mat-error *ngIf="scenarioForm.get('name')?.hasError('minlength')">Minimum 3 characters</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Describe the scenario"></textarea>
+            <mat-error *ngIf="scenarioForm.get('description')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="form-section">
+          <h3>Parameters</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Demand Change</mat-label>
+              <input matInput type="number" formControlName="demandIncrease" placeholder="Enter percentage">
+              <span matSuffix>%</span>
+              <mat-hint>Positive for increase, negative for decrease</mat-hint>
+              <mat-error *ngIf="scenarioForm.get('demandIncrease')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Budget Constraint</mat-label>
+              <input matInput type="number" formControlName="budgetConstraint" placeholder="Enter budget">
+              <span matPrefix>$</span>
+              <mat-error *ngIf="scenarioForm.get('budgetConstraint')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Feasibility</mat-label>
+              <mat-select formControlName="feasibility">
+                <mat-option value="High">High</mat-option>
+                <mat-option value="Medium">Medium</mat-option>
+                <mat-option value="Low">Low</mat-option>
+              </mat-select>
+              <mat-error *ngIf="scenarioForm.get('feasibility')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-button (click)="closeScenarioDialog()">Cancel</button>
+      <button mat-raised-button color="primary" (click)="saveScenario()" class="save-button">
+        {{ isEditMode ? 'Update' : 'Create' }} Scenario
+      </button>
+    </div>
+  </div>
+</div>

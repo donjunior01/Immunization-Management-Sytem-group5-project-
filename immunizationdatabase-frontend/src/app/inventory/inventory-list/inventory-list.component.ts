@@ -15,6 +15,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { LoaderService } from '../../services/loader.service';
+import { NotificationService } from '../../services/notification.service';
 import { InventoryRealService, VaccineBatchResponse } from '../../services/inventory-real.service';
 import { AuthService } from '../../services/auth.service';
 
@@ -92,12 +94,15 @@ export class InventoryListComponent implements OnInit {
     private inventoryService: InventoryRealService,
     private authService: AuthService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {
     this.dataSource = new MatTableDataSource<VaccineBatchResponse>();
   }
 
   ngOnInit(): void {
+    this.loaderService.show(); // Show loader for 1000ms
     this.loadUserData();
     this.loadInventory();
     this.setupFilters();
@@ -121,19 +126,24 @@ export class InventoryListComponent implements OnInit {
   }
 
   loadInventory(): void {
+    // Check authentication first
+    if (!this.authService.isAuthenticated()) {
+      console.warn('User not authenticated, redirecting to login...');
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: this.router.url }
+      });
+      return;
+    }
+
     this.isLoading = true;
-    
+
     // Use authService.getFacilityId() which handles all user types correctly
     const facilityId = this.authService.getFacilityId();
 
     if (facilityId === 'NATIONAL') {
       // For government officials, they can view national dashboard for inventory summary
       // Inventory list is facility-specific
-      this.snackBar.open('Inventory is facility-specific. View national summary on dashboard or select a facility.', 'Close', {
-        duration: 5000,
-        horizontalPosition: 'end',
-        verticalPosition: 'top'
-      });
+      this.notificationService.info('Inventory is facility-specific. View national summary on dashboard or select a facility.');
       this.isLoading = false;
       return;
     }
@@ -145,11 +155,20 @@ export class InventoryListComponent implements OnInit {
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
         this.isLoading = false;
-        this.showSuccess(`Loaded ${batches.length} vaccine batches`);
+        this.notificationService.success(`Loaded ${batches.length} vaccine batches`);
       },
       error: (error) => {
         console.error('Error loading inventory:', error);
-        this.showError('Failed to load inventory data');
+
+        if (error.status === 403 || error.status === 401) {
+          this.notificationService.error('Authentication required. Please log in.');
+          this.authService.logout();
+          this.router.navigate(['/login'], {
+            queryParams: { returnUrl: this.router.url }
+          });
+        } else {
+          this.notificationService.error('Failed to load inventory data');
+        }
         this.isLoading = false;
       }
     });

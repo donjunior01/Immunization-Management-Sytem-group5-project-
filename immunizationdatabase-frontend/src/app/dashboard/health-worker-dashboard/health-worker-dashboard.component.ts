@@ -116,19 +116,24 @@ export class HealthWorkerDashboardComponent implements OnInit {
   loadStockAlerts(): void {
     this.inventoryService.getExpiringSoonBatches(this.facilityId).subscribe({
       next: (batches) => {
-        this.stockAlerts = batches
-          .filter(batch => batch.quantityRemaining < 1000 || batch.isExpiringSoon)
-          .map(batch => ({
-            vaccineName: batch.vaccineName,
-            currentStock: batch.quantityRemaining,
-            minRequired: 1000,
-            expiryDate: batch.expiryDate,
-            status: (batch.quantityRemaining < 300 ? 'critical' : 'warning') as 'critical' | 'warning' | 'good'
-          }))
-          .slice(0, 5);
+        if (Array.isArray(batches) && batches.length > 0) {
+          this.stockAlerts = batches
+            .filter(batch => batch.quantityRemaining < 1000 || batch.isExpiringSoon)
+            .map(batch => ({
+              vaccineName: batch.vaccineName,
+              currentStock: batch.quantityRemaining,
+              minRequired: 1000,
+              expiryDate: batch.expiryDate,
+              status: (batch.quantityRemaining < 300 ? 'critical' : 'warning') as 'critical' | 'warning' | 'good'
+            }))
+            .slice(0, 5);
+        } else {
+          this.stockAlerts = [];
+        }
       },
       error: (error) => {
         console.error('Error loading stock alerts:', error);
+        this.stockAlerts = [];
         this.showError('Failed to load stock alerts');
       }
     });

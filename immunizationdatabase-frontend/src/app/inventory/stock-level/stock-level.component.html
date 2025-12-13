@@ -1,0 +1,209 @@
+<div class="stock-level-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="page-title">
+          <mat-icon>inventory</mat-icon>
+          Stock Levels
+        </h1>
+        <p class="page-subtitle">Monitor vaccine inventory across all batches</p>
+      </div>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" (click)="addBatch()">
+          <mat-icon>add</mat-icon>
+          Add Batch
+        </button>
+        <button mat-raised-button (click)="refresh()">
+          <mat-icon>refresh</mat-icon>
+          Refresh
+        </button>
+        <button mat-stroked-button (click)="exportData()">
+          <mat-icon>download</mat-icon>
+          Export
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);">
+          <mat-icon>vaccines</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value">{{ totalVaccines }}</span>
+          <span class="stat-label">Total Vaccines</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #dc3545 0%, #e15665 100%);">
+          <mat-icon>error</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value">{{ criticalStockCount }}</span>
+          <span class="stat-label">Critical Stock</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ffca28 100%);">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value">{{ lowStockCount }}</span>
+          <span class="stat-label">Low Stock</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content>
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);">
+          <mat-icon>event</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value">{{ expiringCount }}</span>
+          <span class="stat-label">Expiring Soon</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filters Section -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search Vaccine</mat-label>
+          <input matInput placeholder="Search by vaccine name..." formControlName="searchTerm">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status Filter</mat-label>
+          <mat-select formControlName="statusFilter">
+            <mat-option value="all">All Status</mat-option>
+            <mat-option value="optimal">Optimal</mat-option>
+            <mat-option value="adequate">Adequate</mat-option>
+            <mat-option value="low">Low</mat-option>
+            <mat-option value="critical">Critical</mat-option>
+          </mat-select>
+          <mat-icon matPrefix>filter_list</mat-icon>
+        </mat-form-field>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Stock Levels Table -->
+  <mat-card class="table-card">
+    <mat-card-content>
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="50"></mat-spinner>
+        <p>Loading stock levels...</p>
+      </div>
+
+      <!-- Table -->
+      <div *ngIf="!isLoading" class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="stock-table">
+          <!-- Vaccine Name Column -->
+          <ng-container matColumnDef="vaccineName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Vaccine Name</th>
+            <td mat-cell *matCellDef="let stock">
+              <div class="vaccine-cell">
+                <mat-icon class="vaccine-icon">vaccines</mat-icon>
+                <strong>{{ stock.vaccineName }}</strong>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Total Quantity Column -->
+          <ng-container matColumnDef="totalQuantity">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Total Quantity</th>
+            <td mat-cell *matCellDef="let stock">
+              <span class="quantity-value">{{ stock.totalQuantity | number }}</span>
+              <span class="quantity-label">units</span>
+            </td>
+          </ng-container>
+
+          <!-- Batch Count Column -->
+          <ng-container matColumnDef="batchCount">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Batches</th>
+            <td mat-cell *matCellDef="let stock">
+              <mat-chip class="batch-chip">{{ stock.batchCount }}</mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+            <td mat-cell *matCellDef="let stock">
+              <mat-chip [class]="'status-chip status-' + stock.status">
+                <mat-icon class="status-icon">{{ getStatusIcon(stock.status) }}</mat-icon>
+                {{ stock.status | titlecase }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Low Stock Batches Column -->
+          <ng-container matColumnDef="lowStock">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Low Stock Batches</th>
+            <td mat-cell *matCellDef="let stock">
+              <span [class.warning-text]="stock.lowStockBatches > 0">
+                {{ stock.lowStockBatches }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Expiring Soon Column -->
+          <ng-container matColumnDef="expiringSoon">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Expiring Soon</th>
+            <td mat-cell *matCellDef="let stock">
+              <span [class.danger-text]="stock.expiringBatches > 0">
+                {{ stock.expiringBatches }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let stock">
+              <button mat-icon-button [matTooltip]="'View Details'" (click)="viewDetails(stock)">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+        </table>
+
+        <!-- No Data State -->
+        <div *ngIf="dataSource.data.length === 0" class="no-data">
+          <mat-icon>inventory_2</mat-icon>
+          <p>No stock level data available</p>
+          <button mat-raised-button color="primary" (click)="addBatch()">
+            <mat-icon>add</mat-icon>
+            Add First Batch
+          </button>
+        </div>
+      </div>
+
+      <!-- Paginator -->
+      <mat-paginator *ngIf="!isLoading && dataSource.data.length > 0"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [pageSize]="25"
+        showFirstLastButtons>
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

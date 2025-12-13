@@ -13,6 +13,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { Observable, debounceTime, distinctUntilChanged, switchMap, startWith } from 'rxjs';
+import { LoaderService } from '../../services/loader.service';
+import { NotificationService } from '../../services/notification.service';
 import { map } from 'rxjs/operators';
 import { VaccinationRealService, RecordVaccinationRequest } from '../../services/vaccination-real.service';
 import { PatientService } from '../../services/patient.service';
@@ -78,10 +80,13 @@ export class RecordVaccinationComponent implements OnInit {
     private inventoryService: InventoryRealService,
     private authService: AuthService,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
+    this.loaderService.show(); // Show loader for 1000ms
     const currentUser = this.authService.getCurrentUser();
     this.facilityId = this.authService.getFacilityId();
 
@@ -215,20 +220,26 @@ export class RecordVaccinationComponent implements OnInit {
       this.vaccinationService.recordVaccination(request).subscribe({
         next: (vaccination) => {
           this.isLoading = false;
-          this.snackBar.open(
-            `Vaccination recorded successfully! ${selectedBatch.vaccineName} (Dose ${vaccination.doseNumber}) administered to ${this.selectedPatient?.fullName}`,
-            'Close',
-            { duration: 5000, panelClass: ['success-snackbar'] }
-          );
-
-          // Ask if user wants to print vaccination card
+          this.loaderService.show(); // Show loader for 1000ms
+          
           setTimeout(() => {
-            const printCard = confirm('Would you like to print the vaccination card?');
-            if (printCard) {
-              this.router.navigate(['/vaccinations/print', this.selectedPatient?.id]);
-            } else {
-              this.resetForm();
-            }
+            // Enhanced success notification with vaccine and patient details
+            this.notificationService.success(
+              `${selectedBatch.vaccineName} (Dose ${vaccination.doseNumber}) administered successfully to ${this.selectedPatient?.fullName}`
+            );
+
+            // Ask if user wants to print vaccination card
+            setTimeout(() => {
+              const printCard = confirm('Would you like to print the vaccination card?');
+              if (printCard) {
+                this.loaderService.show(); // Show loader before navigation
+                setTimeout(() => {
+                  this.router.navigate(['/vaccinations/print', this.selectedPatient?.id]);
+                }, 1000);
+              } else {
+                this.resetForm();
+              }
+            }, 1000);
           }, 1000);
         },
         error: (error) => {
@@ -244,7 +255,7 @@ export class RecordVaccinationComponent implements OnInit {
             errorMessage = 'This vaccination has already been recorded.';
           }
 
-          this.showError(errorMessage);
+          this.notificationService.error(errorMessage);
         }
       });
     } else {
@@ -269,7 +280,10 @@ export class RecordVaccinationComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/dashboard']);
+    this.loaderService.show(); // Show loader for 1000ms
+    setTimeout(() => {
+      this.router.navigate(['/dashboard']);
+    }, 1000);
   }
 
   private showError(message: string): void {

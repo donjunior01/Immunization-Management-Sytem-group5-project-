@@ -8,9 +8,14 @@
 
     <div class="sidebar-content">
       <!-- Logo Section -->
-      <div class="sidebar-logo" *ngIf="isOpen">
-        <mat-icon class="logo-icon">vaccines</mat-icon>
-        <span class="logo-text">IMS</span>
+      <div class="sidebar-brand" [class.sidebar-brand-collapsed]="!isOpen">
+        <div class="brand-logo">
+          <mat-icon class="logo-icon">vaccines</mat-icon>
+        </div>
+        <div class="brand-text" *ngIf="isOpen">
+          <span class="brand-name">ImmunizeDB</span>
+          <span class="brand-tagline">Health for All</span>
+        </div>
       </div>
 
       <!-- Menu Items -->
@@ -21,7 +26,7 @@
             mat-list-item
             [routerLink]="item.route"
             routerLinkActive="active-link"
-            [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
+            [routerLinkActiveOptions]="{exact: false}"
             class="nav-item"
             *ngIf="!item.children || item.children.length === 0"
             [matTooltip]="!isOpen ? item.label : ''"
@@ -52,6 +57,7 @@
                 mat-list-item
                 [routerLink]="child.route"
                 routerLinkActive="active-link"
+                [routerLinkActiveOptions]="{exact: false}"
                 class="nav-item nav-item-child"
                 *ngFor="let child of item.children">
                 <mat-icon

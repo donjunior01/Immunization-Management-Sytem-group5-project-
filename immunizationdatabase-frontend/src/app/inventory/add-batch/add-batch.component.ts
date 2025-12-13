@@ -15,6 +15,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { LoaderService } from '../../services/loader.service';
+import { NotificationService } from '../../services/notification.service';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { InventoryRealService, CreateVaccineBatchRequest, VaccineBatchResponse } from '../../services/inventory-real.service';
@@ -97,7 +99,9 @@ export class AddBatchComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {
     this.basicInfoForm = this.createBasicInfoForm();
     this.storageForm = this.createStorageForm();
@@ -106,6 +110,7 @@ export class AddBatchComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loaderService.show(); // Show loader for 1000ms
     this.setupAutocomplete();
     this.checkEditMode();
   }
@@ -212,9 +217,12 @@ export class AddBatchComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading batch:', error);
-        this.showError('Failed to load batch data');
+        this.notificationService.error('Failed to load batch data');
         this.submitting = false;
-        this.router.navigate(['/inventory']);
+        this.loaderService.show(); // Show loader before navigation
+        setTimeout(() => {
+          this.router.navigate(['/inventory']);
+        }, 1000);
       }
     });
   }
@@ -223,7 +231,7 @@ export class AddBatchComponent implements OnInit {
     if (this.basicInfoForm.invalid || this.storageForm.invalid) {
       this.markFormGroupTouched(this.basicInfoForm);
       this.markFormGroupTouched(this.storageForm);
-      this.showError('Please complete all required fields correctly');
+      this.notificationService.warning('Please complete all required fields correctly');
       return;
     }
 
@@ -237,13 +245,13 @@ export class AddBatchComponent implements OnInit {
 
     // Government officials shouldn't create batches at national level
     if (facilityId === 'NATIONAL') {
-      this.showError('Government officials cannot add batches - manage at facility level');
+      this.notificationService.error('Government officials cannot add batches - manage at facility level');
       this.submitting = false;
       return;
     }
 
     if (!facilityId) {
-      this.showError('No facility ID found for current user');
+      this.notificationService.error('No facility ID found for current user');
       this.submitting = false;
       return;
     }
@@ -268,14 +276,20 @@ export class AddBatchComponent implements OnInit {
   createBatch(request: CreateVaccineBatchRequest): void {
     this.inventoryService.createBatch(request).subscribe({
       next: (response) => {
-        this.showSuccess('Vaccine batch registered successfully!');
+        this.loaderService.show(); // Show loader for 1000ms
         setTimeout(() => {
-          this.router.navigate(['/inventory']);
-        }, 1500);
+          // Enhanced batch creation confirmation with details
+          this.notificationService.success(
+            `Batch ${request.batchNumber} (${request.vaccineName}) created successfully - ${request.quantityReceived} units added to inventory`
+          );
+          setTimeout(() => {
+            this.router.navigate(['/inventory']);
+          }, 1500);
+        }, 1000);
       },
       error: (error) => {
         console.error('Batch creation error:', error);
-        this.showError('Failed to register batch: ' + (error.error?.message || error.message || 'Unknown error'));
+        this.notificationService.error('Failed to register batch: ' + (error.error?.message || error.message || 'Unknown error'));
         this.submitting = false;
       }
     });
@@ -286,14 +300,17 @@ export class AddBatchComponent implements OnInit {
 
     this.inventoryService.updateBatch(this.batchId, request).subscribe({
       next: (response) => {
-        this.showSuccess('Vaccine batch updated successfully!');
+        this.loaderService.show(); // Show loader for 1000ms
         setTimeout(() => {
-          this.router.navigate(['/inventory']);
-        }, 1500);
+          this.notificationService.success(`Batch ${request.batchNumber} updated successfully`);
+          setTimeout(() => {
+            this.router.navigate(['/inventory']);
+          }, 1500);
+        }, 1000);
       },
       error: (error) => {
         console.error('Batch update error:', error);
-        this.showError('Failed to update batch: ' + (error.error?.message || error.message || 'Unknown error'));
+        this.notificationService.error('Failed to update batch: ' + (error.error?.message || error.message || 'Unknown error'));
         this.submitting = false;
       }
     });

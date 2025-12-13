@@ -14,8 +14,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { LoaderService } from '../../services/loader.service';
+import { NotificationService } from '../../services/notification.service';
+import { DefaulterDetailsDialogComponent } from '../defaulter-details-dialog/defaulter-details-dialog.component';
+import { ReminderConfirmationDialogComponent } from '../../shared/reminder-confirmation-dialog/reminder-confirmation-dialog.component';
 
 interface DefaulterRecord {
   patientId: string;
@@ -48,7 +53,8 @@ interface DefaulterRecord {
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatChipsModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatDialogModule
   ],
   templateUrl: './defaulters-list.component.html',
   styleUrls: ['./defaulters-list.component.scss']
@@ -76,10 +82,14 @@ export class DefaultersListComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
+    this.loaderService.show(); // Show loader for 1000ms
     const currentUser = this.authService.getCurrentUser();
     this.facilityId = this.authService.getFacilityId();
 
@@ -201,48 +211,79 @@ export class DefaultersListComponent implements OnInit {
   }
 
   sendReminder(defaulter: DefaulterRecord): void {
-    // TODO: Implement SMS/WhatsApp reminder functionality
-    // Backend endpoint: POST /api/reminders
+    const dialogRef = this.dialog.open(ReminderConfirmationDialogComponent, {
+      width: '600px',
+      data: {
+        patientName: defaulter.patientName,
+        guardianName: defaulter.guardianName,
+        phoneNumber: defaulter.phoneNumber,
+        missedVaccine: defaulter.missedVaccine
+      }
+    });
 
-    this.snackBar.open(
-      `Sending reminder to ${defaulter.guardianName} for ${defaulter.patientName}...`,
-      'Close',
-      { duration: 3000, panelClass: ['info-snackbar'] }
-    );
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.loaderService.show(); // Show loader for 1000ms
+        this.notificationService.info(`Sending reminder to ${defaulter.guardianName}...`);
 
-    // Mock API call
-    setTimeout(() => {
-      this.snackBar.open(
-        `Reminder sent successfully to ${defaulter.phoneNumber}`,
-        'Close',
-        { duration: 5000, panelClass: ['success-snackbar'] }
-      );
-    }, 1500);
+        // TODO: Replace with actual backend API call
+        // Backend endpoint: POST /api/reminders
+        setTimeout(() => {
+          this.notificationService.success(
+            `Reminder sent successfully to ${defaulter.guardianName} at ${defaulter.phoneNumber}`
+          );
+        }, 1000);
+      }
+    });
   }
 
   scheduleFollowUp(defaulter: DefaulterRecord): void {
-    // TODO: Navigate to scheduling component
-    this.snackBar.open(
-      `Scheduling follow-up for ${defaulter.patientName}...`,
-      'Close',
-      { duration: 3000, panelClass: ['info-snackbar'] }
-    );
+    this.loaderService.show(); // Show loader for 1000ms
+    
+    setTimeout(() => {
+      // TODO: Navigate to scheduling component or open scheduling dialog
+      this.notificationService.info(`Follow-up scheduled for ${defaulter.patientName}`);
+    }, 1000);
   }
 
   viewPatientDetails(defaulter: DefaulterRecord): void {
-    // TODO: Navigate to patient details view
-    console.log('View patient details:', defaulter.patientId);
+    this.loaderService.show(); // Show loader for 1000ms
+
+    setTimeout(() => {
+      const dialogRef = this.dialog.open(DefaulterDetailsDialogComponent, {
+        width: '800px',
+        maxWidth: '90vw',
+        data: defaulter,
+        disableClose: false
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          if (result.action === 'send-reminder') {
+            this.sendReminder(defaulter);
+          } else if (result.action === 'schedule-followup') {
+            this.scheduleFollowUp(defaulter);
+          }
+        }
+      });
+    }, 1000);
   }
 
   exportToCSV(): void {
-    const csvData = this.convertToCSV(this.dataSource.data);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `defaulters_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    this.loaderService.show(); // Show loader for 1000ms
+    
+    setTimeout(() => {
+      const csvData = this.convertToCSV(this.dataSource.data);
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `defaulters_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      
+      this.notificationService.success(`Exported ${this.dataSource.data.length} defaulter records to CSV`);
+    }, 1000);
   }
 
   private convertToCSV(data: DefaulterRecord[]): string {
@@ -286,6 +327,12 @@ export class DefaultersListComponent implements OnInit {
   }
 
   refreshData(): void {
-    this.loadDefaulters();
+    this.loaderService.show(); // Show loader for 1000ms
+    this.notificationService.info('Refreshing defaulters list...');
+    
+    setTimeout(() => {
+      this.loadDefaulters();
+      this.notificationService.success('Defaulters list refreshed');
+    }, 1000);
   }
 }

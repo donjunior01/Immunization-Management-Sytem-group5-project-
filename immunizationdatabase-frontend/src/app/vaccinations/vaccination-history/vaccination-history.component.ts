@@ -18,6 +18,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { Observable, startWith, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { LoaderService } from '../../services/loader.service';
+import { NotificationService } from '../../services/notification.service';
 import { VaccinationRealService, VaccinationResponse } from '../../services/vaccination-real.service';
 import { PatientService } from '../../services/patient.service';
 import { AuthService } from '../../services/auth.service';
@@ -85,10 +87,13 @@ export class VaccinationHistoryComponent implements OnInit {
     private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
+    this.loaderService.show(); // Show loader for 1000ms
     const currentUser = this.authService.getCurrentUser();
     this.facilityId = this.authService.getFacilityId();
 
@@ -140,7 +145,7 @@ export class VaccinationHistoryComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading vaccinations:', error);
-        this.showError('Failed to load vaccination history');
+        this.notificationService.error('Failed to load vaccination history');
         this.isLoading = false;
       }
     });
@@ -164,23 +169,26 @@ export class VaccinationHistoryComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error loading vaccination history:', error);
-            this.showError('Failed to load vaccination history');
+            this.notificationService.error('Failed to load vaccination history');
             this.isLoading = false;
           }
         });
       },
       error: (error) => {
         console.error('Error loading patient:', error);
-        this.showError('Failed to load patient details');
+        this.notificationService.error('Failed to load patient details');
         this.isLoading = false;
       }
     });
   }
 
   onPatientSelected(patient: Patient): void {
+    this.loaderService.show(); // Show loader for 1000ms
     this.selectedPatient = patient;
     this.patientSearchControl.setValue(`${patient.fullName} (ID: ${patient.id})`);
-    this.loadPatientVaccinations(patient.id);
+    setTimeout(() => {
+      this.loadPatientVaccinations(patient.id);
+    }, 1000);
   }
 
   displayPatient(patient: Patient): string {
@@ -235,18 +243,27 @@ export class VaccinationHistoryComponent implements OnInit {
   }
 
   printVaccinationCard(vaccination: VaccinationResponse): void {
-    this.router.navigate(['/vaccinations/print', vaccination.patientId]);
+    this.loaderService.show(); // Show loader for 1000ms
+    setTimeout(() => {
+      this.router.navigate(['/vaccinations/print', vaccination.patientId]);
+    }, 1000);
   }
 
   exportToCSV(): void {
-    const csvData = this.convertToCSV(this.dataSource.data);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `vaccination_history_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    this.loaderService.show(); // Show loader for 1000ms
+    
+    setTimeout(() => {
+      const csvData = this.convertToCSV(this.dataSource.data);
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `vaccination_history_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      
+      this.notificationService.success(`Exported ${this.dataSource.data.length} vaccination records to CSV`);
+    }, 1000);
   }
 
   private convertToCSV(data: VaccinationResponse[]): string {
@@ -271,11 +288,17 @@ export class VaccinationHistoryComponent implements OnInit {
   }
 
   refreshData(): void {
-    if (this.selectedPatient) {
-      this.loadPatientVaccinations(this.selectedPatient.id);
-    } else {
-      this.loadFacilityVaccinations();
-    }
+    this.loaderService.show(); // Show loader for 1000ms
+    this.notificationService.info('Refreshing vaccination history...');
+    
+    setTimeout(() => {
+      if (this.selectedPatient) {
+        this.loadPatientVaccinations(this.selectedPatient.id);
+      } else {
+        this.loadFacilityVaccinations();
+      }
+      this.notificationService.success('Vaccination history refreshed');
+    }, 1000);
   }
 
   private showError(message: string): void {

@@ -1,0 +1,117 @@
+<div class="patient-details-dialog">
+  <div class="dialog-header">
+    <div class="header-content">
+      <mat-icon class="patient-icon">person</mat-icon>
+      <div>
+        <h2 mat-dialog-title>Patient Details</h2>
+        <p class="patient-id">ID: {{ patient.id }}</p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="onClose()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <div class="details-grid">
+      <!-- Personal Information Section -->
+      <section class="detail-section">
+        <h3 class="section-title">
+          <mat-icon>badge</mat-icon>
+          Personal Information
+        </h3>
+        <mat-divider></mat-divider>
+        
+        <div class="detail-row">
+          <span class="label">Full Name:</span>
+          <span class="value">{{ patient.fullName }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="label">Date of Birth:</span>
+          <span class="value">{{ formatDate(patient.dateOfBirth) }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="label">Age:</span>
+          <span class="value">{{ calculateAge(patient.dateOfBirth) }} years</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="label">Gender:</span>
+          <mat-chip-set>
+            <mat-chip [highlighted]="true" [class]="patient.gender.toLowerCase() + '-chip'">
+              {{ patient.gender }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </section>
+
+      <!-- Guardian Information Section -->
+      <section class="detail-section">
+        <h3 class="section-title">
+          <mat-icon>supervisor_account</mat-icon>
+          Guardian Information
+        </h3>
+        <mat-divider></mat-divider>
+
+        <div class="detail-row">
+          <span class="label">Guardian Name:</span>
+          <span class="value">{{ patient.guardianName || 'N/A' }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="label">Phone Number:</span>
+          <span class="value">
+            <a *ngIf="patient.phoneNumber" [href]="'tel:' + patient.phoneNumber" class="phone-link">
+              <mat-icon>phone</mat-icon>
+              {{ patient.phoneNumber }}
+            </a>
+            <span *ngIf="!patient.phoneNumber">N/A</span>
+          </span>
+        </div>
+      </section>
+
+      <!-- Address Information Section -->
+      <section class="detail-section full-width">
+        <h3 class="section-title">
+          <mat-icon>location_on</mat-icon>
+          Address
+        </h3>
+        <mat-divider></mat-divider>
+
+        <div class="detail-row">
+          <span class="label">Address:</span>
+          <span class="value">{{ patient.address || 'No address provided' }}</span>
+        </div>
+      </section>
+
+      <!-- Facility Information Section -->
+      <section class="detail-section full-width">
+        <h3 class="section-title">
+          <mat-icon>local_hospital</mat-icon>
+          Facility Information
+        </h3>
+        <mat-divider></mat-divider>
+
+        <div class="detail-row">
+          <span class="label">Facility ID:</span>
+          <span class="value">{{ patient.facilityId }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="label">Created At:</span>
+          <span class="value">{{ formatDate(patient.createdAt) }}</span>
+        </div>
+      </section>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onClose()">Close</button>
+    <button mat-raised-button color="primary" (click)="onEdit()">
+      <mat-icon>edit</mat-icon>
+      Edit Patient
+    </button>
+  </mat-dialog-actions>
+</div>

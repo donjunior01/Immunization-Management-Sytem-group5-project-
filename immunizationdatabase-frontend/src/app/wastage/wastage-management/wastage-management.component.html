@@ -1,0 +1,644 @@
+<div class="container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-wrapper">
+        <mat-icon>delete_outline</mat-icon>
+      </div>
+      <div class="header-text">
+        <h1>Wastage Management</h1>
+        <p>Track, analyze, and reduce vaccine wastage</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openRecordDialog()">
+        <mat-icon>add</mat-icon>
+        Report Wastage
+      </button>
+      <button mat-button [matMenuTriggerFor]="exportMenu">
+        <mat-icon>file_download</mat-icon>
+        Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportRecords('csv')">
+          <mat-icon>description</mat-icon>
+          Export as CSV
+        </button>
+        <button mat-menu-item (click)="exportRecords('json')">
+          <mat-icon>code</mat-icon>
+          Export as JSON
+        </button>
+        <button mat-menu-item (click)="exportRecords('pdf')">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Export as PDF
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>inventory_2</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-label">Total Wastage</div>
+            <div class="stat-value">{{ stats.totalWastage }} doses</div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>attach_money</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-label">Estimated Value</div>
+            <div class="stat-value">{{ formatCurrency(stats.totalValue) }}</div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card" [class.warning]="stats.preventablePercentage > 30">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-label">Preventable Wastage</div>
+            <div class="stat-value" 
+                 [class.high]="stats.preventablePercentage > 50"
+                 [class.medium]="stats.preventablePercentage > 30 && stats.preventablePercentage <= 50">
+              {{ stats.preventableWastage }} doses ({{ stats.preventablePercentage.toFixed(1) }}%)
+            </div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>percent</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-label">Wastage Rate</div>
+            <div class="stat-value" 
+                 [class.good]="stats.wastageRate < 5"
+                 [class.warning]="stats.wastageRate >= 5 && stats.wastageRate < 10"
+                 [class.critical]="stats.wastageRate >= 10">
+              {{ stats.wastageRate.toFixed(2) }}%
+            </div>
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card full-width">
+        <div class="stat-content">
+          <div class="stat-icon">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-label">Most Common Reason</div>
+            <div class="stat-value">{{ stats.mostCommonReason }}</div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Wastage by Reason -->
+  <mat-card class="reasons-card">
+    <div class="card-header">
+      <mat-icon>pie_chart</mat-icon>
+      <h2>Wastage by Reason</h2>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="reasons-grid">
+      <div class="reason-item" *ngFor="let item of wastageByReason">
+        <div class="reason-header">
+          <span class="reason-name">{{ item.reason }}</span>
+          <span class="reason-percentage">{{ item.percentage.toFixed(1) }}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="item.percentage"></div>
+        </div>
+        <div class="reason-details">
+          <span class="quantity">{{ item.quantity }} doses</span>
+          <span class="value">{{ formatCurrency(item.value) }}</span>
+        </div>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Trend Analysis -->
+  <mat-card class="trend-card">
+    <div class="card-header">
+      <mat-icon>show_chart</mat-icon>
+      <h2>Wastage Trend (Last 6 Months)</h2>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="trend-chart">
+      <div class="chart-bar" *ngFor="let data of trendData">
+        <div class="bar-container">
+          <div class="bar" [style.height.%]="(data.wastage / (trendData[0]?.wastage || 1)) * 100"></div>
+        </div>
+        <div class="bar-label">{{ data.month }}</div>
+        <div class="bar-value">{{ data.wastage }}</div>
+        <div class="bar-cost">{{ formatCurrency(data.value) }}</div>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <div class="card-header">
+      <mat-icon>filter_list</mat-icon>
+      <h2>Filters</h2>
+    </div>
+    <mat-divider></mat-divider>
+    <form [formGroup]="filterForm" class="filter-form">
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Search</mat-label>
+          <input matInput formControlName="search" placeholder="Search records...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Reason</mat-label>
+          <mat-select formControlName="reason">
+            <mat-option value="">All Reasons</mat-option>
+            <mat-option *ngFor="let reason of reasonOptions" [value]="reason">
+              {{ reason }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Facility</mat-label>
+          <mat-select formControlName="facilityId">
+            <mat-option value="">All Facilities</mat-option>
+            <mat-option *ngFor="let facility of facilities" [value]="facility.id">
+              {{ facility.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="">All Status</mat-option>
+            <mat-option *ngFor="let status of statusOptions" [value]="status">
+              {{ status }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Preventable</mat-label>
+          <mat-select formControlName="preventable">
+            <mat-option value="">All</mat-option>
+            <mat-option value="true">Yes</mat-option>
+            <mat-option value="false">No</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="pickerFrom" formControlName="dateFrom" placeholder="From date">
+          <mat-datepicker-toggle matSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFrom></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="pickerTo" formControlName="dateTo" placeholder="To date">
+          <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
+          <mat-datepicker #pickerTo></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" mat-raised-button color="accent" (click)="resetFilters()" class="reset-button">
+          <mat-icon>clear</mat-icon>
+          Reset Filters
+        </button>
+        <span class="filter-results">{{ filteredRecords.length }} records found</span>
+      </div>
+    </form>
+  </mat-card>
+
+  <!-- Wastage Records Table -->
+  <mat-card class="table-card">
+    <div class="card-header">
+      <mat-icon>list_alt</mat-icon>
+      <h2>Wastage Records</h2>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="table-container">
+      <table mat-table [dataSource]="getPaginatedRecords()" class="records-table">
+        <!-- Batch Number Column -->
+        <ng-container matColumnDef="batchNumber">
+          <th mat-header-cell *matHeaderCellDef>Batch Number</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="batch-info">
+              <span class="batch-number">{{ record.batchNumber }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Vaccine Column -->
+        <ng-container matColumnDef="vaccine">
+          <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="vaccine-info">
+              <span class="vaccine-name">{{ record.vaccineName }}</span>
+              <span class="facility-name">{{ record.facilityName }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Quantity Column -->
+        <ng-container matColumnDef="quantity">
+          <th mat-header-cell *matHeaderCellDef>Quantity</th>
+          <td mat-cell *matCellDef="let record">
+            <span class="quantity-value">{{ record.quantityWasted }} doses</span>
+          </td>
+        </ng-container>
+
+        <!-- Reason Column -->
+        <ng-container matColumnDef="reason">
+          <th mat-header-cell *matHeaderCellDef>Reason</th>
+          <td mat-cell *matCellDef="let record">
+            <mat-chip [color]="getReasonColor(record.reason)">
+              {{ record.reason }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Date Column -->
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date Reported</th>
+          <td mat-cell *matCellDef="let record">
+            <div class="date-info">
+              <span class="date">{{ formatDate(record.dateReported) }}</span>
+              <span class="reporter">{{ record.reportedBy }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Value Column -->
+        <ng-container matColumnDef="value">
+          <th mat-header-cell *matHeaderCellDef>Value</th>
+          <td mat-cell *matCellDef="let record">
+            <span class="value-amount">{{ formatCurrency(record.estimatedValue) }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Preventable Column -->
+        <ng-container matColumnDef="preventable">
+          <th mat-header-cell *matHeaderCellDef>Preventable</th>
+          <td mat-cell *matCellDef="let record">
+            <mat-chip [color]="record.preventable ? 'warn' : 'primary'">
+              <mat-icon>{{ record.preventable ? 'warning' : 'check_circle' }}</mat-icon>
+              {{ record.preventable ? 'Yes' : 'No' }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let record">
+            <mat-chip [color]="getStatusColor(record.status)">
+              {{ record.status }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let record">
+            <button mat-icon-button [matMenuTriggerFor]="recordMenu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #recordMenu="matMenu">
+              <button mat-menu-item (click)="viewRecordDetails(record)">
+                <mat-icon>visibility</mat-icon>
+                View Details
+              </button>
+              <button mat-menu-item (click)="openRecordDialog(record)">
+                <mat-icon>edit</mat-icon>
+                Edit
+              </button>
+              <button mat-menu-item (click)="openInvestigationDialog(record)" 
+                      *ngIf="record.status !== 'Closed'">
+                <mat-icon>search</mat-icon>
+                Investigate
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="deleteRecord(record)" class="danger-action">
+                <mat-icon>delete</mat-icon>
+                Delete
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+
+    <mat-paginator 
+      [length]="filteredRecords.length"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      [pageIndex]="pageIndex"
+      (page)="handlePageEvent($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  </mat-card>
+</div>
+
+<!-- Record Dialog -->
+<div class="dialog-overlay" *ngIf="showRecordDialog" (click)="closeRecordDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>{{ isEditMode ? 'Edit Wastage Record' : 'Report Wastage' }}</h2>
+      <button mat-icon-button (click)="closeRecordDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="dialog-content">
+      <form [formGroup]="recordForm">
+        <div class="form-section">
+          <h3>Batch Information</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Batch Number</mat-label>
+              <input matInput formControlName="batchNumber" placeholder="e.g., BCG-2024-001">
+              <mat-error *ngIf="recordForm.get('batchNumber')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="recordForm.get('batchNumber')?.hasError('minlength')">
+                Minimum 3 characters
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Vaccine Name</mat-label>
+              <mat-select formControlName="vaccineName">
+                <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">
+                  {{ vaccine }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="recordForm.get('vaccineName')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Quantity Wasted</mat-label>
+              <input matInput type="number" formControlName="quantityWasted" placeholder="e.g., 10">
+              <span matTextSuffix>doses</span>
+              <mat-error *ngIf="recordForm.get('quantityWasted')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="recordForm.get('quantityWasted')?.hasError('min')">
+                Must be at least 1
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Estimated Value</mat-label>
+              <input matInput type="number" formControlName="estimatedValue" placeholder="e.g., 50.00">
+              <span matTextPrefix>$</span>
+              <mat-error *ngIf="recordForm.get('estimatedValue')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Wastage Details</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Reason</mat-label>
+              <mat-select formControlName="reason">
+                <mat-option *ngFor="let reason of reasonOptions" [value]="reason">
+                  {{ reason }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="recordForm.get('reason')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Date Reported</mat-label>
+              <input matInput [matDatepicker]="recordPicker" formControlName="dateReported" placeholder="Select date">
+              <mat-datepicker-toggle matSuffix [for]="recordPicker"></mat-datepicker-toggle>
+              <mat-datepicker #recordPicker></mat-datepicker>
+              <mat-error *ngIf="recordForm.get('dateReported')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Reason Detail</mat-label>
+            <textarea matInput formControlName="reasonDetail" rows="3" 
+                      placeholder="Additional details about the wastage..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="form-section">
+          <h3>Facility & Reporter</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Facility</mat-label>
+              <mat-select formControlName="facilityId">
+                <mat-option *ngFor="let facility of facilities" [value]="facility.id">
+                  {{ facility.name }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="recordForm.get('facilityId')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Reported By</mat-label>
+              <input matInput formControlName="reportedBy" placeholder="e.g., Dr. John Doe">
+              <mat-error *ngIf="recordForm.get('reportedBy')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="dialog-actions">
+      <button mat-button (click)="closeRecordDialog()">Cancel</button>
+      <button mat-raised-button color="primary" (click)="saveRecord()" class="save-button">
+        <mat-icon>save</mat-icon>
+        {{ isEditMode ? 'Update' : 'Report' }} Wastage
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Dialog -->
+<div class="dialog-overlay" *ngIf="showDetailDialog" (click)="closeDetailDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>Wastage Record Details</h2>
+      <button mat-icon-button (click)="closeDetailDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="dialog-content" *ngIf="selectedRecord">
+      <div class="detail-section">
+        <h3>Batch Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Batch Number:</span>
+            <span class="value">{{ selectedRecord.batchNumber }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Vaccine Name:</span>
+            <span class="value">{{ selectedRecord.vaccineName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Quantity Wasted:</span>
+            <span class="value quantity">{{ selectedRecord.quantityWasted }} doses</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Estimated Value:</span>
+            <span class="value value-highlight">{{ formatCurrency(selectedRecord.estimatedValue) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="detail-section">
+        <h3>Wastage Details</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Reason:</span>
+            <mat-chip [color]="getReasonColor(selectedRecord.reason)">
+              {{ selectedRecord.reason }}
+            </mat-chip>
+          </div>
+          <div class="detail-item">
+            <span class="label">Preventable:</span>
+            <mat-chip [color]="selectedRecord.preventable ? 'warn' : 'primary'">
+              {{ selectedRecord.preventable ? 'Yes' : 'No' }}
+            </mat-chip>
+          </div>
+          <div class="detail-item">
+            <span class="label">Status:</span>
+            <mat-chip [color]="getStatusColor(selectedRecord.status)">
+              {{ selectedRecord.status }}
+            </mat-chip>
+          </div>
+          <div class="detail-item">
+            <span class="label">Date Reported:</span>
+            <span class="value">{{ formatDate(selectedRecord.dateReported) }}</span>
+          </div>
+        </div>
+        <div class="detail-item full-width" *ngIf="selectedRecord.reasonDetail">
+          <span class="label">Additional Details:</span>
+          <span class="value">{{ selectedRecord.reasonDetail }}</span>
+        </div>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="detail-section">
+        <h3>Facility & Reporter</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Facility:</span>
+            <span class="value">{{ selectedRecord.facilityName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Reported By:</span>
+            <span class="value">{{ selectedRecord.reportedBy }}</span>
+          </div>
+        </div>
+        <div class="detail-item full-width" *ngIf="selectedRecord.actionTaken">
+          <span class="label">Action Taken:</span>
+          <span class="value">{{ selectedRecord.actionTaken }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button mat-raised-button color="primary" (click)="closeDetailDialog()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Investigation Dialog -->
+<div class="dialog-overlay" *ngIf="showInvestigationDialog" (click)="closeInvestigationDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>Wastage Investigation</h2>
+      <button mat-icon-button (click)="closeInvestigationDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="dialog-content">
+      <form [formGroup]="investigationForm">
+        <div class="form-section">
+          <h3>Investigation Findings</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Findings</mat-label>
+            <textarea matInput formControlName="findings" rows="4" 
+                      placeholder="Describe investigation findings..."></textarea>
+            <mat-error *ngIf="investigationForm.get('findings')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-section">
+          <h3>Assessment</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Was this preventable?</mat-label>
+              <mat-select formControlName="preventable">
+                <mat-option [value]="true">Yes</mat-option>
+                <mat-option [value]="false">No</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>New Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let status of statusOptions" [value]="status">
+                  {{ status }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="investigationForm.get('status')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Action Taken</mat-label>
+            <textarea matInput formControlName="actionTaken" rows="3" 
+                      placeholder="Describe actions taken to address the issue..."></textarea>
+            <mat-error *ngIf="investigationForm.get('actionTaken')?.hasError('required')">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Recommendations</mat-label>
+            <textarea matInput formControlName="recommendations" rows="3" 
+                      placeholder="Recommendations to prevent similar incidents..."></textarea>
+          </mat-form-field>
+        </div>
+      </form>
+    </div>
+    <div class="dialog-actions">
+      <button mat-button (click)="closeInvestigationDialog()">Cancel</button>
+      <button mat-raised-button color="primary" (click)="saveInvestigation()" class="save-button">
+        <mat-icon>save</mat-icon>
+        Complete Investigation
+      </button>
+    </div>
+  </div>
+</div>

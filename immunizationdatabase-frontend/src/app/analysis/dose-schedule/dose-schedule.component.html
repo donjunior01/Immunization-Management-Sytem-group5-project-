@@ -1,0 +1,658 @@
+<div class="dose-schedule-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-wrapper">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <div class="header-text">
+        <h1>Dose Schedule Optimization</h1>
+        <p>Optimize vaccination schedules based on supply, demand, and resources</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openScheduleDialog()">
+        <mat-icon>add</mat-icon>
+        New Schedule
+      </button>
+      <button mat-raised-button color="accent" (click)="openScenarioDialog()">
+        <mat-icon>science</mat-icon>
+        Run Simulation
+      </button>
+      <button mat-icon-button [matMenuTriggerFor]="exportMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportData('csv')">
+          <mat-icon>description</mat-icon>
+          Export as CSV
+        </button>
+        <button mat-menu-item (click)="exportData('json')">
+          <mat-icon>code</mat-icon>
+          Export as JSON
+        </button>
+        <button mat-menu-item (click)="exportData('pdf')">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Export as PDF
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <div class="stat-icon primary">
+          <mat-icon>event_note</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Total Schedules</div>
+          <div class="stat-value">{{ formatNumber(stats.totalSchedules) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon success">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Optimized</div>
+          <div class="stat-value">{{ formatNumber(stats.optimizedSchedules) }}</div>
+          <div class="stat-trend">{{ formatPercentage((stats.optimizedSchedules / stats.totalSchedules) * 100) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon accent">
+          <mat-icon>speed</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Avg Optimization Score</div>
+          <div class="stat-value" [style.color]="getScoreColor(stats.averageScore)">
+            {{ stats.averageScore.toFixed(0) }}
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon info">
+          <mat-icon>vaccines</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Total Doses Scheduled</div>
+          <div class="stat-value">{{ formatNumber(stats.totalDoses) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon success">
+          <mat-icon>assignment_turned_in</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Allocated Doses</div>
+          <div class="stat-value">{{ formatNumber(stats.allocatedDoses) }}</div>
+          <div class="stat-trend">{{ formatPercentage((stats.allocatedDoses / stats.totalDoses) * 100) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon warning">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Remaining Capacity</div>
+          <div class="stat-value">{{ formatNumber(stats.remainingCapacity) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon error">
+          <mat-icon>priority_high</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">High Priority</div>
+          <div class="stat-value">{{ formatNumber(stats.highPriority) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon accent">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Medium Priority</div>
+          <div class="stat-value">{{ formatNumber(stats.mediumPriority) }}</div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Main Content Tabs -->
+  <mat-tab-group [(selectedIndex)]="selectedTab" class="tab-container">
+    <!-- Schedules Tab -->
+    <mat-tab label="Dose Schedules">
+      <div class="tab-content">
+        <!-- Filters -->
+        <mat-card class="filters-card">
+          <h3>Filter Schedules</h3>
+          <form [formGroup]="filterForm" class="filter-form">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Search</mat-label>
+                <input matInput formControlName="search" placeholder="Search by vaccine, facility, or batch">
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Vaccine</mat-label>
+                <mat-select formControlName="vaccine">
+                  <mat-option value="All">All Vaccines</mat-option>
+                  <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">{{ vaccine }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Priority</mat-label>
+                <mat-select formControlName="priority">
+                  <mat-option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Status</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option *ngFor="let status of statuses" [value]="status">{{ status }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+              <button mat-raised-button type="button" (click)="resetFilters()">Reset Filters</button>
+            </div>
+          </form>
+        </mat-card>
+
+        <!-- Schedules Table -->
+        <mat-card class="table-card">
+          <table mat-table [dataSource]="getPaginatedData()" class="schedules-table">
+            <!-- Vaccine Name Column -->
+            <ng-container matColumnDef="vaccineName">
+              <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+              <td mat-cell *matCellDef="let schedule">
+                <div class="vaccine-info">
+                  <div class="vaccine-name">{{ schedule.vaccineName }}</div>
+                  <div class="batch-number">{{ schedule.batchNumber }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Target Population Column -->
+            <ng-container matColumnDef="targetPopulation">
+              <th mat-header-cell *matHeaderCellDef>Target Population</th>
+              <td mat-cell *matCellDef="let schedule">
+                <div class="population-info">
+                  <div class="population-count">{{ formatNumber(schedule.targetPopulation) }}</div>
+                  <div class="age-group">{{ schedule.ageGroup }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Scheduled Doses Column -->
+            <ng-container matColumnDef="scheduledDoses">
+              <th mat-header-cell *matHeaderCellDef>Scheduled Doses</th>
+              <td mat-cell *matCellDef="let schedule">
+                <div class="doses-count">{{ formatNumber(schedule.scheduledDoses) }}</div>
+              </td>
+            </ng-container>
+
+            <!-- Allocated Column -->
+            <ng-container matColumnDef="allocated">
+              <th mat-header-cell *matHeaderCellDef>Allocated</th>
+              <td mat-cell *matCellDef="let schedule">
+                <div class="allocation-info">
+                  <div class="allocation-count">{{ formatNumber(schedule.allocatedDoses) }}</div>
+                  <div class="allocation-percentage">
+                    {{ formatPercentage((schedule.allocatedDoses / schedule.scheduledDoses) * 100) }}
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Remaining Column -->
+            <ng-container matColumnDef="remaining">
+              <th mat-header-cell *matHeaderCellDef>Remaining</th>
+              <td mat-cell *matCellDef="let schedule">
+                <div class="remaining-count" [class.low]="schedule.remainingDoses < schedule.scheduledDoses * 0.2">
+                  {{ formatNumber(schedule.remainingDoses) }}
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Timeline Column -->
+            <ng-container matColumnDef="timeline">
+              <th mat-header-cell *matHeaderCellDef>Timeline</th>
+              <td mat-cell *matCellDef="let schedule">
+                <div class="timeline-info">
+                  <div class="timeline-date">{{ formatDate(schedule.startDate) }}</div>
+                  <mat-icon class="timeline-arrow">arrow_forward</mat-icon>
+                  <div class="timeline-date">{{ formatDate(schedule.endDate) }}</div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Priority Column -->
+            <ng-container matColumnDef="priority">
+              <th mat-header-cell *matHeaderCellDef>Priority</th>
+              <td mat-cell *matCellDef="let schedule">
+                <mat-chip [color]="getPriorityColor(schedule.priority)">
+                  {{ schedule.priority }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Score Column -->
+            <ng-container matColumnDef="score">
+              <th mat-header-cell *matHeaderCellDef>Score</th>
+              <td mat-cell *matCellDef="let schedule">
+                <div class="score-badge" [style.background-color]="getScoreColor(schedule.optimizationScore)">
+                  {{ schedule.optimizationScore }}
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let schedule">
+                <mat-chip [color]="getStatusColor(schedule.status)">
+                  {{ schedule.status }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let schedule">
+                <button mat-icon-button [matMenuTriggerFor]="scheduleMenu">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #scheduleMenu="matMenu">
+                  <button mat-menu-item (click)="openScheduleDialog(schedule)">
+                    <mat-icon>edit</mat-icon>
+                    Edit
+                  </button>
+                  <button mat-menu-item (click)="optimizeSchedule(schedule)">
+                    <mat-icon>auto_fix_high</mat-icon>
+                    Optimize
+                  </button>
+                  <button mat-menu-item (click)="deleteSchedule(schedule)">
+                    <mat-icon>delete</mat-icon>
+                    Delete
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+
+          <mat-paginator
+            [length]="filteredSchedules.length"
+            [pageSize]="pageSize"
+            [pageSizeOptions]="pageSizeOptions"
+            [pageIndex]="pageIndex"
+            (page)="onPageChange($event)"
+            showFirstLastButtons>
+          </mat-paginator>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Scenarios Tab -->
+    <mat-tab label="Scenario Simulations">
+      <div class="tab-content">
+        <mat-card class="scenarios-card">
+          <h3>Previous Simulations</h3>
+          <div class="scenarios-list" *ngIf="scenarios.length > 0">
+            <mat-card *ngFor="let scenario of scenarios" class="scenario-item">
+              <div class="scenario-header">
+                <h4>{{ scenario.name }}</h4>
+                <span class="scenario-date">{{ formatDate(scenario.createdAt) }}</span>
+              </div>
+              <p class="scenario-description">{{ scenario.description }}</p>
+              <div class="scenario-results">
+                <div class="result-item">
+                  <span class="result-label">Achievable Coverage:</span>
+                  <span class="result-value">{{ formatPercentage(scenario.results.achievableCoverage) }}</span>
+                </div>
+                <div class="result-item">
+                  <span class="result-label">Doses Scheduled:</span>
+                  <span class="result-value">{{ formatNumber(scenario.results.dosesScheduled) }}</span>
+                </div>
+                <div class="result-item">
+                  <span class="result-label">Resource Utilization:</span>
+                  <span class="result-value">{{ formatPercentage(scenario.results.resourceUtilization) }}</span>
+                </div>
+                <div class="result-item">
+                  <span class="result-label">Estimated Completion:</span>
+                  <span class="result-value">{{ formatDate(scenario.results.estimatedCompletion) }}</span>
+                </div>
+              </div>
+              <div class="scenario-insights" *ngIf="scenario.results.bottlenecks.length > 0">
+                <h5>Bottlenecks:</h5>
+                <ul>
+                  <li *ngFor="let bottleneck of scenario.results.bottlenecks">{{ bottleneck }}</li>
+                </ul>
+              </div>
+              <div class="scenario-insights" *ngIf="scenario.results.recommendations.length > 0">
+                <h5>Recommendations:</h5>
+                <ul>
+                  <li *ngFor="let recommendation of scenario.results.recommendations">{{ recommendation }}</li>
+                </ul>
+              </div>
+            </mat-card>
+          </div>
+          <div class="no-scenarios" *ngIf="scenarios.length === 0">
+            <mat-icon>science</mat-icon>
+            <p>No simulations run yet. Click "Run Simulation" to create your first scenario.</p>
+          </div>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- Schedule Dialog -->
+  <div class="dialog-overlay" *ngIf="showScheduleDialog" (click)="closeScheduleDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>{{ selectedSchedule ? 'Edit Schedule' : 'New Schedule' }}</h2>
+        <button mat-icon-button (click)="closeScheduleDialog()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="dialog-content">
+        <form [formGroup]="scheduleForm">
+          <div class="form-section">
+            <h3>Basic Information</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Vaccine Name</mat-label>
+                <mat-select formControlName="vaccineName">
+                  <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">{{ vaccine }}</mat-option>
+                </mat-select>
+                <mat-error *ngIf="scheduleForm.get('vaccineName')?.hasError('required')">
+                  Vaccine name is required
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Batch Number</mat-label>
+                <input matInput formControlName="batchNumber" placeholder="Enter batch number">
+                <mat-error *ngIf="scheduleForm.get('batchNumber')?.hasError('required')">
+                  Batch number is required
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Target Population</mat-label>
+                <input matInput type="number" formControlName="targetPopulation" placeholder="Enter target population">
+                <mat-error *ngIf="scheduleForm.get('targetPopulation')?.hasError('required')">
+                  Target population is required
+                </mat-error>
+                <mat-error *ngIf="scheduleForm.get('targetPopulation')?.hasError('min')">
+                  Must be at least 1
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Scheduled Doses</mat-label>
+                <input matInput type="number" formControlName="scheduledDoses" placeholder="Enter scheduled doses">
+                <mat-error *ngIf="scheduleForm.get('scheduledDoses')?.hasError('required')">
+                  Scheduled doses is required
+                </mat-error>
+                <mat-error *ngIf="scheduleForm.get('scheduledDoses')?.hasError('min')">
+                  Must be at least 1
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Start Date</mat-label>
+                <input matInput [matDatepicker]="startPicker" formControlName="startDate" placeholder="Select start date">
+                <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                <mat-datepicker #startPicker></mat-datepicker>
+                <mat-error *ngIf="scheduleForm.get('startDate')?.hasError('required')">
+                  Start date is required
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>End Date</mat-label>
+                <input matInput [matDatepicker]="endPicker" formControlName="endDate" placeholder="Select end date">
+                <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                <mat-datepicker #endPicker></mat-datepicker>
+                <mat-error *ngIf="scheduleForm.get('endDate')?.hasError('required')">
+                  End date is required
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Priority</mat-label>
+                <mat-select formControlName="priority">
+                  <mat-option value="High">High</mat-option>
+                  <mat-option value="Medium">Medium</mat-option>
+                  <mat-option value="Low">Low</mat-option>
+                </mat-select>
+                <mat-error *ngIf="scheduleForm.get('priority')?.hasError('required')">
+                  Priority is required
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Age Group</mat-label>
+                <input matInput formControlName="ageGroup" placeholder="e.g., 0-1 months">
+                <mat-error *ngIf="scheduleForm.get('ageGroup')?.hasError('required')">
+                  Age group is required
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Facility ID</mat-label>
+              <input matInput formControlName="facilityId" placeholder="Enter facility ID">
+              <mat-error *ngIf="scheduleForm.get('facilityId')?.hasError('required')">
+                Facility ID is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-section">
+            <h3>Resource Allocation</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Personnel</mat-label>
+                <input matInput type="number" formControlName="personnel" placeholder="Number of personnel">
+                <mat-error *ngIf="scheduleForm.get('personnel')?.hasError('required')">
+                  Personnel is required
+                </mat-error>
+                <mat-error *ngIf="scheduleForm.get('personnel')?.hasError('min')">
+                  Must be at least 1
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Vaccination Points</mat-label>
+                <input matInput type="number" formControlName="vaccinationPoints" placeholder="Number of points">
+                <mat-error *ngIf="scheduleForm.get('vaccinationPoints')?.hasError('required')">
+                  Vaccination points is required
+                </mat-error>
+                <mat-error *ngIf="scheduleForm.get('vaccinationPoints')?.hasError('min')">
+                  Must be at least 1
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Working Hours/Day</mat-label>
+                <input matInput type="number" formControlName="workingHours" placeholder="Hours per day">
+                <mat-error *ngIf="scheduleForm.get('workingHours')?.hasError('required')">
+                  Working hours is required
+                </mat-error>
+                <mat-error *ngIf="scheduleForm.get('workingHours')?.hasError('min')">
+                  Must be at least 1
+                </mat-error>
+                <mat-error *ngIf="scheduleForm.get('workingHours')?.hasError('max')">
+                  Cannot exceed 24 hours
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="dialog-actions">
+        <button mat-button (click)="closeScheduleDialog()">Cancel</button>
+        <button mat-raised-button color="primary" (click)="saveSchedule()" [disabled]="!scheduleForm.valid">
+          {{ selectedSchedule ? 'Update' : 'Create' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scenario Dialog -->
+  <div class="dialog-overlay" *ngIf="showScenarioDialog" (click)="closeScenarioDialog()">
+    <div class="dialog-container" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Run Scenario Simulation</h2>
+        <button mat-icon-button (click)="closeScenarioDialog()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="dialog-content">
+        <form [formGroup]="scenarioForm">
+          <div class="form-section">
+            <h3>Scenario Details</h3>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Scenario Name</mat-label>
+              <input matInput formControlName="name" placeholder="Enter scenario name">
+              <mat-error *ngIf="scenarioForm.get('name')?.hasError('required')">
+                Scenario name is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" rows="3" placeholder="Enter description"></textarea>
+            </mat-form-field>
+          </div>
+
+          <div class="form-section">
+            <h3>Resource Parameters</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Personnel Count</mat-label>
+                <input matInput type="number" formControlName="personnelCount" placeholder="Number of personnel">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Vaccination Points</mat-label>
+                <input matInput type="number" formControlName="vaccinationPoints" placeholder="Number of vaccination points">
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Working Hours/Day</mat-label>
+                <input matInput type="number" formControlName="workingHoursPerDay" placeholder="Hours per day">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Days Available</mat-label>
+                <input matInput type="number" formControlName="daysAvailable" placeholder="Number of days">
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Target Coverage (%)</mat-label>
+              <input matInput type="number" formControlName="targetCoverage" min="0" max="100" placeholder="Target coverage percentage">
+            </mat-form-field>
+          </div>
+
+          <div class="form-section">
+            <h3>Priority Weights</h3>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>High Priority Weight</mat-label>
+                <input matInput type="number" formControlName="highPriorityWeight" placeholder="Weight for high priority">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Medium Priority Weight</mat-label>
+                <input matInput type="number" formControlName="mediumPriorityWeight" placeholder="Weight for medium priority">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Low Priority Weight</mat-label>
+                <input matInput type="number" formControlName="lowPriorityWeight" placeholder="Weight for low priority">
+              </mat-form-field>
+            </div>
+          </div>
+        </form>
+
+        <!-- Simulation Results -->
+        <div class="simulation-results" *ngIf="currentScenario">
+          <h3>Simulation Results</h3>
+          <div class="results-grid">
+            <div class="result-card">
+              <div class="result-label">Achievable Coverage</div>
+              <div class="result-value">{{ formatPercentage(currentScenario.results.achievableCoverage) }}</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Doses Scheduled</div>
+              <div class="result-value">{{ formatNumber(currentScenario.results.dosesScheduled) }}</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Resource Utilization</div>
+              <div class="result-value">{{ formatPercentage(currentScenario.results.resourceUtilization) }}</div>
+            </div>
+            <div class="result-card">
+              <div class="result-label">Completion Date</div>
+              <div class="result-value">{{ formatDate(currentScenario.results.estimatedCompletion) }}</div>
+            </div>
+          </div>
+
+          <div class="insights-section" *ngIf="currentScenario.results.bottlenecks.length > 0">
+            <h4>Bottlenecks Identified</h4>
+            <ul>
+              <li *ngFor="let bottleneck of currentScenario.results.bottlenecks">{{ bottleneck }}</li>
+            </ul>
+          </div>
+
+          <div class="insights-section" *ngIf="currentScenario.results.recommendations.length > 0">
+            <h4>Recommendations</h4>
+            <ul>
+              <li *ngFor="let recommendation of currentScenario.results.recommendations">{{ recommendation }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button mat-button (click)="closeScenarioDialog()">Close</button>
+        <button mat-raised-button color="accent" (click)="runSimulation()" [disabled]="!scenarioForm.valid">
+          <mat-icon>play_arrow</mat-icon>
+          Run Simulation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

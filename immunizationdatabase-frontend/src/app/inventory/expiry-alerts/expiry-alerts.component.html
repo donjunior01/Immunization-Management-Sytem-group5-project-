@@ -1,0 +1,129 @@
+<div class="expiry-alerts-container">
+  <div class="page-header">
+    <h1>
+      <mat-icon>notifications_active</mat-icon>
+      Vaccine Expiry Alerts
+    </h1>
+    <p class="subtitle">Monitor and manage vaccine batches nearing expiration</p>
+  </div>
+
+  <div class="alerts-summary">
+    <mat-card class="summary-card critical">
+      <mat-icon>error</mat-icon>
+      <div class="summary-content">
+        <span class="count">{{ criticalCount }}</span>
+        <span class="label">Critical Alerts</span>
+        <span class="description">Expired or ≤30 days</span>
+      </div>
+    </mat-card>
+
+    <mat-card class="summary-card warning">
+      <mat-icon>warning</mat-icon>
+      <div class="summary-content">
+        <span class="count">{{ warningCount }}</span>
+        <span class="label">Warning Alerts</span>
+        <span class="description">31-90 days</span>
+      </div>
+    </mat-card>
+
+    <mat-card class="summary-card info">
+      <mat-icon>info</mat-icon>
+      <div class="summary-content">
+        <span class="count">{{ infoCount }}</span>
+        <span class="label">Upcoming</span>
+        <span class="description">Monitored batches</span>
+      </div>
+    </mat-card>
+  </div>
+
+  <mat-card class="alerts-table-card">
+    <mat-card-header>
+      <mat-card-title>Expiry Alerts</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="alerts" class="alerts-table">
+        <!-- Severity Column -->
+        <ng-container matColumnDef="severity">
+          <th mat-header-cell *matHeaderCellDef>Severity</th>
+          <td mat-cell *matCellDef="let alert">
+            <mat-chip [color]="getSeverityColor(alert.severity)" selected>
+              <mat-icon>{{ getSeverityIcon(alert.severity) }}</mat-icon>
+              {{ alert.severity | titlecase }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Batch Number Column -->
+        <ng-container matColumnDef="batchNumber">
+          <th mat-header-cell *matHeaderCellDef>Batch Number</th>
+          <td mat-cell *matCellDef="let alert">
+            <strong>{{ alert.batchNumber }}</strong>
+          </td>
+        </ng-container>
+
+        <!-- Vaccine Name Column -->
+        <ng-container matColumnDef="vaccineName">
+          <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+          <td mat-cell *matCellDef="let alert">{{ alert.vaccineName }}</td>
+        </ng-container>
+
+        <!-- Manufacturer Column -->
+        <ng-container matColumnDef="manufacturer">
+          <th mat-header-cell *matHeaderCellDef>Manufacturer</th>
+          <td mat-cell *matCellDef="let alert">{{ alert.manufacturer }}</td>
+        </ng-container>
+
+        <!-- Quantity Column -->
+        <ng-container matColumnDef="quantityRemaining">
+          <th mat-header-cell *matHeaderCellDef>Quantity</th>
+          <td mat-cell *matCellDef="let alert">
+            <span [class.low-stock]="alert.quantityRemaining < 50">
+              {{ alert.quantityRemaining }} doses
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Expiry Date Column -->
+        <ng-container matColumnDef="expiryDate">
+          <th mat-header-cell *matHeaderCellDef>Expiry Date</th>
+          <td mat-cell *matCellDef="let alert">{{ formatDate(alert.expiryDate) }}</td>
+        </ng-container>
+
+        <!-- Days Until Expiry Column -->
+        <ng-container matColumnDef="daysUntilExpiry">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let alert">
+            <div class="status-cell" [ngClass]="alert.severity">
+              {{ getStatusText(alert.daysUntilExpiry) }}
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let alert">
+            <button mat-icon-button (click)="viewBatchDetails(alert.id)" matTooltip="View Details">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button color="accent" (click)="handleBatch(alert.id)" matTooltip="Handle Alert">
+              <mat-icon>done</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            <div class="no-data">
+              <mat-icon>check_circle</mat-icon>
+              <p>No expiry alerts at this time</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+</div>

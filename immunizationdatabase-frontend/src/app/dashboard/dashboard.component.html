@@ -175,8 +175,51 @@
     <!-- Dashboard Main Content -->
     <div class="dashboard-main" *ngIf="!loading">
 
+      <!-- Health Worker Action Cards -->
+      <section class="stats-section" *ngIf="!isGovernmentOfficial">
+        <div class="section-header">
+          <h2 class="section-title">
+            <mat-icon>dashboard</mat-icon>
+            Quick Access
+          </h2>
+        </div>
+        <div class="stats-grid">
+          <mat-card *ngFor="let card of healthWorkerCards"
+                    class="stat-card"
+                    [class.alert-card]="card.isAlert"
+                    [class.clickable-card]="card.clickable"
+                    (click)="card.clickable && handleCardAction(card.action!)">
+            <div class="stat-card-content">
+              <div class="stat-icon-wrapper" [style.background]="card.gradient">
+                <mat-icon class="stat-icon">{{ card.icon }}</mat-icon>
+              </div>
+
+              <div class="stat-details">
+                <h3 class="stat-title">{{ card.title }}</h3>
+                <p class="stat-value">{{ card.value }}</p>
+                <p class="stat-subtitle">{{ card.subtitle }}</p>
+              </div>
+            </div>
+
+            <button *ngIf="card.buttonText"
+                    mat-raised-button
+                    color="warn"
+                    class="card-action-button"
+                    (click)="$event.stopPropagation(); handleCardAction(card.action!)">
+              {{ card.buttonText }}
+            </button>
+          </mat-card>
+        </div>
+      </section>
+
       <!-- Quick Stats Cards Grid -->
       <section class="stats-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <mat-icon>analytics</mat-icon>
+            Inventory Statistics
+          </h2>
+        </div>
         <div class="stats-grid">
           <mat-card *ngFor="let stat of quickStats"
                     class="stat-card"

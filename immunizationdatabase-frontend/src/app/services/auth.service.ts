@@ -96,22 +96,27 @@ export class AuthService {
    * Clears user session and navigates to login
    */
   logout(): void {
-    // Call backend logout endpoint (optional)
+    // Clear localStorage first to prevent any further requests with expired token
     const token = this.getToken();
-    if (token) {
-      this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
-        next: () => console.log('Logged out from server'),
-        error: (err) => console.error('Logout error:', err)
-      });
-    }
-
+    
+    // Clear current user immediately
+    this.currentUserSubject.next(null);
+    
     // Clear localStorage
     localStorage.removeItem('currentUser');
     localStorage.removeItem('authToken');
     localStorage.removeItem('tokenExpiry');
 
-    // Clear current user
-    this.currentUserSubject.next(null);
+    // Call backend logout endpoint (optional) - only if we had a valid token
+    if (token) {
+      this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
+        next: () => console.log('Logged out from server'),
+        error: (err) => {
+          // Ignore logout errors - we've already cleared local state
+          console.warn('Server logout failed (ignored):', err.status);
+        }
+      });
+    }
 
     // Navigate to login
     this.router.navigate(['/login']);

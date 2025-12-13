@@ -18,6 +18,9 @@ import { AuthService } from '../services/auth.service';
 import { InventoryService } from '../services/inventory.service';
 import { AddBatchModalComponent } from '../inventory/add-batch/add-batch.component';
 import { StatisticsService, NationalStatistics } from '../services/statistics.service';
+import { LoaderService } from '../services/loader.service';
+import { NotificationService } from '../services/notification.service';
+import { LogoutConfirmationComponent } from '../shared/logout-confirmation/logout-confirmation.component';
 
 interface StockLevel {
   vaccineName: string;
@@ -39,6 +42,9 @@ interface QuickStat {
   trendUp?: boolean;
   subtitle?: string;
   isAlert?: boolean;
+  action?: string;
+  buttonText?: string;
+  clickable?: boolean;
 }
 
 interface RecentActivity {
@@ -122,6 +128,52 @@ export class DashboardComponent implements OnInit {
     }
   ];
 
+  healthWorkerCards: QuickStat[] = [
+    {
+      title: 'Patient Records',
+      value: 0,
+      icon: 'person',
+      color: '#0066CC',
+      gradient: 'linear-gradient(135deg, #0066CC 0%, #338FD8 100%)',
+      subtitle: 'Total registered patients',
+      action: 'view-patients',
+      clickable: true
+    },
+    {
+      title: 'Print Cards',
+      value: 'Generate',
+      icon: 'print',
+      color: '#9C27B0',
+      gradient: 'linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%)',
+      subtitle: 'Vaccination cards',
+      action: 'print-cards',
+      clickable: true
+    },
+    {
+      title: 'Defaulters',
+      value: 0,
+      icon: 'warning',
+      color: '#FFA500',
+      gradient: 'linear-gradient(135deg, #FFA500 0%, #FFB732 100%)',
+      subtitle: 'Missed vaccinations',
+      isAlert: true,
+      action: 'view-defaulters',
+      clickable: true
+    },
+    {
+      title: 'Low Stock Alert',
+      value: 0,
+      icon: 'inventory',
+      color: '#DC3545',
+      gradient: 'linear-gradient(135deg, #DC3545 0%, #E15665 100%)',
+      subtitle: 'Items below threshold',
+      isAlert: true,
+      action: 'manage-stock',
+      buttonText: 'Manage Low Stock',
+      clickable: true
+    }
+  ];
+
   stockLevels: StockLevel[] = [];
   recentActivities: RecentActivity[] = [];
 
@@ -134,10 +186,13 @@ export class DashboardComponent implements OnInit {
     private inventoryService: InventoryService,
     private statisticsService: StatisticsService,
     private router: Router,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private loaderService: LoaderService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
+    this.loaderService.show();
     this.loadUserData();
     this.loadDashboardData();
     this.checkScreenSize();
@@ -224,6 +279,7 @@ export class DashboardComponent implements OnInit {
       next: (batches) => {
         this.processInventoryData(batches);
         this.generateRecentActivities(batches);
+        this.loadHealthWorkerCardData();
         this.loading = false;
       },
       error: (error) => {
@@ -232,6 +288,31 @@ export class DashboardComponent implements OnInit {
         this.loadMockData();
       }
     });
+  }
+
+  /**
+   * Load Health Worker specific card data
+   */
+  loadHealthWorkerCardData(): void {
+    // TODO: Replace with actual API calls when endpoints are available
+    
+    // Mock patient count
+    this.healthWorkerCards[0].value = 156;
+    this.healthWorkerCards[0].subtitle = 'Total registered patients';
+    
+    // Print card stays as "Generate"
+    this.healthWorkerCards[1].value = 'Generate';
+    
+    // Mock defaulters count
+    this.healthWorkerCards[2].value = 12;
+    this.healthWorkerCards[2].subtitle = '12 patients missed vaccinations';
+    this.healthWorkerCards[2].isAlert = this.healthWorkerCards[2].value as number > 0;
+    
+    // Mock low stock count from existing quick stats
+    const lowStockCount = this.quickStats[2].value;
+    this.healthWorkerCards[3].value = lowStockCount;
+    this.healthWorkerCards[3].subtitle = `${lowStockCount} items below threshold`;
+    this.healthWorkerCards[3].isAlert = (lowStockCount as number) > 0;
   }
 
   /**
@@ -463,9 +544,53 @@ export class DashboardComponent implements OnInit {
     this.sidenavOpened = !this.sidenavOpened;
   }
 
+  handleCardAction(action: string): void {
+    this.loaderService.show(); // Show loader for 1000ms
+
+    switch(action) {
+      case 'view-patients':
+        setTimeout(() => {
+          this.router.navigate(['/patients']);
+        }, 1000);
+        break;
+      case 'print-cards':
+        setTimeout(() => {
+          // TODO: Implement print functionality
+          this.notificationService.info('Print functionality coming soon');
+        }, 1000);
+        break;
+      case 'view-defaulters':
+        setTimeout(() => {
+          this.router.navigate(['/defaulters']);
+        }, 1000);
+        break;
+      case 'manage-stock':
+        setTimeout(() => {
+          this.router.navigate(['/inventory/manage-low-stock']);
+        }, 1000);
+        break;
+      default:
+        this.loaderService.forceHide();
+        break;
+    }
+  }
+
   logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    const dialogRef = this.dialog.open(LogoutConfirmationComponent, {
+      width: '400px',
+      disableClose: false
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.loaderService.show();
+        this.authService.logout();
+        this.notificationService.success('Logged out successfully');
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 500);
+      }
+    });
   }
 
   navigateToInventory(): void {

@@ -1,0 +1,742 @@
+<div class="vaccine-efficacy-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-wrapper">
+        <mat-icon>science</mat-icon>
+      </div>
+      <div class="header-text">
+        <h1>Vaccine Efficacy Tracking</h1>
+        <p>Monitor vaccine effectiveness and safety metrics</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openRecordDialog()">
+        <mat-icon>add</mat-icon>
+        New Study
+      </button>
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu">
+        <mat-icon>download</mat-icon>
+        Export
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportData('csv')">
+          <mat-icon>table_chart</mat-icon>
+          Export as CSV
+        </button>
+        <button mat-menu-item (click)="exportData('json')">
+          <mat-icon>code</mat-icon>
+          Export as JSON
+        </button>
+        <button mat-menu-item (click)="exportData('pdf')">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Export as PDF
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <div class="stat-icon primary">
+          <mat-icon>assignment</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Total Studies</div>
+          <div class="stat-value">{{ formatNumber(stats.totalStudies) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon success">
+          <mat-icon>play_circle</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Active Studies</div>
+          <div class="stat-value">{{ formatNumber(stats.activeStudies) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon accent">
+          <mat-icon>analytics</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Avg Efficacy</div>
+          <div class="stat-value" [style.color]="getEfficacyColor(stats.averageEfficacy)">
+            {{ formatPercentage(stats.averageEfficacy) }}
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon info">
+          <mat-icon>verified</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Avg Effectiveness</div>
+          <div class="stat-value" [style.color]="getEfficacyColor(stats.averageEffectiveness)">
+            {{ formatPercentage(stats.averageEffectiveness) }}
+          </div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon primary">
+          <mat-icon>people</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Total Participants</div>
+          <div class="stat-value">{{ formatNumber(stats.totalParticipants) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon warning">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Adverse Events</div>
+          <div class="stat-value">{{ formatNumber(stats.totalAdverseEvents) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon success">
+          <mat-icon>biotech</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Avg Antibody Level</div>
+          <div class="stat-value">{{ stats.averageAntibodyLevel.toFixed(0) }} ng/mL</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon error">
+          <mat-icon>coronavirus</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Breakthrough Rate</div>
+          <div class="stat-value">{{ formatPercentage(stats.breakthroughRate) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon success">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">High Efficacy (≥90%)</div>
+          <div class="stat-value">{{ formatNumber(stats.highEfficacyCount) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon accent">
+          <mat-icon>show_chart</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Moderate (70-89%)</div>
+          <div class="stat-value">{{ formatNumber(stats.moderateEfficacyCount) }}</div>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon warning">
+          <mat-icon>trending_down</mat-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-label">Low Efficacy (&lt;70%)</div>
+          <div class="stat-value">{{ formatNumber(stats.lowEfficacyCount) }}</div>
+        </div>
+      </mat-card>
+    </div>
+  </div>
+
+  <!-- Main Content Tabs -->
+  <div class="tab-container">
+    <mat-tab-group>
+      <!-- Efficacy Records Tab -->
+      <mat-tab label="Efficacy Records">
+        <div class="tab-content">
+          <!-- Filters -->
+          <mat-card class="filters-card">
+            <h3>Filter Studies</h3>
+            <form [formGroup]="filterForm">
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Search</mat-label>
+                  <input matInput formControlName="search" placeholder="Search by vaccine, manufacturer, batch...">
+                  <mat-icon matPrefix>search</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Vaccine</mat-label>
+                  <mat-select formControlName="vaccine">
+                    <mat-option value="">All Vaccines</mat-option>
+                    <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">{{ vaccine }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Manufacturer</mat-label>
+                  <mat-select formControlName="manufacturer">
+                    <mat-option value="">All Manufacturers</mat-option>
+                    <mat-option *ngFor="let mfr of manufacturers" [value]="mfr">{{ mfr }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Status</mat-label>
+                  <mat-select formControlName="status">
+                    <mat-option value="">All Statuses</mat-option>
+                    <mat-option *ngFor="let status of statuses" [value]="status">{{ status }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Study Period</mat-label>
+                  <mat-date-range-input [rangePicker]="picker" formGroupName="dateRange">
+                    <input matStartDate formControlName="start" placeholder="Start date">
+                    <input matEndDate formControlName="end" placeholder="End date">
+                  </mat-date-range-input>
+                  <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-date-range-picker #picker></mat-date-range-picker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Min Efficacy (%)</mat-label>
+                  <input matInput type="number" formControlName="efficacyMin" min="0" max="100" placeholder="0">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Max Efficacy (%)</mat-label>
+                  <input matInput type="number" formControlName="efficacyMax" min="0" max="100" placeholder="100">
+                </mat-form-field>
+
+                <button mat-raised-button color="accent" type="button" (click)="resetFilters()">
+                  <mat-icon>refresh</mat-icon>
+                  Reset
+                </button>
+              </div>
+            </form>
+          </mat-card>
+
+          <!-- Data Table -->
+          <mat-card class="table-card">
+            <div class="table-header">
+              <h3>Study Records</h3>
+              <span class="record-count">{{ filteredRecords.length }} records found</span>
+            </div>
+            
+            <div class="table-container">
+              <table mat-table [dataSource]="displayedRecords" class="efficacy-table">
+                <!-- Vaccine Column -->
+                <ng-container matColumnDef="vaccine">
+                  <th mat-header-cell *matHeaderCellDef>Vaccine</th>
+                  <td mat-cell *matCellDef="let record">
+                    <div class="vaccine-cell">
+                      <strong>{{ record.vaccineName }}</strong>
+                      <span class="text-muted">{{ record.demographics.ageGroup }}</span>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Manufacturer Column -->
+                <ng-container matColumnDef="manufacturer">
+                  <th mat-header-cell *matHeaderCellDef>Manufacturer</th>
+                  <td mat-cell *matCellDef="let record">{{ record.manufacturer }}</td>
+                </ng-container>
+
+                <!-- Batch Column -->
+                <ng-container matColumnDef="batch">
+                  <th mat-header-cell *matHeaderCellDef>Batch</th>
+                  <td mat-cell *matCellDef="let record">
+                    <code class="batch-code">{{ record.batchNumber }}</code>
+                  </td>
+                </ng-container>
+
+                <!-- Population Column -->
+                <ng-container matColumnDef="population">
+                  <th mat-header-cell *matHeaderCellDef>Population</th>
+                  <td mat-cell *matCellDef="let record">{{ formatNumber(record.populationSize) }}</td>
+                </ng-container>
+
+                <!-- Efficacy Column -->
+                <ng-container matColumnDef="efficacy">
+                  <th mat-header-cell *matHeaderCellDef>Efficacy</th>
+                  <td mat-cell *matCellDef="let record">
+                    <div class="progress-cell">
+                      <div class="progress-bar" [style.width.%]="record.efficacyRate" 
+                           [style.background-color]="getEfficacyColor(record.efficacyRate)"></div>
+                      <span class="progress-text" [style.color]="getEfficacyColor(record.efficacyRate)">
+                        {{ formatPercentage(record.efficacyRate) }}
+                      </span>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Effectiveness Column -->
+                <ng-container matColumnDef="effectiveness">
+                  <th mat-header-cell *matHeaderCellDef>Effectiveness</th>
+                  <td mat-cell *matCellDef="let record">
+                    <span [style.color]="getEfficacyColor(record.effectivenessRate)">
+                      {{ formatPercentage(record.effectivenessRate) }}
+                    </span>
+                  </td>
+                </ng-container>
+
+                <!-- Adverse Events Column -->
+                <ng-container matColumnDef="adverseEvents">
+                  <th mat-header-cell *matHeaderCellDef>Adverse Events</th>
+                  <td mat-cell *matCellDef="let record">
+                    <div class="adverse-events-cell">
+                      <mat-icon class="severity-icon mild" [matTooltip]="'Mild: ' + record.adverseEvents.mild">
+                        circle
+                      </mat-icon>
+                      <mat-icon class="severity-icon moderate" [matTooltip]="'Moderate: ' + record.adverseEvents.moderate">
+                        circle
+                      </mat-icon>
+                      <mat-icon class="severity-icon severe" [matTooltip]="'Severe: ' + record.adverseEvents.severe">
+                        circle
+                      </mat-icon>
+                      <span class="total-count">{{ record.adverseEvents.total }}</span>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Breakthrough Column -->
+                <ng-container matColumnDef="breakthrough">
+                  <th mat-header-cell *matHeaderCellDef>Breakthrough</th>
+                  <td mat-cell *matCellDef="let record">
+                    <mat-chip class="breakthrough-chip">
+                      <mat-icon>coronavirus</mat-icon>
+                      {{ record.breakthrough.length }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <!-- Antibody Column -->
+                <ng-container matColumnDef="antibody">
+                  <th mat-header-cell *matHeaderCellDef>Antibody Level</th>
+                  <td mat-cell *matCellDef="let record">
+                    <div class="antibody-cell">
+                      <mat-icon class="antibody-icon">biotech</mat-icon>
+                      {{ record.immuneResponse.antibodyLevel.toFixed(0) }} ng/mL
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Status Column -->
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let record">
+                    <mat-chip [style.background-color]="getStatusColor(record.status)" class="status-chip">
+                      {{ record.status }}
+                    </mat-chip>
+                  </td>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Actions</th>
+                  <td mat-cell *matCellDef="let record">
+                    <button mat-icon-button [matMenuTriggerFor]="actionsMenu">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #actionsMenu="matMenu">
+                      <button mat-menu-item (click)="openRecordDialog(record)">
+                        <mat-icon>visibility</mat-icon>
+                        View Details
+                      </button>
+                      <button mat-menu-item (click)="openRecordDialog(record)">
+                        <mat-icon>edit</mat-icon>
+                        Edit
+                      </button>
+                      <button mat-menu-item (click)="deleteRecord(record)" class="delete-action">
+                        <mat-icon>delete</mat-icon>
+                        Delete
+                      </button>
+                    </mat-menu>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              </table>
+            </div>
+
+            <mat-paginator
+              [length]="filteredRecords.length"
+              [pageSize]="pageSize"
+              [pageSizeOptions]="pageSizeOptions"
+              [pageIndex]="pageIndex"
+              (page)="onPageChange($event)"
+              showFirstLastButtons>
+            </mat-paginator>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Comparative Analysis Tab -->
+      <mat-tab label="Comparative Analysis">
+        <div class="tab-content">
+          <mat-card class="comparative-card">
+            <h3>Vaccine Comparison</h3>
+            <p class="card-subtitle">Side-by-side comparison of vaccine performance metrics</p>
+
+            <div class="comparative-table-container">
+              <table class="comparative-table">
+                <thead>
+                  <tr>
+                    <th>Vaccine</th>
+                    <th>Efficacy</th>
+                    <th>Effectiveness</th>
+                    <th>Adverse Event Rate</th>
+                    <th>Breakthrough Rate</th>
+                    <th>Immune Duration</th>
+                    <th>Overall Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of comparativeData; let i = index" [class.top-performer]="i === 0">
+                    <td class="vaccine-name">
+                      <mat-icon *ngIf="i === 0" class="trophy-icon">emoji_events</mat-icon>
+                      {{ item.vaccineName }}
+                    </td>
+                    <td>
+                      <div class="metric-cell">
+                        <div class="metric-bar" [style.width.%]="item.efficacy" 
+                             [style.background-color]="getEfficacyColor(item.efficacy)"></div>
+                        <span>{{ formatPercentage(item.efficacy) }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="metric-cell">
+                        <div class="metric-bar" [style.width.%]="item.effectiveness" 
+                             [style.background-color]="getEfficacyColor(item.effectiveness)"></div>
+                        <span>{{ formatPercentage(item.effectiveness) }}</span>
+                      </div>
+                    </td>
+                    <td>{{ formatPercentage(item.adverseEventRate) }}</td>
+                    <td>{{ formatPercentage(item.breakthroughRate) }}</td>
+                    <td>{{ item.immuneDuration.toFixed(0) }} days</td>
+                    <td>
+                      <mat-chip [style.background-color]="getEfficacyColor(item.overallScore)" class="score-chip">
+                        {{ item.overallScore.toFixed(1) }}
+                      </mat-chip>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </mat-card>
+
+          <mat-card class="insights-card">
+            <h3>Key Insights</h3>
+            <div class="insights-grid">
+              <div class="insight-item" *ngIf="comparativeData.length > 0">
+                <mat-icon class="insight-icon success">star</mat-icon>
+                <div class="insight-content">
+                  <h4>Top Performer</h4>
+                  <p>{{ comparativeData[0].vaccineName }} shows the highest overall score with 
+                     {{ formatPercentage(comparativeData[0].efficacy) }} efficacy rate.</p>
+                </div>
+              </div>
+
+              <div class="insight-item">
+                <mat-icon class="insight-icon info">security</mat-icon>
+                <div class="insight-content">
+                  <h4>Safety Profile</h4>
+                  <p>Average adverse event rate across all vaccines is {{ getAverageAdverseEventRate() }}.</p>
+                </div>
+              </div>
+
+              <div class="insight-item">
+                <mat-icon class="insight-icon warning">schedule</mat-icon>
+                <div class="insight-content">
+                  <h4>Immune Duration</h4>
+                  <p>Average immune response duration is {{ getAverageImmuneDuration() }} days.</p>
+                </div>
+              </div>
+
+              <div class="insight-item">
+                <mat-icon class="insight-icon error">coronavirus</mat-icon>
+                <div class="insight-content">
+                  <h4>Breakthrough Protection</h4>
+                  <p>Overall breakthrough rate is {{ formatPercentage(stats.breakthroughRate) }} across all studies.</p>
+                </div>
+              </div>
+            </div>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Trend Analysis Tab -->
+      <mat-tab label="Trend Analysis">
+        <div class="tab-content">
+          <mat-card class="trend-card">
+            <h3>Performance Trends Over Time</h3>
+            <p class="card-subtitle">Monthly tracking of key efficacy metrics</p>
+
+            <div class="trend-table-container">
+              <table class="trend-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Avg Efficacy</th>
+                    <th>Avg Effectiveness</th>
+                    <th>Total Adverse Events</th>
+                    <th>Breakthrough Cases</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let trend of trendData">
+                    <td class="month-cell">{{ trend.month }}</td>
+                    <td>
+                      <span [style.color]="getEfficacyColor(trend.efficacy)">
+                        {{ formatPercentage(trend.efficacy) }}
+                      </span>
+                    </td>
+                    <td>
+                      <span [style.color]="getEfficacyColor(trend.effectiveness)">
+                        {{ formatPercentage(trend.effectiveness) }}
+                      </span>
+                    </td>
+                    <td>{{ formatNumber(trend.adverseEvents) }}</td>
+                    <td>{{ formatNumber(trend.breakthroughCases) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </mat-card>
+
+          <mat-card class="visualization-placeholder">
+            <h3>Trend Visualization</h3>
+            <div class="placeholder-content">
+              <mat-icon>show_chart</mat-icon>
+              <p>Interactive charts will be displayed here using a charting library (e.g., Chart.js, ngx-charts)</p>
+            </div>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>
+
+<!-- Record Dialog -->
+<div class="dialog-overlay" *ngIf="showRecordDialog" (click)="closeRecordDialog()">
+  <div class="dialog-container" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>{{ isEditMode ? 'Edit' : 'New' }} Efficacy Study</h2>
+      <button mat-icon-button (click)="closeRecordDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="dialog-content">
+      <form [formGroup]="recordForm">
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h3>Basic Information</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Vaccine Name</mat-label>
+              <mat-select formControlName="vaccineName">
+                <mat-option *ngFor="let vaccine of vaccines" [value]="vaccine">{{ vaccine }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Manufacturer</mat-label>
+              <mat-select formControlName="manufacturer">
+                <mat-option *ngFor="let mfr of manufacturers" [value]="mfr">{{ mfr }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Batch Number</mat-label>
+              <input matInput formControlName="batchNumber" placeholder="Enter batch number">
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Start Date</mat-label>
+              <input matInput [matDatepicker]="startPicker" formControlName="startDate" placeholder="Select start date">
+              <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>End Date</mat-label>
+              <input matInput [matDatepicker]="endPicker" formControlName="endDate" placeholder="Select end date">
+              <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let status of statuses" [value]="status">{{ status }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Demographics -->
+        <div class="form-section">
+          <h3>Demographics</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Population Size</mat-label>
+              <input matInput type="number" formControlName="populationSize" placeholder="Number of participants">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Age Group</mat-label>
+              <mat-select formControlName="ageGroup">
+                <mat-option *ngFor="let age of ageGroups" [value]="age">{{ age }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Gender</mat-label>
+              <mat-select formControlName="gender">
+                <mat-option *ngFor="let gender of genders" [value]="gender">{{ gender }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Comorbidities</mat-label>
+            <mat-select formControlName="comorbidities" multiple>
+              <mat-option *ngFor="let condition of comorbidityOptions" [value]="condition">{{ condition }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Efficacy Metrics -->
+        <div class="form-section">
+          <h3>Efficacy Metrics</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Efficacy Rate (%)</mat-label>
+              <input matInput type="number" formControlName="efficacyRate" min="0" max="100" 
+                     placeholder="0-100">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Effectiveness Rate (%)</mat-label>
+              <input matInput type="number" formControlName="effectivenessRate" min="0" max="100" 
+                     placeholder="0-100">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Confidence Level (%)</mat-label>
+              <input matInput type="number" formControlName="confidenceLevel" min="0" max="100" 
+                     placeholder="e.g., 95">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confidence Interval</mat-label>
+            <input matInput formControlName="confidenceInterval" placeholder="e.g., 85.2% - 94.8%">
+          </mat-form-field>
+        </div>
+
+        <!-- Adverse Events -->
+        <div class="form-section">
+          <h3>Adverse Events</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Mild Events</mat-label>
+              <input matInput type="number" formControlName="mildEvents" min="0" placeholder="Count">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Moderate Events</mat-label>
+              <input matInput type="number" formControlName="moderateEvents" min="0" placeholder="Count">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Severe Events</mat-label>
+              <input matInput type="number" formControlName="severeEvents" min="0" placeholder="Count">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Immune Response -->
+        <div class="form-section">
+          <h3>Immune Response</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Antibody Level (ng/mL)</mat-label>
+              <input matInput type="number" formControlName="antibodyLevel" min="0" 
+                     placeholder="e.g., 500">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>T-Cell Response (%)</mat-label>
+              <input matInput type="number" formControlName="tcellResponse" min="0" max="100" 
+                     placeholder="0-100">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Immune Duration (days)</mat-label>
+              <input matInput type="number" formControlName="immuneDuration" min="0" 
+                     placeholder="e.g., 180">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Breakthrough Cases -->
+        <div class="form-section">
+          <h3>Breakthrough Cases</h3>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Number of Cases</mat-label>
+              <input matInput type="number" formControlName="breakthroughCases" min="0" placeholder="Count">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Predominant Severity</mat-label>
+              <mat-select formControlName="breakthroughSeverity">
+                <mat-option value="Mild">Mild</mat-option>
+                <mat-option value="Moderate">Moderate</mat-option>
+                <mat-option value="Severe">Severe</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="form-section">
+          <h3>Additional Information</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Facility Name</mat-label>
+            <input matInput formControlName="facilityName" placeholder="Enter facility name">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Notes</mat-label>
+            <textarea matInput formControlName="notes" rows="3" 
+                      placeholder="Additional study notes or observations"></textarea>
+          </mat-form-field>
+        </div>
+      </form>
+    </div>
+
+    <div class="dialog-actions">
+      <button mat-stroked-button (click)="closeRecordDialog()">Cancel</button>
+      <button mat-raised-button color="primary" (click)="saveRecord()" 
+              [disabled]="recordForm.invalid">
+        {{ isEditMode ? 'Update' : 'Create' }} Study
+      </button>
+    </div>
+  </div>
+</div>

@@ -65,7 +65,7 @@
                 <div class="batch-option">
                   <span class="batch-name">{{ batch.vaccineName }} - {{ batch.batchNumber }}</span>
                   <span class="batch-details">
-                    {{ batch.manufacturer }} | Stock: {{ batch.quantityRemaining }} | 
+                    {{ batch.manufacturer }} | Stock: {{ batch.quantityRemaining }} |
                     Expires: {{ batch.expiryDate | date: 'shortDate' }}
                     <mat-icon *ngIf="batch.isExpiringSoon" class="warning-icon">warning</mat-icon>
                   </span>

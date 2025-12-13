@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -82,6 +83,7 @@ interface CoverageByVaccine {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule,
     MatCardModule,
     MatIconModule,
@@ -117,192 +119,13 @@ export class GovernmentOfficialDashboardComponent implements OnInit {
     totalVaccineStock: 0
   };
 
-  districtPerformance: DistrictPerformance[] = [
-    {
-      districtName: 'Nairobi Central',
-      facilities: 8,
-      population: 12000,
-      registered: 11500,
-      vaccinated: 10800,
-      coverageRate: 93.9,
-      rank: 1,
-      trend: 'up',
-      stockStatus: 'optimal'
-    },
-    {
-      districtName: 'Nairobi West',
-      facilities: 6,
-      population: 9500,
-      registered: 8700,
-      vaccinated: 7800,
-      coverageRate: 89.7,
-      rank: 2,
-      trend: 'up',
-      stockStatus: 'optimal'
-    },
-    {
-      districtName: 'Nairobi East',
-      facilities: 7,
-      population: 11000,
-      registered: 9200,
-      vaccinated: 7600,
-      coverageRate: 82.6,
-      rank: 3,
-      trend: 'stable',
-      stockStatus: 'low'
-    },
-    {
-      districtName: 'Nairobi North',
-      facilities: 5,
-      population: 7800,
-      registered: 6500,
-      vaccinated: 5200,
-      coverageRate: 80.0,
-      rank: 4,
-      trend: 'down',
-      stockStatus: 'low'
-    },
-    {
-      districtName: 'Nairobi South',
-      facilities: 6,
-      population: 8200,
-      registered: 6800,
-      vaccinated: 5100,
-      coverageRate: 75.0,
-      rank: 5,
-      trend: 'stable',
-      stockStatus: 'critical'
-    }
-  ];
+  districtPerformance: DistrictPerformance[] = []; // Will be populated from statistics service
 
-  campaignOverviews: CampaignOverview[] = [
-    {
-      id: 'NC001',
-      campaignName: 'National Measles Eradication Campaign 2025',
-      targetDistricts: ['Nairobi Central', 'Nairobi West', 'Nairobi East'],
-      totalTargetPopulation: 32500,
-      totalVaccinated: 28750,
-      coveragePercent: 88.5,
-      startDate: '2025-11-01',
-      endDate: '2025-12-31',
-      status: 'active',
-      budget: 5000000,
-      spent: 4200000
-    },
-    {
-      id: 'NC002',
-      campaignName: 'Polio Immunization Drive',
-      targetDistricts: ['All Districts'],
-      totalTargetPopulation: 52430,
-      totalVaccinated: 45820,
-      coveragePercent: 87.4,
-      startDate: '2025-10-15',
-      endDate: '2025-12-15',
-      status: 'active',
-      budget: 8000000,
-      spent: 6500000
-    },
-    {
-      id: 'NC003',
-      campaignName: 'BCG Vaccination Initiative',
-      targetDistricts: ['Nairobi North', 'Nairobi South'],
-      totalTargetPopulation: 16000,
-      totalVaccinated: 16000,
-      coveragePercent: 100.0,
-      startDate: '2025-09-01',
-      endDate: '2025-10-31',
-      status: 'completed',
-      budget: 3000000,
-      spent: 2850000
-    }
-  ];
+  campaignOverviews: CampaignOverview[] = []; // Will be populated from campaign service
 
-  vaccineStockByDistrict: VaccineStockByDistrict[] = [
-    {
-      districtName: 'Nairobi Central',
-      totalStock: 45000,
-      distributed: 32000,
-      remaining: 13000,
-      expiringIn30Days: 150,
-      stockoutRisk: 'low',
-      lastRestockDate: '2025-11-28'
-    },
-    {
-      districtName: 'Nairobi West',
-      totalStock: 32000,
-      distributed: 24000,
-      remaining: 8000,
-      expiringIn30Days: 200,
-      stockoutRisk: 'medium',
-      lastRestockDate: '2025-11-25'
-    },
-    {
-      districtName: 'Nairobi East',
-      totalStock: 28000,
-      distributed: 22000,
-      remaining: 6000,
-      expiringIn30Days: 180,
-      stockoutRisk: 'medium',
-      lastRestockDate: '2025-11-20'
-    },
-    {
-      districtName: 'Nairobi North',
-      totalStock: 18000,
-      distributed: 14500,
-      remaining: 3500,
-      expiringIn30Days: 120,
-      stockoutRisk: 'high',
-      lastRestockDate: '2025-11-15'
-    },
-    {
-      districtName: 'Nairobi South',
-      totalStock: 15000,
-      distributed: 12800,
-      remaining: 2200,
-      expiringIn30Days: 90,
-      stockoutRisk: 'high',
-      lastRestockDate: '2025-11-10'
-    }
-  ];
+  vaccineStockByDistrict: VaccineStockByDistrict[] = []; // Will be populated from inventory service
 
-  coverageByVaccine: CoverageByVaccine[] = [
-    {
-      vaccineName: 'BCG',
-      targetDoses: 52430,
-      administeredDoses: 49850,
-      coveragePercent: 95.1,
-      defaulters: 2580,
-      stockAvailability: 85000,
-      trend: 'up'
-    },
-    {
-      vaccineName: 'Polio (OPV)',
-      targetDoses: 52430,
-      administeredDoses: 45820,
-      coveragePercent: 87.4,
-      defaulters: 6610,
-      stockAvailability: 62000,
-      trend: 'stable'
-    },
-    {
-      vaccineName: 'Measles',
-      targetDoses: 32500,
-      administeredDoses: 28750,
-      coveragePercent: 88.5,
-      defaulters: 3750,
-      stockAvailability: 28000,
-      trend: 'up'
-    },
-    {
-      vaccineName: 'DPT',
-      targetDoses: 52430,
-      administeredDoses: 41940,
-      coveragePercent: 80.0,
-      defaulters: 10490,
-      stockAvailability: 45000,
-      trend: 'down'
-    }
-  ];
+  coverageByVaccine: CoverageByVaccine[] = []; // Will be populated from statistics service
 
   districtColumns: string[] = ['rank', 'districtName', 'facilities', 'coverage', 'vaccinated', 'trend', 'stockStatus', 'actions'];
   campaignColumns: string[] = ['campaignName', 'districts', 'progress', 'coverage', 'budget', 'status', 'actions'];
@@ -337,7 +160,7 @@ export class GovernmentOfficialDashboardComponent implements OnInit {
 
   loadNationalStats(): void {
     console.log('Loading national statistics for government official...');
-    
+
     // Use StatisticsService to get national-level data
     this.statisticsService.getNationalStatistics().subscribe({
       next: (data: NationalStatistics) => {
@@ -374,7 +197,7 @@ export class GovernmentOfficialDashboardComponent implements OnInit {
 
   loadCampaigns(): void {
     console.log('Loading campaigns for government official...');
-    
+
     // For government officials, load ALL campaigns (not filtered by facility)
     // If the backend returns 403, we'll provide mock data
     this.campaignService.getActiveCampaigns().subscribe({
@@ -419,7 +242,7 @@ export class GovernmentOfficialDashboardComponent implements OnInit {
 
   loadStockData(): void {
     console.log('Loading stock data for government official...');
-    
+
     // Government officials viewing NATIONAL data - backend needs to support this
     // For now, skip or use aggregate data from national stats
     if (this.facilityId === 'NATIONAL') {
@@ -428,7 +251,7 @@ export class GovernmentOfficialDashboardComponent implements OnInit {
       this.isLoading = false; // Important: stop the loader
       return;
     }
-    
+
     this.inventoryService.getAvailableBatches(this.facilityId).subscribe({
       next: (batches) => {
         // Calculate total vaccine stock

@@ -19,6 +19,14 @@ public class ReportingController {
 
     private final ReportingService reportingService;
 
+    @GetMapping("/dashboard-stats")
+    @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
+    public ResponseEntity<DashboardStatsResponse> getDashboardStatsSimple() {
+        // Default to facility "FAC-001" for now
+        DashboardStatsResponse stats = reportingService.getDashboardStats("FAC-001");
+        return ResponseEntity.ok(stats);
+    }
+
     @GetMapping("/national-stats")
     @PreAuthorize("hasRole('GOVERNMENT_OFFICIAL')")
     public ResponseEntity<NationalStatisticsResponse> getNationalStatistics() {
@@ -58,3 +66,4 @@ public class ReportingController {
         return ResponseEntity.ok(report);
     }
 }
+

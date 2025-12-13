@@ -1,0 +1,457 @@
+<div class="alerts-management-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <mat-icon class="header-icon">settings_alert</mat-icon>
+      <div class="header-text">
+        <h1>Alerts Management</h1>
+        <p class="subtitle">Configure alert rules, thresholds, and notification preferences</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="openRuleForm()">
+        <mat-icon>add</mat-icon>
+        New Alert Rule
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <mat-tab-group [(selectedIndex)]="activeTab">
+    <!-- Alert Rules Tab -->
+    <mat-tab label="Alert Rules">
+      <div class="tab-content">
+        <!-- Filters -->
+        <mat-card class="filters-card">
+          <div class="filters-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Type</mat-label>
+              <mat-select [(ngModel)]="filterType">
+                <mat-option value="all">All Types</mat-option>
+                <mat-option *ngFor="let type of ruleTypes" [value]="type.value">
+                  {{ type.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Category</mat-label>
+              <mat-select [(ngModel)]="filterCategory">
+                <mat-option value="all">All Categories</mat-option>
+                <mat-option *ngFor="let cat of categoryOptions" [value]="cat.value">
+                  {{ cat.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Status</mat-label>
+              <mat-select [(ngModel)]="filterStatus">
+                <mat-option value="all">All Status</mat-option>
+                <mat-option value="enabled">Enabled</mat-option>
+                <mat-option value="disabled">Disabled</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="filter-actions">
+            <button mat-raised-button (click)="resetFilters()">Reset</button>
+            <button mat-raised-button color="primary" (click)="applyFilters()">Apply Filters</button>
+          </div>
+        </mat-card>
+
+        <!-- Alert Rules Table -->
+        <mat-card class="rules-table-card">
+          <div class="table-header">
+            <h3>Alert Rules ({{ filteredRules.length }})</h3>
+          </div>
+
+          <table mat-table [dataSource]="filteredRules" class="rules-table">
+            <!-- Name Column -->
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>Rule Name</th>
+              <td mat-cell *matCellDef="let rule">
+                <div class="rule-name-cell">
+                  <strong>{{ rule.name }}</strong>
+                  <small>{{ rule.description }}</small>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Type Column -->
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let rule">
+                <mat-chip class="type-chip">{{ rule.type }}</mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Priority Column -->
+            <ng-container matColumnDef="priority">
+              <th mat-header-cell *matHeaderCellDef>Priority</th>
+              <td mat-cell *matCellDef="let rule">
+                <mat-chip [class]="getPriorityClass(rule.priority)">{{ rule.priority }}</mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Threshold Column -->
+            <ng-container matColumnDef="threshold">
+              <th mat-header-cell *matHeaderCellDef>Threshold</th>
+              <td mat-cell *matCellDef="let rule">
+                {{ rule.condition }} {{ rule.threshold }} {{ rule.thresholdUnit }}
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let rule">
+                <mat-slide-toggle
+                  [checked]="rule.enabled"
+                  (change)="toggleRuleStatus(rule)"
+                  color="primary">
+                </mat-slide-toggle>
+              </td>
+            </ng-container>
+
+            <!-- Last Triggered Column -->
+            <ng-container matColumnDef="lastTriggered">
+              <th mat-header-cell *matHeaderCellDef>Last Triggered</th>
+              <td mat-cell *matCellDef="let rule">
+                <div class="triggered-info">
+                  <span>{{ formatTimestamp(rule.lastTriggered) }}</span>
+                  <small>{{ rule.triggeredCount }} times</small>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let rule">
+                <button mat-icon-button [matTooltip]="'Edit'" (click)="openRuleForm(rule)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button [matTooltip]="'Test'" (click)="testRule(rule)">
+                  <mat-icon>send</mat-icon>
+                </button>
+                <button mat-icon-button [matTooltip]="'Delete'" (click)="deleteRule(rule)" class="delete-btn">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+
+          <div *ngIf="filteredRules.length === 0" class="empty-state">
+            <mat-icon>rule</mat-icon>
+            <h3>No alert rules found</h3>
+            <p>Create your first alert rule to get started</p>
+            <button mat-raised-button color="primary" (click)="openRuleForm()">
+              <mat-icon>add</mat-icon>
+              Create Alert Rule
+            </button>
+          </div>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Alert Channels Tab -->
+    <mat-tab label="Alert Channels">
+      <div class="tab-content">
+        <div class="channels-header">
+          <h3>Notification Channels</h3>
+          <button mat-raised-button color="primary" (click)="openChannelForm()">
+            <mat-icon>add</mat-icon>
+            Add Channel
+          </button>
+        </div>
+
+        <div class="channels-grid">
+          <mat-card *ngFor="let channel of alertChannels" class="channel-card">
+            <div class="channel-header">
+              <div class="channel-icon" [class.disabled]="!channel.enabled">
+                <mat-icon>{{ getChannelIcon(channel.type) }}</mat-icon>
+              </div>
+              <mat-slide-toggle
+                [checked]="channel.enabled"
+                (change)="toggleChannelStatus(channel)"
+                color="primary">
+              </mat-slide-toggle>
+            </div>
+            <div class="channel-body">
+              <h4>{{ channel.name }}</h4>
+              <mat-chip class="channel-type">{{ channel.type }}</mat-chip>
+              <div class="channel-config">
+                <small>Configuration:</small>
+                <pre>{{ channel.config | json }}</pre>
+              </div>
+            </div>
+            <div class="channel-actions">
+              <button mat-button (click)="openChannelForm(channel)">
+                <mat-icon>edit</mat-icon>
+                Edit
+              </button>
+              <button mat-button (click)="testChannel(channel)">
+                <mat-icon>send</mat-icon>
+                Test
+              </button>
+              <button mat-button (click)="deleteChannel(channel)" class="delete-btn">
+                <mat-icon>delete</mat-icon>
+                Delete
+              </button>
+            </div>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Notification Preferences Tab -->
+    <mat-tab label="Preferences">
+      <div class="tab-content">
+        <mat-card class="preferences-card">
+          <h3>Notification Preferences</h3>
+          <p class="subtitle">Configure how and when you receive notifications</p>
+
+          <div class="preferences-list">
+            <div *ngFor="let pref of notificationPreferences" class="preference-item">
+              <div class="preference-header">
+                <div class="preference-title">
+                  <h4>{{ pref.category }}</h4>
+                  <mat-slide-toggle
+                    [checked]="pref.enabled"
+                    (change)="togglePreferenceCategory(pref)"
+                    color="primary">
+                  </mat-slide-toggle>
+                </div>
+              </div>
+
+              <div class="preference-body" *ngIf="pref.enabled">
+                <div class="preference-channels">
+                  <label>Notification Channels:</label>
+                  <div class="channels-chips">
+                    <mat-chip *ngFor="let channel of pref.channels" class="selected-channel">
+                      <mat-icon>{{ getChannelIcon(channel) }}</mat-icon>
+                      {{ channel }}
+                    </mat-chip>
+                  </div>
+                </div>
+
+                <div class="preference-schedule">
+                  <div class="schedule-header">
+                    <label>Quiet Hours:</label>
+                    <mat-slide-toggle
+                      [checked]="pref.schedule.enabled"
+                      (change)="togglePreferenceSchedule(pref)"
+                      color="primary">
+                    </mat-slide-toggle>
+                  </div>
+
+                  <div class="schedule-details" *ngIf="pref.schedule.enabled">
+                    <div class="time-range">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Start Time</mat-label>
+                        <input matInput type="time" [(ngModel)]="pref.schedule.startTime">
+                      </mat-form-field>
+                      <span>to</span>
+                      <mat-form-field appearance="outline">
+                        <mat-label>End Time</mat-label>
+                        <input matInput type="time" [(ngModel)]="pref.schedule.endTime">
+                      </mat-form-field>
+                    </div>
+                    <div class="days-selection">
+                      <mat-chip *ngFor="let day of pref.schedule.days" class="day-chip">
+                        {{ day }}
+                      </mat-chip>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preferences-actions">
+            <button mat-raised-button color="primary" (click)="savePreferences()">
+              <mat-icon>save</mat-icon>
+              Save Preferences
+            </button>
+          </div>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- Rule Form Dialog -->
+  <div class="form-overlay" *ngIf="showRuleForm" (click)="closeRuleForm()">
+    <mat-card class="form-card" (click)="$event.stopPropagation()">
+      <div class="form-header">
+        <h3>{{ editingRule ? 'Edit Alert Rule' : 'New Alert Rule' }}</h3>
+        <button mat-icon-button (click)="closeRuleForm()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <form [formGroup]="ruleForm" class="rule-form">
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Rule Name</mat-label>
+            <input matInput formControlName="name" placeholder="e.g., Low Stock Warning">
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let type of ruleTypes" [value]="type.value">
+                {{ type.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Category</mat-label>
+            <mat-select formControlName="category">
+              <mat-option *ngFor="let cat of categoryOptions" [value]="cat.value">
+                {{ cat.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <mat-select formControlName="priority">
+              <mat-option *ngFor="let priority of priorityOptions" [value]="priority.value">
+                {{ priority.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Condition</mat-label>
+            <mat-select formControlName="condition">
+              <mat-option *ngFor="let cond of conditionOptions" [value]="cond.value">
+                {{ cond.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Threshold</mat-label>
+            <input matInput type="number" formControlName="threshold" placeholder="e.g., 100">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Unit</mat-label>
+            <input matInput formControlName="thresholdUnit" placeholder="e.g., doses, days">
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Notification Channels</mat-label>
+            <mat-select formControlName="channels" multiple>
+              <mat-option *ngFor="let channel of channelTypeOptions" [value]="channel.value">
+                <mat-icon>{{ channel.icon }}</mat-icon>
+                {{ channel.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Frequency</mat-label>
+            <mat-select formControlName="frequency">
+              <mat-option *ngFor="let freq of frequencyOptions" [value]="freq.value">
+                {{ freq.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Recipients (comma-separated emails)</mat-label>
+            <input matInput formControlName="recipients" placeholder="email1@example.com, email2@example.com">
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Describe when this alert should trigger"></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-slide-toggle formControlName="enabled" color="primary">
+            Enable this rule
+          </mat-slide-toggle>
+        </div>
+
+        <div class="form-actions">
+          <button mat-button (click)="closeRuleForm()">Cancel</button>
+          <button mat-raised-button color="primary" (click)="saveRule()">
+            <mat-icon>save</mat-icon>
+            {{ editingRule ? 'Update' : 'Create' }} Rule
+          </button>
+        </div>
+      </form>
+    </mat-card>
+  </div>
+
+  <!-- Channel Form Dialog -->
+  <div class="form-overlay" *ngIf="showChannelForm" (click)="closeChannelForm()">
+    <mat-card class="form-card" (click)="$event.stopPropagation()">
+      <div class="form-header">
+        <h3>{{ editingChannel ? 'Edit Alert Channel' : 'New Alert Channel' }}</h3>
+        <button mat-icon-button (click)="closeChannelForm()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <form [formGroup]="channelForm" class="channel-form">
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Channel Name</mat-label>
+            <input matInput formControlName="name" placeholder="e.g., Primary Email">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Channel Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let type of channelTypeOptions" [value]="type.value">
+                <mat-icon>{{ type.icon }}</mat-icon>
+                {{ type.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Configuration (JSON)</mat-label>
+            <textarea matInput formControlName="config" rows="8" placeholder='{"key": "value"}'></textarea>
+            <mat-hint>Enter configuration as valid JSON</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-slide-toggle formControlName="enabled" color="primary">
+            Enable this channel
+          </mat-slide-toggle>
+        </div>
+
+        <div class="form-actions">
+          <button mat-button (click)="closeChannelForm()">Cancel</button>
+          <button mat-raised-button color="primary" (click)="saveChannel()">
+            <mat-icon>save</mat-icon>
+            {{ editingChannel ? 'Update' : 'Create' }} Channel
+          </button>
+        </div>
+      </form>
+    </mat-card>
+  </div>
+</div>
