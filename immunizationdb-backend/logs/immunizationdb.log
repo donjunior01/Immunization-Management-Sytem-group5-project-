@@ -7233,3 +7233,282 @@ Identify and stop the process that's listening on port 8080 or configure this ap
 2025-12-13 08:57:09 [http-nio-8080-exec-6] DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor - Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json]
 2025-12-13 08:57:09 [http-nio-8080-exec-6] DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor - Writing [DashboardStatsResponse(totalPatients=35, totalVaccinations=null, vaccinationsThisMonth=55, activeCam (truncated)...]
 2025-12-13 08:57:09 [http-nio-8080-exec-6] DEBUG o.s.web.servlet.DispatcherServlet - Completed 200 OK
+2025-12-13 09:21:20 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Securing POST /auth/login
+2025-12-13 09:21:20 [http-nio-8080-exec-4] DEBUG o.s.s.w.a.AnonymousAuthenticationFilter - Set SecurityContextHolder to anonymous SecurityContext
+2025-12-13 09:21:20 [http-nio-8080-exec-4] DEBUG o.s.security.web.FilterChainProxy - Secured POST /auth/login
+2025-12-13 09:21:20 [http-nio-8080-exec-4] DEBUG o.s.web.servlet.DispatcherServlet - POST "/api/auth/login", parameters={}
+2025-12-13 09:21:20 [http-nio-8080-exec-4] DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping - Mapped to com.immunizationdb.auth.controller.AuthController#login(LoginRequest)
+2025-12-13 09:21:20 [http-nio-8080-exec-4] DEBUG o.s.w.s.m.m.a.RequestResponseBodyMethodProcessor - Read "application/json;charset=UTF-8" to [LoginRequest(username=gov.official, password=Password123!)]
+2025-12-13 09:21:21 [http-nio-8080-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.active,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.deleted,
+        u1_0.deleted_at,
+        u1_0.district_id,
+        u1_0.email,
+        u1_0.facility_id,
+        u1_0.failed_login_attempts,
+        u1_0.full_name,
+        u1_0.locked,
+        u1_0.national_id,
+        u1_0.password,
+        u1_0.role,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-12-13 09:21:21 [http-nio-8080-exec-4] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.active,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.deleted,
+        u1_0.deleted_at,
+        u1_0.district_id,
+        u1_0.email,
+        u1_0.facility_id,
+        u1_0.failed_login_attempts,
+        u1_0.full_name,
+        u1_0.locked,
+        u1_0.national_id,
+        u1_0.password,
+        u1_0.role,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-12-13 09:21:22 [http-nio-8080-exec-4] DEBUG o.s.s.a.d.DaoAuthenticationProvider - Authenticated user
+2025-12-13 09:21:22 [http-nio-8080-exec-4] INFO  c.i.auth.service.AuthService - User gov.official logged in successfully
+2025-12-13 09:21:22 [http-nio-8080-exec-4] DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor - Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json]
+2025-12-13 09:21:22 [http-nio-8080-exec-4] DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor - Writing [LoginResponse(token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJnb3Yub2ZmaWNpYWwiLCJpYXQiOjE3NjU2MTQwODIsImV4cCI (truncated)...]
+2025-12-13 09:21:22 [http-nio-8080-exec-4] DEBUG o.s.web.servlet.DispatcherServlet - Completed 200 OK
+2025-12-13 09:21:23 [http-nio-8080-exec-3] DEBUG o.s.security.web.FilterChainProxy - Securing OPTIONS /reports/national-stats
+2025-12-13 09:21:23 [http-nio-8080-exec-9] DEBUG o.s.security.web.FilterChainProxy - Securing OPTIONS /campaigns/active
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Securing GET /reports/national-stats
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG c.i.a.s.JwtAuthenticationFilter - Processing request to: /reports/national-stats, Auth header present: true
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Securing GET /campaigns/active
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG c.i.a.s.JwtAuthenticationFilter - Processing request to: /campaigns/active, Auth header present: true
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG c.i.a.s.JwtAuthenticationFilter - Extracted username from token: gov.official
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG c.i.a.s.JwtAuthenticationFilter - Extracted username from token: gov.official
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.active,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.deleted,
+        u1_0.deleted_at,
+        u1_0.district_id,
+        u1_0.email,
+        u1_0.facility_id,
+        u1_0.failed_login_attempts,
+        u1_0.full_name,
+        u1_0.locked,
+        u1_0.national_id,
+        u1_0.password,
+        u1_0.role,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        u1_0.id,
+        u1_0.active,
+        u1_0.created_at,
+        u1_0.created_by,
+        u1_0.deleted,
+        u1_0.deleted_at,
+        u1_0.district_id,
+        u1_0.email,
+        u1_0.facility_id,
+        u1_0.failed_login_attempts,
+        u1_0.full_name,
+        u1_0.locked,
+        u1_0.national_id,
+        u1_0.password,
+        u1_0.role,
+        u1_0.username 
+    from
+        users u1_0 
+    where
+        u1_0.username=?
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG c.i.a.s.JwtAuthenticationFilter - Loaded user details for: gov.official, authorities: [ROLE_GOVERNMENT_OFFICIAL]
+2025-12-13 09:21:23 [http-nio-8080-exec-8] INFO  c.i.a.s.JwtAuthenticationFilter - User gov.official authenticated successfully with authorities: [ROLE_GOVERNMENT_OFFICIAL]
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG o.s.security.web.FilterChainProxy - Secured GET /campaigns/active
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG o.s.web.servlet.DispatcherServlet - GET "/api/campaigns/active", parameters={}
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping - Mapped to com.immunizationdb.campaign.controller.CampaignController#getActiveCampaigns(String)
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG c.i.a.s.JwtAuthenticationFilter - Loaded user details for: gov.official, authorities: [ROLE_GOVERNMENT_OFFICIAL]
+2025-12-13 09:21:23 [http-nio-8080-exec-7] INFO  c.i.a.s.JwtAuthenticationFilter - User gov.official authenticated successfully with authorities: [ROLE_GOVERNMENT_OFFICIAL]
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG o.s.security.web.FilterChainProxy - Secured GET /reports/national-stats
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG o.s.web.servlet.DispatcherServlet - GET "/api/reports/national-stats", parameters={}
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG o.s.w.s.m.m.a.RequestMappingHandlerMapping - Mapped to com.immunizationdb.reporting.controller.ReportingController#getNationalStatistics()
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.immunizationdb.reporting.controller.ReportingController.getNationalStatistics(); target is of class [com.immunizationdb.reporting.controller.ReportingController]
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.immunizationdb.reporting.controller.ReportingController.getNationalStatistics(); target is of class [com.immunizationdb.reporting.controller.ReportingController]
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorizing method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.immunizationdb.campaign.controller.CampaignController.getActiveCampaigns(java.lang.String); target is of class [com.immunizationdb.campaign.controller.CampaignController]
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG o.s.s.a.m.AuthorizationManagerBeforeMethodInterceptor - Authorized method invocation ReflectiveMethodInvocation: public org.springframework.http.ResponseEntity com.immunizationdb.campaign.controller.CampaignController.getActiveCampaigns(java.lang.String); target is of class [com.immunizationdb.campaign.controller.CampaignController]
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        vb1_0.id,
+        vb1_0.batch_number,
+        vb1_0.created_at,
+        vb1_0.created_by,
+        vb1_0.expiry_date,
+        vb1_0.facility_id,
+        vb1_0.manufacturer,
+        vb1_0.quantity_received,
+        vb1_0.quantity_remaining,
+        vb1_0.receipt_date,
+        vb1_0.vaccine_name 
+    from
+        vaccine_batches vb1_0
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG org.hibernate.SQL - 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.created_by,
+        c1_0.description,
+        c1_0.district_id,
+        c1_0.end_date,
+        c1_0.facility_id,
+        c1_0.name,
+        c1_0.national_id,
+        c1_0.start_date,
+        c1_0.status,
+        c1_0.target_age_group,
+        c1_0.target_population,
+        c1_0.updated_at,
+        c1_0.vaccinated_count,
+        c1_0.vaccine_name 
+    from
+        campaigns c1_0 
+    where
+        ? between c1_0.start_date and c1_0.end_date 
+        and c1_0.status='ACTIVE'
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor - Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json]
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        patients p1_0
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        count(*) 
+    from
+        vaccinations v1_0
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        c1_0.id,
+        c1_0.created_at,
+        c1_0.created_by,
+        c1_0.description,
+        c1_0.district_id,
+        c1_0.end_date,
+        c1_0.facility_id,
+        c1_0.name,
+        c1_0.national_id,
+        c1_0.start_date,
+        c1_0.status,
+        c1_0.target_age_group,
+        c1_0.target_population,
+        c1_0.updated_at,
+        c1_0.vaccinated_count,
+        c1_0.vaccine_name 
+    from
+        campaigns c1_0 
+    where
+        ? between c1_0.start_date and c1_0.end_date 
+        and c1_0.status='ACTIVE'
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        vb1_0.id,
+        vb1_0.batch_number,
+        vb1_0.created_at,
+        vb1_0.created_by,
+        vb1_0.expiry_date,
+        vb1_0.facility_id,
+        vb1_0.manufacturer,
+        vb1_0.quantity_received,
+        vb1_0.quantity_remaining,
+        vb1_0.receipt_date,
+        vb1_0.vaccine_name 
+    from
+        vaccine_batches vb1_0
+2025-12-13 09:21:23 [http-nio-8080-exec-8] DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor - Writing [[CampaignResponse(id=8, name=Rotavirus Immunization Drive, description=Campaign targeting School-age (truncated)...]
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        vb1_0.id,
+        vb1_0.batch_number,
+        vb1_0.created_at,
+        vb1_0.created_by,
+        vb1_0.expiry_date,
+        vb1_0.facility_id,
+        vb1_0.manufacturer,
+        vb1_0.quantity_received,
+        vb1_0.quantity_remaining,
+        vb1_0.receipt_date,
+        vb1_0.vaccine_name 
+    from
+        vaccine_batches vb1_0
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        vb1_0.id,
+        vb1_0.batch_number,
+        vb1_0.created_at,
+        vb1_0.created_by,
+        vb1_0.expiry_date,
+        vb1_0.facility_id,
+        vb1_0.manufacturer,
+        vb1_0.quantity_received,
+        vb1_0.quantity_remaining,
+        vb1_0.receipt_date,
+        vb1_0.vaccine_name 
+    from
+        vaccine_batches vb1_0 
+    where
+        vb1_0.facility_id=?
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        vb1_0.id,
+        vb1_0.batch_number,
+        vb1_0.created_at,
+        vb1_0.created_by,
+        vb1_0.expiry_date,
+        vb1_0.facility_id,
+        vb1_0.manufacturer,
+        vb1_0.quantity_received,
+        vb1_0.quantity_remaining,
+        vb1_0.receipt_date,
+        vb1_0.vaccine_name 
+    from
+        vaccine_batches vb1_0 
+    where
+        vb1_0.facility_id=?
+2025-12-13 09:21:23 [http-nio-8080-exec-7] DEBUG org.hibernate.SQL - 
+    select
+        vb1_0.id,
+        vb1_0.batch_number,
+        vb1_0.created_at,
+        vb1_0.created_by,
+        vb1_0.expiry_date,
+        vb1_0.facility_id,
+        vb1_0.manufacturer,
+        vb1_0.quantity_received,
+        vb1_0.quantity_remaining,
+        vb1_0.receipt_date,
+        vb1_0.vaccine_name 
+    from
+        vaccine_batches vb1_0 
+    where
+        vb1_0.facility_id=?
+2025-12-13 09:21:24 [http-nio-8080-exec-8] DEBUG o.s.web.servlet.DispatcherServlet - Completed 200 OK
+2025-12-13 09:21:24 [http-nio-8080-exec-7] DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor - Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json]
+2025-12-13 09:21:24 [http-nio-8080-exec-7] DEBUG o.s.w.s.m.m.a.HttpEntityMethodProcessor - Writing [NationalStatisticsResponse(totalFacilities=3, totalVaccineTypes=8, totalDosesAvailable=32316, totalP (truncated)...]
+2025-12-13 09:21:24 [http-nio-8080-exec-7] DEBUG o.s.web.servlet.DispatcherServlet - Completed 200 OK
