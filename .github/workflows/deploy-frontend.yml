@@ -47,7 +47,7 @@ jobs:
           path: build.log
 
       - name: Fail if build failed
-        if: steps.build.outcome != 'success'
+        if: steps.build.conclusion != 'success'
         run: |
           echo "Build failed — see uploaded artifact 'build-log'"
           exit 1
