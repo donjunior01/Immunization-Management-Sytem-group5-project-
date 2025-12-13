@@ -1,7 +1,7 @@
 name: Deploy Angular Frontend to GitHub Pages
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -60,21 +60,10 @@ jobs:
           echo "Build failed — see uploaded artifact 'build-log'"
           exit 1
 
-      - name: Deploy to gh-pages branch
-        env:
-          REPO: ${{ github.repository }}
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -eux
-          git --version
-          node -v
-          npm -v
-          cd dist
-          git init
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add --all
-          git commit -m "chore(deploy): publish site from $GITHUB_SHA" || true
-          git branch -M gh-pages
-          git remote add origin "https://x-access-token:${TOKEN}@github.com/${REPO}.git"
-          git push -f origin gh-pages
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
