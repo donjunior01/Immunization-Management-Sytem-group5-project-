@@ -1,0 +1,312 @@
+<app-layout pageTitle="Vaccinator Dashboard" pageSubtitle="Welcome back! Here's your overview for today">
+  <div class="vaccinator-dashboard">
+    <app-alert 
+      *ngIf="errorMessage" 
+      type="error" 
+      [message]="errorMessage"
+      [show]="!!errorMessage">
+    </app-alert>
+
+    <!-- Patient Search Bar -->
+    <div class="dashboard-search-section">
+      <div class="search-bar-container">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search patients by name, ID, or village..."
+          [(ngModel)]="patientSearchQuery"
+          (input)="onPatientSearch()"
+          [ngModelOptions]="{standalone: true}">
+        <button class="btn btn-primary" *ngIf="patientSearchQuery.trim()" (click)="clearSearch()">Clear</button>
+      </div>
+
+      <!-- Search Results Dropdown -->
+      <div class="quick-search-results" *ngIf="patientSearchQuery.trim().length >= 2 && (searching || searchResults.length > 0 || showNoResults)">
+        <div *ngIf="searching" class="search-loading">
+          <span class="loading-spinner">⏳</span>
+          <span>Searching...</span>
+        </div>
+        <div *ngIf="!searching && searchResults.length > 0" class="search-results-list">
+          <div
+            *ngFor="let patient of searchResults"
+            class="quick-result-item"
+            [routerLink]="['/vaccinator/patients', patient.id || patient.patientId]"
+            (click)="selectSearchResult(patient)">
+            <div class="result-avatar">{{ getPatientDisplayName(patient)[0] }}</div>
+            <div class="result-info">
+              <div class="result-name">{{ getPatientDisplayName(patient) }}</div>
+              <div class="result-details">
+                <span>Age: {{ getPatientAgeFromDate(patient.birthDate || patient.dateOfBirth) }}</span>
+                <span class="separator">•</span>
+                <span>Village: {{ patient.village || patient.address || 'N/A' }}</span>
+                <span class="separator">•</span>
+                <span>Last Vaccination: {{ getLastVaccinationDate(patient) }}</span>
+              </div>
+            </div>
+            <div class="result-action">→</div>
+          </div>
+        </div>
+        <div *ngIf="!searching && searchResults.length === 0 && showNoResults" class="no-results-message">
+          <div class="no-results-icon">🔍</div>
+          <p>No patients found matching "{{ patientSearchQuery }}"</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card stat-primary">
+        <div class="stat-header">
+          <div class="stat-icon">📅</div>
+          <div class="stat-label">Today's Appointments</div>
+        </div>
+        <div class="stat-value">{{ todayAppointments.length }}</div>
+        <div class="stat-trend positive">↑ 12% vs yesterday</div>
+        <a [routerLink]="['/vaccinator/appointments']" class="stat-link">View All →</a>
+      </div>
+      <div class="stat-card stat-success">
+        <div class="stat-header">
+          <div class="stat-icon">👥</div>
+          <div class="stat-label">Patients Registered</div>
+        </div>
+        <div class="stat-value">{{ totalPatients | number }}</div>
+        <div class="stat-trend">This Month</div>
+      </div>
+      <div class="stat-card stat-info">
+        <div class="stat-header">
+          <div class="stat-icon">💉</div>
+          <div class="stat-label">Vaccinations Recorded</div>
+        </div>
+        <div class="stat-value">{{ vaccinationsThisWeek }}</div>
+        <div class="stat-trend">This Week</div>
+      </div>
+      <div class="stat-card" [ngClass]="getStockCardClass()">
+        <div class="stat-header">
+          <div class="stat-icon">📦</div>
+          <div class="stat-label">Stock Status</div>
+        </div>
+        <div class="stat-value" [ngClass]="stockStatusClass">{{ stockStatusText }}</div>
+        <div class="stat-trend" *ngIf="lowStockVaccines.length > 0" [ngClass]="{'warning': lowStockVaccines.length > 0}">{{ lowStockVaccines.length }} items low</div>
+      </div>
+    </div>
+
+    <!-- Main Content (2 columns) -->
+    <div class="dashboard-main">
+      <!-- Left Column (60%) -->
+      <div class="dashboard-left">
+        <!-- Today's Appointments List -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">Today's Appointments</h3>
+            <div class="section-header-right">
+              <div class="section-date">{{ getTodayDateFormatted() }}</div>
+              <a [routerLink]="['/vaccinator/appointments']" class="btn btn-sm btn-primary">View All</a>
+            </div>
+          </div>
+          <div class="filter-tabs">
+            <button 
+              class="filter-tab" 
+              [class.active]="appointmentFilter === 'all'"
+              (click)="appointmentFilter = 'all'">All</button>
+            <button 
+              class="filter-tab" 
+              [class.active]="appointmentFilter === 'morning'"
+              (click)="appointmentFilter = 'morning'">Morning</button>
+            <button 
+              class="filter-tab" 
+              [class.active]="appointmentFilter === 'afternoon'"
+              (click)="appointmentFilter = 'afternoon'">Afternoon</button>
+            <button 
+              class="filter-tab" 
+              [class.active]="appointmentFilter === 'completed'"
+              (click)="appointmentFilter = 'completed'">Completed</button>
+            <button 
+              class="filter-tab" 
+              [class.active]="appointmentFilter === 'missed'"
+              (click)="appointmentFilter = 'missed'">Missed</button>
+          </div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Search appointments..." />
+          </div>
+          <div class="appointments-list">
+            <div *ngFor="let appointment of todayAppointments" class="appointment-card">
+              <div class="appointment-avatar">{{ (appointment.patientName || 'P')[0] }}</div>
+              <div class="appointment-info">
+                <div class="appointment-name">{{ appointment.patientName || 'Patient' }} ({{ getPatientAge(appointment) }})</div>
+                <div class="appointment-details">
+                  <span>Parent: {{ appointment.guardianName || 'N/A' }}</span>
+                  <span class="separator">•</span>
+                  <span>Phone: {{ appointment.guardianPhone || 'N/A' }}</span>
+                </div>
+                <div class="appointment-vaccine">Vaccine Due: {{ appointment.vaccineName || 'N/A' }}</div>
+                <div class="appointment-time">Scheduled: {{ appointment.appointmentTime || 'All Day' }}</div>
+              </div>
+              <div class="appointment-actions">
+                <a [routerLink]="['/vaccinator/patients', appointment.patientId]" class="btn-sm">View Details</a>
+                <a [routerLink]="['/vaccinator/vaccinations/record', appointment.patientId]" class="btn-sm btn-primary">Record Vaccination</a>
+              </div>
+            </div>
+            <div *ngIf="todayAppointments.length === 0" class="empty-state">
+              <div class="empty-icon">📅</div>
+              <p>No appointments scheduled for today</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column (40%) -->
+      <div class="dashboard-right">
+        <!-- Quick Actions Card -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">Quick Actions</h3>
+          </div>
+          <div class="quick-actions">
+            <a routerLink="/vaccinator/patients/register" class="quick-action-btn">
+              <span class="action-icon">➕</span>
+              <span>Register New Patient</span>
+            </a>
+            <a routerLink="/vaccinator/vaccinations/record" class="quick-action-btn">
+              <span class="action-icon">💉</span>
+              <span>Record Vaccination</span>
+            </a>
+            <a routerLink="/vaccinator/patients/search" class="quick-action-btn">
+              <span class="action-icon">🔍</span>
+              <span>Search Patient</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Vaccine Stock Status Card -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">Vaccine Stock Status</h3>
+            <a routerLink="/vaccinator/stock" class="view-all-link">View Full Inventory →</a>
+          </div>
+          <div class="stock-table">
+            <div class="stock-row" *ngFor="let vaccine of lowStockVaccines.slice(0, 5)">
+              <div class="stock-vaccine">{{ vaccine.vaccineName }}</div>
+              <div class="stock-quantity">{{ vaccine.totalQuantity }}</div>
+              <div class="stock-status-badge" [ngClass]="getStockStatusClass(vaccine.status)">
+                <span *ngIf="vaccine.status === 'GOOD'">🟢 Good</span>
+                <span *ngIf="vaccine.status === 'LOW'">🟡 Low</span>
+                <span *ngIf="vaccine.status === 'CRITICAL' || vaccine.status === 'OUT'">🔴 Out</span>
+              </div>
+            </div>
+            <div *ngIf="lowStockVaccines.length === 0" class="empty-state-small">
+              <p>All vaccines well stocked</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Vaccinations Card -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">Recent Vaccinations</h3>
+            <a routerLink="/vaccinator/vaccinations" class="view-all-link">View All →</a>
+          </div>
+          <div class="recent-vaccinations">
+            <div *ngFor="let vaccination of recentVaccinations" class="vaccination-item">
+              <div class="vaccination-name">{{ vaccination.patientName || 'Patient' }}</div>
+              <div class="vaccination-details">
+                <span>{{ vaccination.vaccineName }}</span>
+                <span class="separator">•</span>
+                <span>{{ vaccination.date }}</span>
+              </div>
+            </div>
+            <div *ngIf="recentVaccinations.length === 0" class="empty-state-small">
+              <p>No recent vaccinations</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <!-- Recent Patients -->
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Recent Patients</h3>
+        </div>
+        <div class="search-bar-small">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            class="search-input-small"
+            placeholder="Q Search patients..."
+            [(ngModel)]="patientSearchQuery"
+            (input)="onPatientSearch()"
+          />
+        </div>
+        <div class="patients-list">
+          <div *ngFor="let patient of recentPatients" class="patient-item" [routerLink]="['/vaccinator/patients', patient.id]" style="cursor: pointer;">
+            <div class="patient-info">
+              <div class="patient-name">{{ getPatientDisplayName(patient) }}</div>
+              <div class="patient-details">
+                <span class="age">{{ getPatientAgeFromDate(patient.birthDate || patient.dateOfBirth) }}</span>
+                <span class="separator">•</span>
+                <span class="guardian">Guardian: {{ patient.guardianName || 'N/A' }}</span>
+              </div>
+              <div class="patient-contact">
+                <span class="phone">{{ patient.guardianPhone || patient.phoneNumber || 'N/A' }}</span>
+                <span class="separator">•</span>
+                <span class="last-vaccine">Last: {{ getLastVaccination(patient) }}</span>
+              </div>
+            </div>
+            <div class="patient-actions">
+              <a [routerLink]="['/vaccinator/patients', patient.id]" class="btn-sm btn-secondary" (click)="$event.stopPropagation()">View</a>
+            </div>
+          </div>
+          <div *ngIf="recentPatients.length === 0" class="empty-state">
+            <p>No recent patients</p>
+            <a routerLink="/vaccinator/patients/register" class="btn btn-primary">Register New Patient</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stock Levels -->
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Stock Levels</h3>
+          <a routerLink="/vaccinator/stock" class="view-all-link">View All Stock</a>
+        </div>
+        <div class="stock-list">
+          <div *ngFor="let vaccine of lowStockVaccines" class="stock-item">
+            <div class="stock-info">
+              <div class="vaccine-name">{{ vaccine.vaccineName }}</div>
+              <div class="stock-quantity">{{ vaccine.totalQuantity }} doses</div>
+            </div>
+            <div class="stock-status">
+              <div class="progress-bar" [ngClass]="getStockStatusClass(vaccine.status)">
+                <div class="progress-fill" [style.width.%]="getStockPercentage(vaccine)"></div>
+              </div>
+              <span class="status-badge" [ngClass]="getStockStatusClass(vaccine.status)">
+                {{ vaccine.status }}
+              </span>
+              <div *ngIf="vaccine.status === 'LOW' || vaccine.status === 'CRITICAL'" class="stock-alert">
+                ▲ {{ vaccine.status === 'CRITICAL' ? 'Critical - Order now' : 'Low stock - Consider reordering' }}
+              </div>
+            </div>
+          </div>
+          <div *ngIf="lowStockVaccines.length === 0" class="empty-state">
+            <p>All vaccines are well stocked</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sync Status -->
+      <div class="section-card sync-card">
+        <div class="sync-content">
+          <div class="sync-icon">✓</div>
+          <div class="sync-info">
+            <div class="sync-title">All synced</div>
+            <div class="sync-time">Last sync: {{ lastSyncTime || '2 min ago' }}</div>
+          </div>
+          <button class="btn-sync">Sync Now</button>
+        </div>
+      </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>

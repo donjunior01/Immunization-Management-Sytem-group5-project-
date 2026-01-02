@@ -1,0 +1,373 @@
+<app-layout pageTitle="Register Patient">
+  <div class="register-patient-page">
+    <!-- Offline Banner -->
+    <div class="offline-banner" *ngIf="showOfflineBanner">
+      <span class="offline-icon">📴</span>
+      <span>Working Offline - Data will sync when online</span>
+    </div>
+
+    <div class="page-header">
+      <div>
+        <h1>Patient Registration</h1>
+        <p class="subtitle">View and register new patients</p>
+      </div>
+      <button class="btn btn-primary" (click)="openRegisterModal()">+ Register New Patient</button>
+    </div>
+
+    <app-alert 
+      *ngIf="errorMessage" 
+      type="error" 
+      [message]="errorMessage"
+      [show]="!!errorMessage"
+      (dismiss)="errorMessage = ''">
+    </app-alert>
+
+    <app-alert 
+      *ngIf="successMessage" 
+      type="success" 
+      [message]="successMessage"
+      [show]="!!successMessage"
+      (dismiss)="successMessage = ''">
+    </app-alert>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by name, phone, or ID..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()">
+      </div>
+      <div class="filter-group">
+        <label>Gender:</label>
+        <select [(ngModel)]="filterGender" (change)="onFilterChange()" class="filter-select" title="Filter by gender">
+          <option value="all">All</option>
+          <option value="MALE">Male</option>
+          <option value="FEMALE">Female</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Patients Table -->
+    <div class="patients-table-card">
+      <div class="table-header">
+        <h3>All Patients ({{ filteredPatients.length }})</h3>
+      </div>
+      <div class="table-container">
+        <table class="patients-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Age</th>
+              <th>Gender</th>
+              <th>Guardian</th>
+              <th>Phone</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let patient of filteredPatients"
+              class="patient-row"
+              [routerLink]="['/vaccinator/patients', patient.id || patient.patientId]"
+              style="cursor: pointer;">
+              <td>
+                <div class="patient-name">
+                  <strong>{{ patient.fullName || (patient.firstName + ' ' + patient.lastName) }}</strong>
+                </div>
+              </td>
+              <td>{{ getPatientAge(patient.birthDate || patient.dateOfBirth) }}</td>
+              <td>
+                <span class="gender-badge" [ngClass]="'gender-' + (patient.gender || '').toLowerCase()">
+                  {{ patient.gender }}
+                </span>
+              </td>
+              <td>{{ patient.guardianName || 'N/A' }}</td>
+              <td>{{ patient.phoneNumber || patient.guardianPhone || 'N/A' }}</td>
+              <td (click)="$event.stopPropagation()">
+                <button class="btn btn-sm btn-primary" [routerLink]="['/vaccinator/patients', patient.id || patient.patientId]">
+                  View
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredPatients.length === 0">
+              <td colspan="6" class="no-data">
+                <div class="empty-state">
+                  <span class="empty-icon">👥</span>
+                  <p>No patients found</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+
+    <!-- Register Patient Modal -->
+    <div class="modal-overlay" *ngIf="showRegisterModal" (click)="closeRegisterModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>👶 Register New Patient</h2>
+          <button class="modal-close" (click)="closeRegisterModal()">×</button>
+        </div>
+        <form [formGroup]="patientForm" (ngSubmit)="onSubmit()" class="modal-body">
+      <!-- Section 1: Patient Information -->
+      <div class="form-section">
+            <h3 class="section-title">Patient Information</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName" class="required">First Name</label>
+            <input
+              type="text"
+              id="firstName"
+              formControlName="firstName"
+                  class="form-input"
+              [class.error]="isFieldInvalid('firstName')"
+              placeholder="Enter first name">
+                <span class="error-text" *ngIf="isFieldInvalid('firstName')">
+              {{ getFieldError('firstName') }}
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="lastName" class="required">Last Name</label>
+            <input
+              type="text"
+              id="lastName"
+              formControlName="lastName"
+                  class="form-input"
+              [class.error]="isFieldInvalid('lastName')"
+              placeholder="Enter last name">
+                <span class="error-text" *ngIf="isFieldInvalid('lastName')">
+              {{ getFieldError('lastName') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="birthDate" class="required">Date of Birth</label>
+            <input
+              type="date"
+              id="birthDate"
+              formControlName="birthDate"
+                  class="form-input"
+              [class.error]="isFieldInvalid('birthDate')"
+              [max]="getTodayDate()">
+                <span class="error-text" *ngIf="isFieldInvalid('birthDate')">
+              {{ getFieldError('birthDate') }}
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="gender" class="required">Gender</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" formControlName="gender" value="MALE">
+                <span>Male</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" formControlName="gender" value="FEMALE">
+                <span>Female</span>
+              </label>
+            </div>
+                <span class="error-text" *ngIf="isFieldInvalid('gender')">
+              {{ getFieldError('gender') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="nationalId">National ID (Optional)</label>
+          <input
+            type="text"
+            id="nationalId"
+            formControlName="nationalId"
+                class="form-input"
+            placeholder="Enter national ID">
+        </div>
+
+        <div class="form-group">
+          <label for="village">Village/Address</label>
+          <input
+            type="text"
+            id="village"
+            formControlName="village"
+                class="form-input"
+            placeholder="Enter village or address">
+          <input
+            type="text"
+            formControlName="address"
+                class="form-input mt-2"
+            placeholder="Additional address details">
+        </div>
+      </div>
+
+      <!-- Section 2: Guardian Information -->
+      <div class="form-section">
+            <h3 class="section-title">Guardian Information</h3>
+        
+        <div class="form-group">
+          <label for="guardianName" class="required">Guardian Name</label>
+          <input
+            type="text"
+            id="guardianName"
+            formControlName="guardianName"
+                class="form-input"
+            [class.error]="isFieldInvalid('guardianName')"
+            placeholder="Enter guardian name">
+              <span class="error-text" *ngIf="isFieldInvalid('guardianName')">
+            {{ getFieldError('guardianName') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="guardianPhone" class="required">Phone Number</label>
+            <input
+              type="tel"
+              id="guardianPhone"
+              formControlName="guardianPhone"
+                class="form-input"
+              [class.error]="isFieldInvalid('guardianPhone')"
+                placeholder="+237XXXXXXXXX"
+                (input)="formatPhoneNumber($event)"
+                maxlength="13">
+              <small class="input-hint">Format: +237XXXXXXXXX (e.g., +237678123456)</small>
+              <span class="error-text" *ngIf="isFieldInvalid('guardianPhone')">
+            {{ getFieldError('guardianPhone') || 'Invalid phone format. Use +237XXXXXXXXX' }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="alternativePhone">Alternative Phone (Optional)</label>
+            <input
+              type="tel"
+              id="alternativePhone"
+              formControlName="alternativePhone"
+                class="form-input"
+                placeholder="+237XXXXXXXXX"
+                (input)="formatPhoneNumber($event)"
+                maxlength="13">
+        </div>
+
+        <div class="form-group">
+          <label for="relationship" class="required">Relationship to Child</label>
+              <select id="relationship" formControlName="relationship" class="form-input">
+            <option value="MOTHER">Mother</option>
+            <option value="FATHER">Father</option>
+            <option value="GUARDIAN">Guardian</option>
+            <option value="OTHER">Other</option>
+          </select>
+              <span class="error-text" *ngIf="isFieldInvalid('relationship')">
+            {{ getFieldError('relationship') }}
+          </span>
+        </div>
+      </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeRegisterModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading || patientForm.invalid">
+              {{ loading ? 'Registering...' : 'Register Patient' }}
+        </button>
+      </div>
+    </form>
+      </div>
+    </div>
+
+    <!-- Duplicate Check Modal -->
+    <div class="modal-overlay" *ngIf="showDuplicateModal" (click)="closeDuplicateModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>⚠️ Possible Duplicate Found</h3>
+          <button class="modal-close" (click)="closeDuplicateModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <p>We found a similar patient in the system:</p>
+        <div class="duplicate-info" *ngIf="duplicatePatient">
+            <div class="duplicate-card">
+              <p class="duplicate-name"><strong>{{ duplicatePatient.fullName || (duplicatePatient.firstName + ' ' + duplicatePatient.lastName) }}</strong></p>
+              <div class="duplicate-details">
+                <p><span class="label">Born:</span> {{ (duplicatePatient.birthDate || duplicatePatient.dateOfBirth) | date:'dd/MM/yyyy' }}</p>
+                <p><span class="label">Parent:</span> {{ duplicatePatient.guardianName }}</p>
+                <p><span class="label">Phone:</span> {{ duplicatePatient.guardianPhone || duplicatePatient.phoneNumber }}</p>
+                <p *ngIf="duplicatePatient.patientId || duplicatePatient.id"><span class="label">Patient ID:</span> {{ duplicatePatient.patientId || duplicatePatient.id }}</p>
+              </div>
+            </div>
+          </div>
+          <p class="modal-question">Is this the same patient?</p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="useDuplicatePatient()">Yes, Use This Patient</button>
+          <button class="btn btn-primary" (click)="registerNewAnyway()">No, Register New Anyway</button>
+        </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Success Modal -->
+  <div class="modal-overlay" *ngIf="showSuccessModal" (click)="showSuccessModal = false">
+    <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header success-header">
+        <div class="success-icon-wrapper">
+          <div class="success-icon-circle">
+            <span class="success-checkmark">✓</span>
+          </div>
+        </div>
+        <div class="modal-title-section">
+          <h2>🎉 Patient Registered Successfully!</h2>
+          <p class="success-subtitle">The patient has been added to the system</p>
+        </div>
+        <button class="modal-close" (click)="showSuccessModal = false" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body success-body">
+        <div class="success-details" *ngIf="createdPatient">
+          <div class="detail-card">
+            <div class="detail-icon">👶</div>
+            <div class="detail-content">
+              <div class="detail-label">Patient Name</div>
+              <div class="detail-value">{{ createdPatient.fullName || (createdPatient.firstName + ' ' + createdPatient.lastName) }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">🆔</div>
+            <div class="detail-content">
+              <div class="detail-label">Patient ID</div>
+              <div class="detail-value">{{ createdPatient.patientId || createdPatient.id }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">📅</div>
+            <div class="detail-content">
+              <div class="detail-label">Date of Birth</div>
+              <div class="detail-value">{{ (createdPatient.birthDate || createdPatient.dateOfBirth) | date:'dd MMM yyyy' }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">👤</div>
+            <div class="detail-content">
+              <div class="detail-label">Guardian</div>
+              <div class="detail-value">{{ createdPatient.guardianName }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">📞</div>
+            <div class="detail-content">
+              <div class="detail-label">Phone</div>
+              <div class="detail-value">{{ createdPatient.guardianPhone || createdPatient.phoneNumber }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer success-footer">
+        <button type="button" class="btn btn-primary" (click)="showSuccessModal = false">
+          <span>✓</span> Got it
+        </button>
+      </div>
+    </div>
+  </div>
+</app-layout>

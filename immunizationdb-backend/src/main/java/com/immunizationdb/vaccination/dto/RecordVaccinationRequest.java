@@ -20,7 +20,7 @@ public class RecordVaccinationRequest {
     @NotNull(message = "Patient ID is required")
     private UUID patientId;
 
-    @NotNull(message = "Batch ID is required")
+    // Batch ID is optional - if not provided, system will auto-select oldest non-expired batch (FIFO)
     private Long batchId;
 
     @NotBlank(message = "Vaccine name is required")
@@ -35,6 +35,9 @@ public class RecordVaccinationRequest {
 
     @NotBlank(message = "Facility ID is required")
     private String facilityId;
+
+    @NotBlank(message = "Administration site is required")
+    private String administrationSite;
 
     private String notes;
 }

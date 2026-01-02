@@ -110,6 +110,27 @@ CREATE TABLE offline_sync_queue
     CONSTRAINT pk_offline_sync_queue PRIMARY KEY (id)
 );
 
+-- Create Appointments Table (missing - required by Hibernate entity)
+CREATE TABLE appointments
+(
+    id               UUID                        NOT NULL,
+    patient_id       UUID                        NOT NULL,
+    facility_id      VARCHAR(50)                 NOT NULL,
+    vaccine_name     VARCHAR(100)                NOT NULL,
+    dose_number      INTEGER                     NOT NULL,
+    appointment_date DATE                        NOT NULL,
+    appointment_time TIME,
+    status           VARCHAR(20)                 NOT NULL,
+    notes            VARCHAR(500),
+    sms_sent         BOOLEAN                     NOT NULL DEFAULT false,
+    sms_sent_at      TIMESTAMP WITHOUT TIME ZONE,
+    created_at       TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    created_by       BIGINT,
+    updated_at       TIMESTAMP WITHOUT TIME ZONE,
+    CONSTRAINT pk_appointments PRIMARY KEY (id)
+);
+
+
 -- Add Unique Constraints
 ALTER TABLE users
     ADD CONSTRAINT uc_users_username UNIQUE (username);

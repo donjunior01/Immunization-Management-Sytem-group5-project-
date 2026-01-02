@@ -1,0 +1,253 @@
+<app-layout pageTitle="Facilities" pageSubtitle="View facilities in your district">
+  <div class="facilities-page">
+    <div class="page-header">
+      <div>
+        <h1>Facilities Management</h1>
+        <p class="subtitle">View and manage all facilities in your district</p>
+      </div>
+      <button class="btn btn-secondary" (click)="refreshData()">🔄 Refresh</button>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+    <app-alert *ngIf="infoMessage" type="info" [message]="infoMessage" [show]="!!infoMessage"></app-alert>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search facilities by name, ID, or location..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()">
+      </div>
+      <div class="filter-group">
+        <label>Type:</label>
+        <select [(ngModel)]="filterType" (change)="onFilterChange()" class="filter-select" title="Filter by facility type">
+          <option value="all">All Types</option>
+          <option value="HOSPITAL">Hospital</option>
+          <option value="HEALTH_CENTER">Health Center</option>
+          <option value="CLINIC">Clinic</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="filterActive" (change)="onFilterChange()" class="filter-select" title="Filter by facility status">
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Facilities Table -->
+    <div class="facilities-table-card">
+      <div class="table-header">
+        <h3>All Facilities ({{ filteredFacilities.length }})</h3>
+      </div>
+      <div class="table-container">
+        <table class="facilities-table">
+          <thead>
+            <tr>
+              <th>Facility Name</th>
+              <th>Type</th>
+              <th>Location</th>
+              <th>County</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let facility of filteredFacilities">
+              <td>
+                <div class="facility-name">
+                  <strong>{{ facility.name }}</strong>
+                  <small>ID: {{ facility.id }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="type-badge" [ngClass]="getTypeBadgeClass(facility.type || '')">
+                  {{ facility.type || 'N/A' }}
+                </span>
+              </td>
+              <td>{{ facility.location || 'N/A' }}</td>
+              <td>{{ facility.county || 'N/A' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getActiveBadgeClass(facility.active)">
+                  {{ facility.active !== false ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-info" (click)="openViewModal(facility)" title="View Details">
+                    👁️ View
+                  </button>
+                  <button class="btn btn-sm btn-secondary" (click)="openEditModal(facility)" title="Edit Facility">
+                    ✏️ Edit
+                  </button>
+                  <button class="btn btn-sm btn-primary" (click)="openAssignDistrictModal(facility)" title="Assign District">
+                    📍 Assign District
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredFacilities.length === 0">
+              <td colspan="6" class="no-data">
+                <div class="empty-state">
+                  <span class="empty-icon">🏥</span>
+                  <p>No facilities found</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+
+    <!-- Edit Facility Modal -->
+    <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>✏️ Edit Facility</h2>
+          <button class="modal-close" (click)="closeEditModal()">×</button>
+        </div>
+        <form [formGroup]="facilityForm" (ngSubmit)="onEditSubmit()" class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Facility Name</label>
+              <input type="text" formControlName="name" class="form-input" placeholder="Enter facility name">
+            </div>
+            <div class="form-group">
+              <label class="required">Type</label>
+              <select formControlName="type" class="form-input" title="Select facility type">
+                <option value="">Select Type</option>
+                <option value="HOSPITAL">Hospital</option>
+                <option value="HEALTH_CENTER">Health Center</option>
+                <option value="CLINIC">Clinic</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" formControlName="location" class="form-input" placeholder="Enter location">
+            </div>
+            <div class="form-group">
+              <label>County</label>
+              <input type="text" formControlName="county" class="form-input" placeholder="Enter county">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>District ID</label>
+            <input type="text" formControlName="district" class="form-input" placeholder="Enter district ID">
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" formControlName="active"> Active
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || facilityForm.invalid">
+              {{ loading ? 'Updating...' : 'Update Facility' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Assign District Modal -->
+    <div class="modal-overlay" *ngIf="showAssignDistrictModal" (click)="closeAssignDistrictModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📍 Assign District to Facility</h2>
+          <button class="modal-close" (click)="closeAssignDistrictModal()">×</button>
+        </div>
+        <form [formGroup]="assignDistrictForm" (ngSubmit)="onAssignDistrictSubmit()" class="modal-body">
+          <div class="form-group">
+            <label class="required">District ID</label>
+            <input type="text" formControlName="districtId" class="form-input" placeholder="Enter district ID (e.g., DISTRICT_001)">
+            <small class="form-hint">Assigning a district to this facility will allow users in this facility to access district-level data.</small>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeAssignDistrictModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || assignDistrictForm.invalid">
+              {{ loading ? 'Assigning...' : 'Assign District' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- View Facility Details Modal -->
+    <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>🏥 Facility Details</h2>
+          <button class="modal-close" (click)="closeViewModal()">×</button>
+        </div>
+        <div class="modal-body" *ngIf="selectedFacility">
+          <div class="details-section">
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>Facility Name</label>
+                <p class="detail-value">{{ selectedFacility.name }}</p>
+              </div>
+              <div class="detail-item">
+                <label>Facility ID</label>
+                <p class="detail-value">{{ selectedFacility.id }}</p>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>Type</label>
+                <p class="detail-value">
+                  <span class="type-badge" [ngClass]="getTypeBadgeClass(selectedFacility.type || '')">
+                    {{ selectedFacility.type || 'N/A' }}
+                  </span>
+                </p>
+              </div>
+              <div class="detail-item">
+                <label>Status</label>
+                <p class="detail-value">
+                  <span class="status-badge" [ngClass]="getActiveBadgeClass(selectedFacility.active)">
+                    {{ selectedFacility.active !== false ? 'Active' : 'Inactive' }}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>Location</label>
+                <p class="detail-value">{{ selectedFacility.location || 'N/A' }}</p>
+              </div>
+              <div class="detail-item">
+                <label>County</label>
+                <p class="detail-value">{{ selectedFacility.county || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>District</label>
+                <p class="detail-value">{{ getFacilityDistrictId(selectedFacility) }}</p>
+              </div>
+              <div class="detail-item">
+                <label>Address</label>
+                <p class="detail-value">{{ getFacilityAddress(selectedFacility) }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeViewModal()">Close</button>
+            <button type="button" class="btn btn-primary" (click)="closeViewModal(); openEditModal(selectedFacility!)">Edit Facility</button>
+            <button type="button" class="btn btn-primary" (click)="closeViewModal(); openAssignDistrictModal(selectedFacility!)" *ngIf="!hasDistrictAssigned(selectedFacility)">Assign District</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-layout>
+

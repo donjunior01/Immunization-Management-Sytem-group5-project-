@@ -20,8 +20,10 @@ public class PatientResponse {
     private String gender;
     private String guardianName;
     private String phoneNumber;
+    private String nationalId;
     private String address;
     private String facilityId;
     private LocalDateTime createdAt;
     private Integer age;
+    private Boolean hasSevereAdverseEvents;
 }

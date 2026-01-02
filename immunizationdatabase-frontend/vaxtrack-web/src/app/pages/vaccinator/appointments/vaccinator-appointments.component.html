@@ -1,0 +1,109 @@
+<app-layout pageTitle="Today's Appointments">
+  <div class="appointments-page">
+    <div class="page-header">
+      <div>
+        <h1>Today's Appointments</h1>
+        <p class="subtitle">View and manage today's vaccination schedule</p>
+      </div>
+      <div class="badge-container">
+        <span class="appointment-badge" *ngIf="getAppointmentCount() > 0">
+          {{ getAppointmentCount() }} {{ getAppointmentCount() === 1 ? 'Appointment' : 'Appointments' }}
+        </span>
+      </div>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by patient name or vaccine..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()">
+      </div>
+      <div class="filter-group">
+        <label>Date:</label>
+        <input
+          type="date"
+          class="filter-input"
+          [(ngModel)]="selectedDate"
+          (change)="onDateChange()"
+          [value]="selectedDate">
+        <button 
+          *ngIf="!isToday" 
+          type="button" 
+          class="btn btn-sm btn-secondary" 
+          (click)="selectedDate = getTodayDate(); onDateChange()"
+          style="margin-left: 8px;">
+          Today
+        </button>
+      </div>
+      <div class="filter-group">
+        <label>Status:</label>
+        <select class="filter-select" [(ngModel)]="appointmentFilter" (change)="onFilterChange()">
+          <option value="all">All ({{ getAppointmentCount() }})</option>
+          <option value="scheduled">Scheduled ({{ getScheduledCount() }})</option>
+          <option value="completed">Completed</option>
+          <option value="missed">Missed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="appointments-table-card">
+      <div class="table-header">
+        <h3>Appointments ({{ filteredAppointments.length }})</h3>
+      </div>
+      <div class="table-container">
+        <table class="appointments-table">
+          <thead>
+            <tr>
+              <th>Patient Name</th>
+              <th>Age</th>
+              <th>Vaccine Due</th>
+              <th>Appointment Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let appointment of filteredAppointments" 
+              class="appointment-row"
+              (click)="viewPatientDetail(appointment.patientId)"
+              [title]="'Click to view patient details'">
+              <td>
+                <strong>{{ appointment.patientName || 'Unknown' }}</strong>
+              </td>
+              <td>{{ formatAge(appointment.patientAge) }}</td>
+              <td>
+                <span class="vaccine-info">
+                  {{ appointment.vaccineName }} - Dose {{ appointment.doseNumber }}
+                </span>
+              </td>
+              <td>{{ formatTime(appointment.appointmentTime) }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="'status-' + (appointment.status || 'scheduled').toLowerCase()">
+                  {{ appointment.status }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="filteredAppointments.length === 0 && !loading" class="no-data">
+              <td colspan="5">
+                <div class="empty-state">
+                  <span class="empty-icon">📅</span>
+                  <p>No appointments found for {{ isToday ? 'today' : 'this date' }}</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>

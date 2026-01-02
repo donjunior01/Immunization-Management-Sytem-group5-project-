@@ -1,0 +1,188 @@
+<div class="login-page">
+  <div class="login-container">
+    <!-- Left Panel - Login Form -->
+    <div class="login-panel">
+      <div class="login-header">
+        <a routerLink="/landing" class="back-link">
+          <span class="back-icon">←</span>
+          Back to home
+        </a>
+        <div class="login-logo">
+          <div class="logo-square">
+            <span class="logo-icon">💉</span>
+          </div>
+          <div class="logo-text">
+            <h1>VaxTrack</h1>
+            <p>Vaccination Management System</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="login-tabs">
+        <button class="tab active" (click)="activeTab = 'signin'">Sign In</button>
+        <button class="tab" (click)="activeTab = 'register'">Register</button>
+      </div>
+
+      <div class="login-content" *ngIf="activeTab === 'signin'">
+        <h2 class="welcome-title">Welcome back</h2>
+        <p class="welcome-subtitle">Enter your credentials to access your account</p>
+
+        <app-alert
+          *ngIf="showError"
+          type="error"
+          [message]="errorMessage"
+          [show]="showError"
+          (dismiss)="showError = false">
+        </app-alert>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <div class="form-group">
+            <label for="usernameOrEmail" class="required">Username or Email</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input
+                type="text"
+                id="usernameOrEmail"
+                formControlName="usernameOrEmail"
+                class="form-control"
+                [class.invalid]="usernameOrEmail?.invalid && usernameOrEmail?.touched"
+                placeholder="Enter username or email"
+                autocomplete="username"
+              />
+            </div>
+            <div *ngIf="usernameOrEmail?.invalid && usernameOrEmail?.touched" class="error-message">
+              <span *ngIf="usernameOrEmail?.errors?.['required']">Username or email is required</span>
+              <span *ngIf="usernameOrEmail?.errors?.['email']">Please enter a valid email address</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="label-row">
+              <label for="password" class="required">Password</label>
+              <a href="#" class="forgot-link" (click)="onForgotPassword(); $event.preventDefault()">Forgot password?</a>
+            </div>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                formControlName="password"
+                class="form-control"
+                [class.invalid]="password?.invalid && password?.touched"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="showPassword = !showPassword"
+                [title]="showPassword ? 'Hide password' : 'Show password'"
+              >
+                <span *ngIf="!showPassword">👁</span>
+                <span *ngIf="showPassword">👁‍🗨</span>
+              </button>
+            </div>
+            <div *ngIf="password?.invalid && password?.touched" class="error-message">
+              <span *ngIf="password?.errors?.['required']">Password is required</span>
+              <span *ngIf="password?.errors?.['minlength']">Password must be at least 8 characters</span>
+            </div>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="rememberMe"
+                [ngModelOptions]="{standalone: true}"
+                class="checkbox-input"
+              />
+              <span>Remember me</span>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            class="btn-signin"
+            [disabled]="loading || loginForm.invalid">
+            <span *ngIf="!loading">Log In</span>
+            <span *ngIf="loading">Logging In...</span>
+          </button>
+
+          <div class="divider">
+            <span>or</span>
+          </div>
+
+          <button
+            type="button"
+            class="btn-google"
+            (click)="onGoogleSignIn()"
+            [disabled]="loading">
+            <span class="google-icon">G</span>
+            <span>Sign in with Google</span>
+          </button>
+        </form>
+
+        <div class="demo-accounts" *ngIf="isMockMode()">
+          <p class="demo-title">Demo Accounts (Mock Mode)</p>
+          <div class="demo-list">
+            <div class="demo-item" (click)="fillDemoAccount('admin', 'password123')">
+              <strong>Admin:</strong> admin / password123
+            </div>
+            <div class="demo-item" (click)="fillDemoAccount('vaccinator', 'password123')">
+              <strong>Vaccinator:</strong> vaccinator / password123
+            </div>
+            <div class="demo-item" (click)="fillDemoAccount('manager', 'password123')">
+              <strong>Facility Manager:</strong> manager / password123
+            </div>
+            <div class="demo-item" (click)="fillDemoAccount('district', 'password123')">
+              <strong>District Officer:</strong> district / password123
+            </div>
+          </div>
+          <p class="demo-note">Click any account to auto-fill credentials</p>
+        </div>
+      </div>
+
+      <div class="login-content" *ngIf="activeTab === 'register'">
+        <h2 class="welcome-title">Create account</h2>
+        <p class="welcome-subtitle">Register for a new VaxTrack account</p>
+        <p class="register-note">Registration is currently restricted. Please contact your administrator for access.</p>
+        <a routerLink="/landing" class="btn-secondary">Back to Home</a>
+      </div>
+    </div>
+
+    <!-- Right Panel - Promotional Content -->
+    <div class="promo-panel">
+      <div class="promo-content">
+        <div class="promo-logo">
+          <div class="logo-square-large">
+            <span class="logo-icon-large">💉</span>
+          </div>
+        </div>
+        <h2 class="promo-title">Protecting Communities, One Vaccine at a Time</h2>
+        <p class="promo-description">
+          Join thousands of healthcare workers using VaxTrack to improve vaccination coverage and save lives.
+        </p>
+        <ul class="promo-features">
+          <li>
+            <span class="feature-dot">●</span>
+            Offline-capable for rural areas
+          </li>
+          <li>
+            <span class="feature-dot">●</span>
+            Automatic appointment scheduling
+          </li>
+          <li>
+            <span class="feature-dot">●</span>
+            Real-time stock management
+          </li>
+          <li>
+            <span class="feature-dot">●</span>
+            SMS reminders for parents
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <app-loader *ngIf="loading"></app-loader>
+</div>

@@ -48,6 +48,9 @@ public class Vaccination {
     @Column(name = "facility_id", nullable = false, length = 50)
     private String facilityId;
 
+    @Column(name = "administration_site", nullable = false, length = 50)
+    private String administrationSite;
+
     @Column(length = 500)
     private String notes;
 

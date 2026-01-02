@@ -41,6 +41,9 @@ public class Patient {
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
+    @Column(name = "national_id", length = 50, unique = true)
+    private String nationalId;
+
     @Column(columnDefinition = "TEXT")
     private String address;
 
@@ -59,11 +62,17 @@ public class Patient {
     @Column(name = "created_by")
     private Long createdBy;
 
+    @Column(name = "has_severe_adverse_events", nullable = false)
+    private Boolean hasSevereAdverseEvents = false;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         if (deleted == null) {
             deleted = false;
+        }
+        if (hasSevereAdverseEvents == null) {
+            hasSevereAdverseEvents = false;
         }
     }
 }

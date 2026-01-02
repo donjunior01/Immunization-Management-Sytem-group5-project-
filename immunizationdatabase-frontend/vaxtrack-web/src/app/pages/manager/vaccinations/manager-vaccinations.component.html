@@ -1,0 +1,243 @@
+<app-layout pageTitle="Vaccinations Management">
+  <div class="vaccinations-page">
+    <div class="page-header">
+      <div>
+        <h1>Vaccinations Management</h1>
+        <p class="subtitle">View and track all vaccinations in your facility</p>
+      </div>
+      <button class="btn btn-primary" (click)="openRecordModal()">+ Record Vaccination</button>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by patient name, vaccine, or batch number..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()">
+      </div>
+      <div class="filter-group">
+        <label>Date (optional):</label>
+        <input
+          type="date"
+          class="filter-input"
+          [(ngModel)]="filterDate"
+          (change)="onDateChange()"
+          placeholder="Filter by date">
+        <button 
+          *ngIf="filterDate" 
+          type="button" 
+          class="btn btn-sm btn-secondary" 
+          (click)="filterDate = ''; onDateChange()"
+          style="margin-left: 8px;">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Vaccinations Table -->
+    <div class="vaccinations-table-card">
+      <div class="table-header">
+        <h3>All Vaccinations ({{ filteredVaccinations.length }})</h3>
+      </div>
+      <div class="table-container">
+        <table class="vaccinations-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Vaccine</th>
+              <th>Dose</th>
+              <th>Batch</th>
+              <th>Date</th>
+              <th>Administered By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let vaccination of filteredVaccinations">
+              <td>
+                <div class="patient-name">
+                  <strong>{{ vaccination.patientName || 'N/A' }}</strong>
+                </div>
+              </td>
+              <td>{{ vaccination.vaccineName || 'N/A' }}</td>
+              <td>
+                <span class="dose-badge">Dose {{ vaccination.doseNumber || 1 }}</span>
+              </td>
+              <td>{{ vaccination.batchNumber || 'N/A' }}</td>
+              <td>{{ vaccination.administeredDate | date:'shortDate' }}</td>
+              <td>{{ vaccination.administeredBy || 'N/A' }}</td>
+            </tr>
+            <tr *ngIf="filteredVaccinations.length === 0">
+              <td colspan="6" class="no-data">
+                <div class="empty-state">
+                  <span class="empty-icon">💉</span>
+                  <p>No vaccinations found</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+
+    <!-- Record Vaccination Modal -->
+    <div class="modal-overlay" *ngIf="showRecordModal" (click)="closeRecordModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>💉 Record Vaccination</h2>
+          <button class="modal-close" (click)="closeRecordModal()">×</button>
+        </div>
+        <form [formGroup]="vaccinationForm" (ngSubmit)="onRecordSubmit()" class="modal-body">
+          <div class="form-group">
+            <label class="required">Patient</label>
+            <input 
+              type="text" 
+              class="form-input" 
+              placeholder="Search patient by name or ID..."
+              [(ngModel)]="patientSearchQuery"
+              (input)="searchPatients()"
+              [ngModelOptions]="{standalone: true}">
+            <div class="patient-results" *ngIf="patientSearchResults.length > 0">
+              <div 
+                *ngFor="let patient of patientSearchResults" 
+                class="patient-result-item"
+                (click)="selectPatient(patient)">
+                {{ patient.fullName || (patient.firstName + ' ' + patient.lastName) }} - {{ patient.age || 'N/A' }} months
+              </div>
+            </div>
+            <div class="selected-patient" *ngIf="selectedPatient">
+              Selected: <strong>{{ selectedPatient.fullName || (selectedPatient.firstName + ' ' + selectedPatient.lastName) }}</strong>
+            </div>
+            <span class="error-text" *ngIf="isFieldInvalid('patientId')">
+              {{ getFieldError('patientId') }}
+            </span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Vaccine</label>
+              <select formControlName="vaccineId" class="form-input" (change)="onVaccineChange()">
+                <option value="">Select Vaccine</option>
+                <option *ngFor="let vaccine of availableVaccines" [value]="vaccine.id">
+                  {{ vaccine.name }}
+                </option>
+              </select>
+              <span class="error-text" *ngIf="isFieldInvalid('vaccineId')">
+                {{ getFieldError('vaccineId') }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="required">Dose Number</label>
+              <input type="number" formControlName="doseNumber" class="form-input" min="1" placeholder="e.g., 1, 2, 3">
+              <span class="error-text" *ngIf="isFieldInvalid('doseNumber')">
+                {{ getFieldError('doseNumber') }}
+              </span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Batch Number</label>
+              <select formControlName="batchNumber" class="form-input">
+                <option value="">Select Batch</option>
+                <option *ngFor="let batch of availableBatches" [value]="batch.batchNumber">
+                  {{ batch.batchNumber }} ({{ batch.quantity }} doses, expires {{ batch.expiryDate | date:'shortDate' }})
+                </option>
+              </select>
+              <span class="error-text" *ngIf="isFieldInvalid('batchNumber')">
+                {{ getFieldError('batchNumber') }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="required">Administered Date</label>
+              <input type="date" formControlName="administeredDate" class="form-input" [value]="getTodayDate()">
+              <span class="error-text" *ngIf="isFieldInvalid('administeredDate')">
+                {{ getFieldError('administeredDate') }}
+              </span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="required">Administration Site</label>
+            <select formControlName="administrationSite" class="form-input">
+              <option value="LEFT_ARM">Left Arm</option>
+              <option value="RIGHT_ARM">Right Arm</option>
+              <option value="LEFT_THIGH">Left Thigh</option>
+              <option value="RIGHT_THIGH">Right Thigh</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Adverse Event Notes (Optional)</label>
+            <textarea formControlName="adverseEventNotes" class="form-input" rows="3" placeholder="Record any adverse events or reactions"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeRecordModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || vaccinationForm.invalid">
+              {{ loading ? 'Recording...' : 'Record Vaccination' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Modal for Vaccination Record -->
+    <div class="modal-overlay" *ngIf="showSuccessModal" (click)="showSuccessModal = false">
+      <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header success-header">
+          <div class="success-icon-wrapper">
+            <div class="success-icon-circle">
+              <span class="success-checkmark">✓</span>
+            </div>
+          </div>
+          <div class="modal-title-section">
+            <h2>💉 Vaccination Recorded Successfully!</h2>
+            <p class="success-subtitle">The vaccination has been added to the patient's record</p>
+          </div>
+          <button class="modal-close" (click)="showSuccessModal = false" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body success-body">
+          <div class="success-details" *ngIf="recordedVaccination">
+            <div class="detail-card">
+              <div class="detail-icon">👤</div>
+              <div class="detail-content">
+                <div class="detail-label">Patient</div>
+                <div class="detail-value">{{ recordedVaccination.patientName }}</div>
+              </div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-icon">💉</div>
+              <div class="detail-content">
+                <div class="detail-label">Vaccine</div>
+                <div class="detail-value">{{ recordedVaccination.vaccineName }} (Dose {{ recordedVaccination.doseNumber }})</div>
+              </div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-icon">📦</div>
+              <div class="detail-content">
+                <div class="detail-label">Batch Number</div>
+                <div class="detail-value">{{ recordedVaccination.batchNumber }}</div>
+              </div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-icon">📅</div>
+              <div class="detail-content">
+                <div class="detail-label">Date Administered</div>
+                <div class="detail-value">{{ recordedVaccination.dateAdministered | date:'dd MMM yyyy' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer success-footer">
+          <button type="button" class="btn btn-primary" (click)="showSuccessModal = false">
+            <span>✓</span> Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-layout>
+

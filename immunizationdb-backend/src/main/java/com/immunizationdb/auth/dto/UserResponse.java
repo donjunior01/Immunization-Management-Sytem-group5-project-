@@ -26,7 +26,29 @@ public class UserResponse {  // Added 'public' modifier
     @JsonProperty("facilityId")
     private String facilityId;  // Added facilityId field
 
+    @JsonProperty("districtId")
+    private String districtId;  // Added districtId field
+
+    @JsonProperty("phoneNumber")
+    private String phoneNumber;
+
+    @JsonProperty("status")
+    private String status;  // ACTIVE, INACTIVE, or LOCKED
+
+    @JsonProperty("active")
+    private Boolean active;
+
     public static UserResponse fromUser(User user) {
+        // Determine status based on user state
+        String status;
+        if (user.getLocked()) {
+            status = "LOCKED";
+        } else if (!user.getActive()) {
+            status = "INACTIVE";
+        } else {
+            status = "ACTIVE";
+        }
+
         return UserResponse.builder()
                 .id(String.valueOf(user.getId()))
                 .username(user.getUsername())
@@ -34,6 +56,10 @@ public class UserResponse {  // Added 'public' modifier
                 .fullName(user.getFullName())
                 .role(user.getRole())
                 .facilityId(user.getFacilityId())
+                .districtId(user.getDistrictId())
+                .phoneNumber(null)  // Phone number not in User entity yet
+                .status(status)
+                .active(user.getActive())
                 .build();
     }
 }

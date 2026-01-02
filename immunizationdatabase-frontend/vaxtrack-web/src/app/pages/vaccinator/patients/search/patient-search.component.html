@@ -1,0 +1,142 @@
+<app-layout pageTitle="Search Patients">
+  <div class="patient-search-page">
+    <!-- Offline Banner -->
+    <div class="offline-banner" *ngIf="offlineMode">
+      <span class="offline-icon">📴</span>
+      <span>Searching local records (offline mode)</span>
+    </div>
+
+    <div class="search-header">
+      <h1>🔍 Search Patients</h1>
+      <div class="view-toggle">
+        <button 
+          class="view-btn" 
+          [class.active]="viewMode === 'list'"
+          (click)="viewMode = 'list'">List</button>
+        <button 
+          class="view-btn" 
+          [class.active]="viewMode === 'grid'"
+          (click)="viewMode = 'grid'">Grid</button>
+      </div>
+    </div>
+
+    <!-- Search Interface -->
+    <div class="search-interface">
+      <div class="search-bar-large">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="onSearch()"
+          (input)="onSearch()"
+          class="search-input-large"
+          placeholder="Search by name, ID, or phone number...">
+        <button class="btn btn-primary" (click)="onSearch()" [disabled]="loading">
+          Search
+        </button>
+      </div>
+
+      <button 
+        class="advanced-toggle"
+        (click)="showAdvancedFilters = !showAdvancedFilters">
+        Advanced Filters {{ showAdvancedFilters ? '▲' : '▼' }}
+      </button>
+
+      <div class="advanced-filters" *ngIf="showAdvancedFilters">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Age Range:</label>
+            <input type="number" [(ngModel)]="ageMin" placeholder="Min" min="0" class="input">
+            <span>to</span>
+            <input type="number" [(ngModel)]="ageMax" placeholder="Max" min="0" class="input">
+            <span>months</span>
+          </div>
+
+          <div class="filter-group">
+            <label>Gender:</label>
+            <select [(ngModel)]="genderFilter" class="input">
+              <option value="all">All</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Village:</label>
+            <select [(ngModel)]="villageFilter" class="input">
+              <option value="">All</option>
+              <option *ngFor="let village of villages" [value]="village">{{ village }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label>Vaccination Status:</label>
+            <select [(ngModel)]="vaccinationStatusFilter" class="input">
+              <option value="all">All</option>
+              <option value="up-to-date">Up to date</option>
+              <option value="due">Due</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <button class="btn btn-primary" (click)="onSearch()">Apply Filters</button>
+          <button class="btn btn-secondary" (click)="clearFilters()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="search-results" *ngIf="patients.length > 0 || loading">
+      <div class="results-header">
+        <p class="results-count">{{ patients.length }} patient(s) found</p>
+      </div>
+
+      <div [ngClass]="{'list-view': viewMode === 'list', 'grid-view': viewMode === 'grid'}">
+        <div *ngFor="let patient of patients" 
+             [ngClass]="{'patient-card-list': viewMode === 'list', 'patient-card-grid': viewMode === 'grid'}"
+             class="patient-card">
+          <div class="patient-avatar">{{ getPatientDisplayName(patient)[0] }}</div>
+          <div class="patient-info">
+            <div class="patient-name">{{ getPatientDisplayName(patient) }}</div>
+            <div class="patient-id">ID: {{ patient.patientId || patient.id }}</div>
+            <div class="patient-details">
+              <span>Age: {{ getPatientAge(patient.birthDate || patient.dateOfBirth) }}</span>
+              <span class="separator">•</span>
+              <span>Parent: {{ patient.guardianName || 'N/A' }}</span>
+            </div>
+            <div class="patient-contact">
+              <span>Phone: {{ patient.guardianPhone || patient.phoneNumber || 'N/A' }}</span>
+            </div>
+            <div class="patient-status">
+              <span class="status-badge" [ngClass]="getStatusClass(getVaccinationStatus(patient))">
+                {{ getVaccinationStatus(patient) }}
+              </span>
+            </div>
+          </div>
+          <div class="patient-actions">
+            <a [routerLink]="['/vaccinator/patients', patient.id]" class="btn btn-sm btn-secondary">View Details</a>
+            <button class="btn btn-sm btn-primary" (click)="recordVaccination(patient)">Record Vaccination</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!loading && patients.length === 0 && searchQuery">
+      <div class="empty-icon">🔍</div>
+      <h3>No patients found</h3>
+      <p>No patients found matching your search criteria.</p>
+      <div class="empty-actions">
+        <button class="btn btn-secondary" (click)="clearFilters()">Clear filters</button>
+        <a routerLink="/vaccinator/patients/register" class="btn btn-primary">Register new patient</a>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+
+
+

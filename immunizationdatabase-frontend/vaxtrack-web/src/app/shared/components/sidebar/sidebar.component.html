@@ -1,0 +1,64 @@
+<aside class="sidebar" [class.collapsed]="collapsed">
+  <div class="sidebar-header">
+    <div class="sidebar-logo" [routerLink]="['/']">
+      <div class="logo-icon">💉</div>
+      <span class="logo-text" *ngIf="!collapsed">VaxTrack</span>
+    </div>
+  </div>
+
+  <div class="sidebar-role" *ngIf="roleLabel && !collapsed">
+    {{ roleLabel }}
+  </div>
+
+  <nav class="sidebar-nav">
+    <a
+      *ngFor="let item of items"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: false }"
+      class="nav-item"
+      [title]="collapsed ? item.label : ''">
+      <span class="nav-icon">{{ item.icon }}</span>
+      <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer" *ngIf="user">
+    <div class="user-profile" *ngIf="!collapsed">
+      <div class="user-avatar">{{ getUserInitials() }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ getUserDisplayName() }}</div>
+        <div class="user-facility">{{ getFacilityName() }}</div>
+      </div>
+    </div>
+    <div class="user-profile" *ngIf="collapsed">
+      <div class="user-avatar" [title]="getUserDisplayName()">{{ getUserInitials() }}</div>
+    </div>
+    <button class="toggle-btn" (click)="onToggleCollapse()" [title]="collapsed ? 'Expand' : 'Collapse'">
+      <span class="toggle-icon">{{ collapsed ? '▶' : '◀' }}</span>
+    </button>
+    <button class="logout-btn" (click)="logout()" [title]="collapsed ? 'Logout' : ''">
+      <span class="logout-icon">🚪</span>
+      <span class="logout-text" *ngIf="!collapsed">Logout</span>
+    </button>
+  </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div class="modal-overlay" *ngIf="showLogoutConfirm" (click)="cancelLogout()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-icon warning">⚠️</div>
+        <h2>Confirm Logout</h2>
+        <button class="modal-close" (click)="cancelLogout()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to logout? You will need to login again to access the system.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelLogout()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="confirmLogout()">Logout</button>
+      </div>
+    </div>
+  </div>
+</aside>
+

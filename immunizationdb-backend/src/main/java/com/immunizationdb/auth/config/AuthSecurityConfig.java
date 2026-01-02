@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -56,7 +57,8 @@ public class AuthSecurityConfig {
                                 "/auth/register",
                                 "/auth/health",
                                 "/auth/refresh",
-                                "/auth/logout"
+                                "/auth/logout",
+                                "/error"  // Allow error endpoint for proper error handling
                         ).permitAll()
 
                         // All other requests require authentication (rely on @PreAuthorize for fine-grained control)
@@ -64,6 +66,28 @@ public class AuthSecurityConfig {
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(exceptions -> exceptions
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            System.out.println("[DEBUG] AccessDeniedHandler called: " + accessDeniedException.getMessage());
+                            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                            String username = auth != null ? auth.getName() : "null";
+                            String authorities = auth != null ? auth.getAuthorities().toString() : "null";
+                            System.out.println("[DEBUG] AccessDeniedHandler - username: " + username + ", authorities: " + authorities);
+                            // Log to file
+                            try {
+                                java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
+                                fw.write(String.format("{\"location\":\"AuthSecurityConfig.java:AccessDeniedHandler\",\"message\":\"AccessDeniedHandler invoked\",\"data\":{\"hasAuth\":%s,\"username\":\"%s\",\"authorities\":\"%s\",\"requestURI\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H7\"}\n", 
+                                    auth != null, username, authorities, request.getRequestURI(), System.currentTimeMillis()));
+                                fw.close();
+                            } catch (Exception e) {
+                                System.err.println("[DEBUG] Error writing AccessDeniedHandler log: " + e.getMessage());
+                            }
+                            // Send 403 response
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\":\"Access forbidden: Insufficient permissions\"}");
+                        })
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

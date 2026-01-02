@@ -1,0 +1,66 @@
+<app-layout>
+  <div class="reports-page">
+    <div class="page-header">
+      <h1>Coverage Reports</h1>
+      <p class="subtitle">Detailed vaccination coverage analytics</p>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <div class="report-filters">
+      <div class="filter-group">
+        <label>Start Date:</label>
+        <input type="date" [(ngModel)]="startDate" class="date-input">
+      </div>
+      <div class="filter-group">
+        <label>End Date:</label>
+        <input type="date" [(ngModel)]="endDate" class="date-input">
+      </div>
+      <button class="btn btn-primary" (click)="loadReport()">Load Report</button>
+      <button class="btn btn-secondary" (click)="exportData()">Export CSV</button>
+    </div>
+
+    <div *ngIf="coverageReport" class="report-content">
+      <div class="report-summary">
+        <h2>Summary</h2>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">Total Patients Registered:</span>
+            <span class="value">{{ coverageReport.totalPatientsRegistered }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Coverage Percentage:</span>
+            <span class="value">{{ coverageReport.coveragePercentage | number:'1.1-1' }}%</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Penta 1 Count:</span>
+            <span class="value">{{ coverageReport.penta1Count }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Penta 3 Count:</span>
+            <span class="value">{{ coverageReport.penta3Count }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Penta Dropout Rate:</span>
+            <span class="value">{{ coverageReport.pentaDropoutRate | number:'1.1-1' }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="vaccinations-by-type">
+        <h2>Vaccinations by Vaccine Type</h2>
+        <div class="vaccination-list">
+          <div *ngFor="let vaccine of coverageReport.vaccinationsByVaccine" class="vaccination-item">
+            <div class="vaccine-header">
+              <h3>{{ vaccine.vaccineName }}</h3>
+              <span class="total-doses">{{ vaccine.totalDoses }} total doses</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+

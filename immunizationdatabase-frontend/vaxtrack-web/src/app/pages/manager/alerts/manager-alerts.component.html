@@ -1,0 +1,94 @@
+<app-layout pageTitle="Alerts & Notifications">
+  <div class="alerts-page">
+    <div class="page-header">
+      <div>
+        <h1>Alerts & Notifications</h1>
+        <p class="subtitle">Stay informed about important events in your facility</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="markAllAsRead()" *ngIf="getUnreadCount() > 0">
+          ✓ Mark All as Read
+        </button>
+        <button class="btn btn-secondary" (click)="loadAlerts()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Alert Summary Cards -->
+    <div class="alert-summary">
+      <div class="summary-card">
+        <div class="summary-icon">🔔</div>
+        <div class="summary-value">{{ alerts.length }}</div>
+        <div class="summary-label">Total Alerts</div>
+      </div>
+      <div class="summary-card unread">
+        <div class="summary-icon">🔴</div>
+        <div class="summary-value">{{ getUnreadCount() }}</div>
+        <div class="summary-label">Unread</div>
+      </div>
+      <div class="summary-card error">
+        <div class="summary-icon">🚨</div>
+        <div class="summary-value">{{ getErrorCount() }}</div>
+        <div class="summary-label">Critical</div>
+      </div>
+      <div class="summary-card warning">
+        <div class="summary-icon">⚠️</div>
+        <div class="summary-value">{{ getWarningCount() }}</div>
+        <div class="summary-label">Warnings</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="filter-group">
+        <label>Type:</label>
+        <select [(ngModel)]="filterType" (change)="onFilterChange()" class="filter-select" title="Filter by alert type">
+          <option value="all">All Types</option>
+          <option value="error">Critical</option>
+          <option value="warning">Warnings</option>
+          <option value="info">Info</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>
+          <input type="checkbox" [(ngModel)]="showUnreadOnly" (change)="onFilterChange()">
+          Show unread only
+        </label>
+      </div>
+    </div>
+
+    <!-- Alerts List -->
+    <div class="alerts-list-card">
+      <div class="alerts-list">
+        <div 
+          *ngFor="let alert of filteredAlerts" 
+          class="alert-item" 
+          [ngClass]="getAlertClasses(alert)"
+          (click)="markAsRead(alert)">
+          <div class="alert-icon">{{ getAlertIcon(alert.type) }}</div>
+          <div class="alert-content">
+            <div class="alert-header">
+              <h3 class="alert-title">{{ alert.title }}</h3>
+              <span class="alert-badge" *ngIf="!alert.read">New</span>
+            </div>
+            <p class="alert-message">{{ alert.message }}</p>
+            <div class="alert-footer">
+              <span class="alert-time">{{ alert.timestamp | date:'short' }}</span>
+              <a *ngIf="alert.actionUrl" [routerLink]="[alert.actionUrl]" class="alert-action">
+                View Details →
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="empty-state" *ngIf="filteredAlerts.length === 0">
+          <div class="empty-icon">✅</div>
+          <p>No alerts found</p>
+        </div>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+

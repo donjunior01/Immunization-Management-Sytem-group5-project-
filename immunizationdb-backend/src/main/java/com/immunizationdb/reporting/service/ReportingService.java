@@ -57,14 +57,71 @@ public class ReportingService {
     public CoverageReportResponse getCoverageReport(String facilityId, LocalDate startDate, LocalDate endDate) {
         log.info("Generating coverage report for facility: {}, from {} to {}", facilityId, startDate, endDate);
         
-        // Calculate summary statistics
-        Long totalTarget = 5000L; // This should come from target population data
-        Long totalAchieved = vaccinationRepository.countByFacilityIdAndDateRange(facilityId, startDate, endDate);
+        // Handle null facilityId - use all facilities or default
+        boolean isAllFacilities = (facilityId == null || facilityId.trim().isEmpty() || facilityId.equals("ALL"));
         
-        Double facilityCoverage = (totalAchieved * 100.0) / totalTarget;
+        // Total patients registered (all patients in facility, not just in date range)
+        Long totalPatientsRegistered = isAllFacilities ? 
+            patientRepository.count() : 
+            patientRepository.countByFacilityId(facilityId);
+        
+        // Target population (estimated based on facility size or use default)
+        Long targetPopulation = totalPatientsRegistered > 0 ? totalPatientsRegistered * 2L : 5000L;
+        
+        // Vaccinations by vaccine type
+        List<Object[]> vaccineStats = isAllFacilities ?
+            vaccinationRepository.findAll().stream()
+                .filter(v -> !v.getDateAdministered().isBefore(startDate) && !v.getDateAdministered().isAfter(endDate))
+                .collect(Collectors.groupingBy(
+                    v -> v.getVaccineName(),
+                    Collectors.counting()
+                ))
+                .entrySet().stream()
+                .map(e -> new Object[]{e.getKey(), e.getValue()})
+                .collect(Collectors.toList()) :
+            vaccinationRepository.getVaccinationStatsByVaccine(facilityId, startDate, endDate);
+        List<CoverageReportResponse.VaccinationByVaccineType> vaccinationsByVaccineType = vaccineStats.stream()
+                .map(stat -> CoverageReportResponse.VaccinationByVaccineType.builder()
+                        .vaccineName((String) stat[0])
+                        .count((Long) stat[1])
+                        .build())
+                .collect(Collectors.toList());
+        
+        // Calculate Penta1/Penta3 dropout rate
+        Long penta1Dose1Count = isAllFacilities ?
+            vaccinationRepository.findAll().stream()
+                .filter(v -> (v.getVaccineName().equalsIgnoreCase("Penta") || v.getVaccineName().equalsIgnoreCase("DTP")))
+                .filter(v -> v.getDoseNumber() == 1)
+                .filter(v -> !v.getDateAdministered().isBefore(startDate) && !v.getDateAdministered().isAfter(endDate))
+                .count() :
+            vaccinationRepository.countPentaDoseByFacilityAndDateRange(facilityId, 1, startDate, endDate);
+        
+        Long penta3Dose3Count = isAllFacilities ?
+            vaccinationRepository.findAll().stream()
+                .filter(v -> (v.getVaccineName().equalsIgnoreCase("Penta") || v.getVaccineName().equalsIgnoreCase("DTP")))
+                .filter(v -> v.getDoseNumber() == 3)
+                .filter(v -> !v.getDateAdministered().isBefore(startDate) && !v.getDateAdministered().isAfter(endDate))
+                .count() :
+            vaccinationRepository.countPentaDoseByFacilityAndDateRange(facilityId, 3, startDate, endDate);
+        
+        Double penta1Penta3DropoutRate = 0.0;
+        if (penta1Dose1Count > 0) {
+            penta1Penta3DropoutRate = ((penta1Dose1Count - penta3Dose3Count) * 100.0) / penta1Dose1Count;
+        }
+        
+        // Coverage percentage (vaccinated/target population)
+        Long vaccinatedCount = isAllFacilities ?
+            vaccinationRepository.findAll().stream()
+                .filter(v -> !v.getDateAdministered().isBefore(startDate) && !v.getDateAdministered().isAfter(endDate))
+                .count() :
+            vaccinationRepository.countByFacilityIdAndDateRange(facilityId, startDate, endDate);
+        Double coveragePercentage = targetPopulation > 0 ? (vaccinatedCount * 100.0) / targetPopulation : 0.0;
+        
+        // Calculate summary statistics
+        Double facilityCoverage = coveragePercentage;
         Double districtCoverage = 85.2; // Calculate from district-level data
         Double nationalCoverage = 87.5; // Calculate from national-level data
-        Double targetVsAchieved = (totalAchieved * 100.0) / totalTarget;
+        Double targetVsAchieved = targetPopulation > 0 ? (vaccinatedCount * 100.0) / targetPopulation : 0.0;
         
         CoverageReportResponse.SummaryStats summaryStats = CoverageReportResponse.SummaryStats.builder()
                 .nationalCoverage(nationalCoverage)
@@ -74,12 +131,20 @@ public class ReportingService {
                 .build();
 
         // Generate vaccine-specific data
-        List<CoverageReportResponse.VaccineData> vaccineData = generateVaccineData(facilityId, startDate, endDate);
+        List<CoverageReportResponse.VaccineData> vaccineData = generateVaccineData(
+            isAllFacilities ? null : facilityId, startDate, endDate);
         
         // Generate trend data for last 6 months
-        List<CoverageReportResponse.TrendData> trendData = generateTrendData(facilityId, endDate);
+        List<CoverageReportResponse.TrendData> trendData = generateTrendData(
+            isAllFacilities ? null : facilityId, endDate);
         
         return CoverageReportResponse.builder()
+                .totalPatientsRegistered(totalPatientsRegistered)
+                .vaccinationsByVaccineType(vaccinationsByVaccineType)
+                .penta1Penta3DropoutRate(penta1Penta3DropoutRate)
+                .coveragePercentage(coveragePercentage)
+                .targetPopulation(targetPopulation)
+                .vaccinatedCount(vaccinatedCount)
                 .summaryStats(summaryStats)
                 .vaccineData(vaccineData)
                 .trendData(trendData)
@@ -186,9 +251,15 @@ public class ReportingService {
     private List<CoverageReportResponse.VaccineData> generateVaccineData(String facilityId, LocalDate startDate, LocalDate endDate) {
         String[] vaccines = {"BCG", "Polio", "DTP", "Measles", "COVID-19"};
         List<CoverageReportResponse.VaccineData> vaccineDataList = new ArrayList<>();
+        boolean isAllFacilities = (facilityId == null || facilityId.trim().isEmpty());
         
         for (String vaccine : vaccines) {
-            Long achieved = vaccinationRepository.countByVaccineAndDateRange(facilityId, vaccine, startDate, endDate);
+            Long achieved = isAllFacilities ?
+                vaccinationRepository.findAll().stream()
+                    .filter(v -> v.getVaccineName().equalsIgnoreCase(vaccine))
+                    .filter(v -> !v.getDateAdministered().isBefore(startDate) && !v.getDateAdministered().isAfter(endDate))
+                    .count() :
+                vaccinationRepository.countByVaccineAndDateRange(facilityId, vaccine, startDate, endDate);
             Integer target = 1000; // Should come from target data
             Double coverage = (achieved * 100.0) / target;
             String trend = coverage > 90 ? "up" : coverage > 70 ? "stable" : "down";
@@ -223,13 +294,18 @@ public class ReportingService {
 
     private List<CoverageReportResponse.TrendData> generateTrendData(String facilityId, LocalDate endDate) {
         List<CoverageReportResponse.TrendData> trendData = new ArrayList<>();
+        boolean isAllFacilities = (facilityId == null || facilityId.trim().isEmpty());
         
         for (int i = 5; i >= 0; i--) {
             YearMonth month = YearMonth.from(endDate.minusMonths(i));
             LocalDate monthStart = month.atDay(1);
             LocalDate monthEnd = month.atEndOfMonth();
             
-            Long vaccinations = vaccinationRepository.countByFacilityIdAndDateRange(facilityId, monthStart, monthEnd);
+            Long vaccinations = isAllFacilities ?
+                vaccinationRepository.findAll().stream()
+                    .filter(v -> !v.getDateAdministered().isBefore(monthStart) && !v.getDateAdministered().isAfter(monthEnd))
+                    .count() :
+                vaccinationRepository.countByFacilityIdAndDateRange(facilityId, monthStart, monthEnd);
             Double coverage = (vaccinations * 100.0) / 1000; // Should use actual target
             
             trendData.add(CoverageReportResponse.TrendData.builder()

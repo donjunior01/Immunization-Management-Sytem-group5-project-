@@ -1,0 +1,129 @@
+<app-layout pageTitle="District Stock Overview">
+  <div class="stock-page">
+    <div class="page-header">
+      <div>
+        <h1>District Stock Overview</h1>
+        <p class="subtitle">Monitor vaccine stock levels across all facilities in your district</p>
+      </div>
+      <button class="btn btn-secondary" (click)="loadAllStock()">🔄 Refresh</button>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+    <app-alert *ngIf="infoMessage" type="info" [message]="infoMessage" [show]="!!infoMessage"></app-alert>
+
+    <!-- Summary Cards -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">💉</div>
+          <div class="stat-label">Total Vaccine Types</div>
+        </div>
+        <div class="stat-value">{{ totalVaccineTypes }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">📦</div>
+          <div class="stat-label">Total Quantity</div>
+        </div>
+        <div class="stat-value">{{ totalQuantity | number }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-label">Low Stock</div>
+        </div>
+        <div class="stat-value">{{ lowStockCount }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">⏰</div>
+          <div class="stat-label">Expiring Soon</div>
+        </div>
+        <div class="stat-value">{{ expiringSoonCount }}</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by vaccine name or ID..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()">
+      </div>
+      <div class="filter-group">
+        <label>Facility:</label>
+        <select [(ngModel)]="selectedFacilityId" (change)="onFacilityChange()" class="filter-select">
+          <option value="all">All Facilities</option>
+          <option *ngFor="let facility of facilities" [value]="facility.id">{{ facility.name }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="filterStatus" (change)="onFilterChange()" class="filter-select">
+          <option value="all">All</option>
+          <option value="GOOD">Good</option>
+          <option value="LOW">Low</option>
+          <option value="CRITICAL">Critical</option>
+          <option value="EXPIRED">Expired</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Stock Table -->
+    <div class="stock-table-card">
+      <div class="table-header">
+        <h3>Stock Levels ({{ filteredStock.length }})</h3>
+      </div>
+      <div class="table-container">
+        <table class="stock-table">
+          <thead>
+            <tr>
+              <th>Facility</th>
+              <th>Vaccine</th>
+              <th>Quantity</th>
+              <th>Expiry Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let stock of filteredStock">
+              <td>
+                <div class="facility-name">
+                  <strong>{{ getFacilityNameFromStock(stock) }}</strong>
+                </div>
+              </td>
+              <td>
+                <div class="vaccine-name">
+                  <strong>{{ stock.vaccineName }}</strong>
+                  <small>{{ stock.vaccineId }}</small>
+                </div>
+              </td>
+              <td>{{ stock.currentQuantity | number }}</td>
+              <td>{{ stock.oldestExpiryDate ? (stock.oldestExpiryDate | date:'shortDate') : 'N/A' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusBadgeClass(stock.status)">
+                  {{ stock.status }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="filteredStock.length === 0">
+              <td colspan="5" class="no-data">
+                <div class="empty-state">
+                  <span class="empty-icon">📦</span>
+                  <p>No stock data found</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+

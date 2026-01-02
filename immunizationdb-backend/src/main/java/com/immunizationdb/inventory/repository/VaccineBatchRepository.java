@@ -26,7 +26,7 @@ public interface VaccineBatchRepository extends JpaRepository<VaccineBatch, Long
     );
 
     @Query("SELECT vb FROM VaccineBatch vb WHERE vb.facilityId = :facilityId " +
-           "AND vb.vaccineName = :vaccineName AND vb.quantityRemaining > 0 " +
+           "AND LOWER(TRIM(vb.vaccineName)) = LOWER(TRIM(:vaccineName)) AND vb.quantityRemaining > 0 " +
            "AND vb.expiryDate > :currentDate ORDER BY vb.expiryDate ASC")
     List<VaccineBatch> findAvailableBatchesByVaccine(
         @Param("facilityId") String facilityId,

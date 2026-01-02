@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/reports")
+@RequestMapping("/v1/reports")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
 public class ReportingController {
@@ -44,10 +44,26 @@ public class ReportingController {
     @GetMapping("/coverage")
     @PreAuthorize("hasAnyRole('FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
     public ResponseEntity<CoverageReportResponse> getCoverageReport(
-            @RequestParam String facilityId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        CoverageReportResponse report = reportingService.getCoverageReport(facilityId, startDate, endDate);
+            @RequestParam(required = false) String facility_id,
+            @RequestParam(required = false) String facilityId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start_date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end_date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        // Support both snake_case and camelCase parameter names
+        String finalFacilityId = facility_id != null ? facility_id : (facilityId != null ? facilityId : null);
+        LocalDate finalStartDate = start_date != null ? start_date : startDate;
+        LocalDate finalEndDate = end_date != null ? end_date : endDate;
+        
+        // Default to last 30 days if dates not provided
+        if (finalStartDate == null) {
+            finalStartDate = LocalDate.now().minusDays(30);
+        }
+        if (finalEndDate == null) {
+            finalEndDate = LocalDate.now();
+        }
+        
+        CoverageReportResponse report = reportingService.getCoverageReport(finalFacilityId, finalStartDate, finalEndDate);
         return ResponseEntity.ok(report);
     }
 

@@ -1,0 +1,146 @@
+<app-layout pageTitle="Appointments Management">
+  <div class="appointments-page">
+    <div class="page-header">
+      <div>
+        <h1>Appointments Management</h1>
+        <p class="subtitle">View and manage all appointments in your facility</p>
+      </div>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="filter-group">
+        <label>Date:</label>
+        <input
+          type="date"
+          class="filter-input"
+          [(ngModel)]="selectedDate"
+          (change)="onDateChange()"
+          title="Select appointment date"
+          aria-label="Appointment date">
+      </div>
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="filterStatus" (change)="onStatusFilterChange()" class="filter-select" title="Filter by appointment status">
+          <option value="all">All</option>
+          <option value="SCHEDULED">Scheduled</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="MISSED">Missed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="appointments-table-card">
+      <div class="table-header">
+        <h3>Appointments for {{ selectedDate | date:'fullDate' }} ({{ filteredAppointments.length }})</h3>
+      </div>
+      <div class="table-container">
+        <table class="appointments-table">
+          <thead>
+            <tr>
+              <th>Patient</th>
+              <th>Vaccine</th>
+              <th>Dose</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Guardian</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let appointment of filteredAppointments">
+              <td>
+                <div class="patient-name">
+                  <strong>{{ appointment.patientName || 'N/A' }}</strong>
+                </div>
+              </td>
+              <td>{{ appointment.vaccineName || 'N/A' }}</td>
+              <td>
+                <span class="dose-badge">Dose {{ appointment.doseNumber || 1 }}</span>
+              </td>
+              <td>{{ appointment.appointmentDate | date:'short' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(appointment.status)">
+                  {{ appointment.status }}
+                </span>
+              </td>
+              <td>
+                <div>{{ appointment.guardianName || 'N/A' }}</div>
+                <div class="phone-text">{{ appointment.guardianPhone || '' }}</div>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-primary" [routerLink]="['/vaccinator/appointments', appointment.id]">
+                    View
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-secondary" 
+                    (click)="openRescheduleModal(appointment)"
+                    *ngIf="appointment.status === 'SCHEDULED'">
+                    Reschedule
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredAppointments.length === 0">
+              <td colspan="7" class="no-data">
+                <div class="empty-state">
+                  <span class="empty-icon">📅</span>
+                  <p>No appointments found for this date</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+
+    <!-- Reschedule Appointment Modal -->
+    <div class="modal-overlay" *ngIf="showRescheduleModal" (click)="closeRescheduleModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📅 Reschedule Appointment</h2>
+          <button class="modal-close" (click)="closeRescheduleModal()">×</button>
+        </div>
+        <form [formGroup]="rescheduleForm" (ngSubmit)="onRescheduleSubmit()" class="modal-body">
+          <div class="info-box">
+            <p><strong>Patient:</strong> {{ selectedAppointment?.patientName || 'N/A' }}</p>
+            <p><strong>Vaccine:</strong> {{ selectedAppointment?.vaccineName || 'N/A' }} - Dose {{ selectedAppointment?.doseNumber || 1 }}</p>
+            <p><strong>Current Date:</strong> {{ selectedAppointment?.appointmentDate | date:'full' }}</p>
+          </div>
+          <div class="form-group">
+            <label class="required">New Appointment Date</label>
+            <input type="date" formControlName="newDate" class="form-input" [min]="getTodayDate()" title="New appointment date" aria-label="New appointment date">
+            <span class="error-text" *ngIf="isFieldInvalid('newDate')">
+              {{ getFieldError('newDate') }}
+            </span>
+          </div>
+          <div class="form-group">
+            <label>New Appointment Time</label>
+            <input type="time" formControlName="newTime" class="form-input" title="New appointment time" aria-label="New appointment time">
+          </div>
+          <div class="form-group">
+            <label>Reason for Reschedule (Optional)</label>
+            <textarea formControlName="reason" class="form-input" rows="3" placeholder="Enter reason for rescheduling"></textarea>
+          </div>
+          <div class="warning-box">
+            <p>⚠️ A new SMS reminder will be sent to the guardian with the updated appointment date.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeRescheduleModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || rescheduleForm.invalid">
+              {{ loading ? 'Rescheduling...' : 'Reschedule Appointment' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</app-layout>
+

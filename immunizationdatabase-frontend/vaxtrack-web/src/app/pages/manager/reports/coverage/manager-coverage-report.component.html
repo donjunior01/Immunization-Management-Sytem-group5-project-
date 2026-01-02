@@ -1,0 +1,160 @@
+<app-layout pageTitle="Vaccination Coverage Report">
+  <div class="coverage-report-page">
+    <div class="page-header">
+      <div>
+        <h1>Vaccination Coverage Report</h1>
+        <p class="subtitle">Generate comprehensive coverage reports for your facility</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="exportToExcel()">Export to Excel</button>
+      </div>
+    </div>
+
+    <!-- Report Parameters -->
+    <div class="report-params">
+      <div class="param-group">
+        <label>Start Date:</label>
+        <input type="date" [(ngModel)]="startDate" class="input">
+      </div>
+      <div class="param-group">
+        <label>End Date:</label>
+        <input type="date" [(ngModel)]="endDate" class="input">
+      </div>
+      <button class="btn btn-primary" (click)="generateReport()">Generate Report</button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="card-label">Overall Coverage</div>
+        <div class="card-value" [ngClass]="getCoverageStatusClass(87)">87%</div>
+        <div class="card-status good">🟢 Target Met</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-label">Fully Vaccinated</div>
+        <div class="card-value">{{ 234 }}</div>
+        <div class="card-subtext">children</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-label">Penta1-Penta3 Coverage</div>
+        <div class="card-value" [ngClass]="getCoverageStatusClass(82)">82%</div>
+        <div class="card-status warning">🟡 Below Target</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-label">Dropout Rate</div>
+        <div class="card-value success">5%</div>
+        <div class="card-status good">🟢 Low</div>
+      </div>
+    </div>
+
+    <!-- Report Summary -->
+    <div class="report-section">
+      <h2>Monthly Summary - {{ getFormattedMonth() }}</h2>
+      <div class="summary-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Patients Registered:</span>
+          <span class="stat-value">{{ totalPatientsRegistered }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Vaccinations Recorded:</span>
+          <span class="stat-value">{{ totalVaccinationsRecorded }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Appointments Scheduled:</span>
+          <span class="stat-value">{{ appointmentsScheduled }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Appointments Completed:</span>
+          <span class="stat-value">{{ appointmentsCompleted }} ({{ completionRate }}%)</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Appointments Missed:</span>
+          <span class="stat-value">{{ appointmentsMissed }} ({{ 100 - completionRate }}%)</span>
+        </div>
+      </div>
+
+      <div class="top-vaccines">
+        <h3>Top Vaccines Administered</h3>
+        <ol>
+          <li *ngFor="let vaccine of topVaccines">
+            <strong>{{ vaccine.name }}</strong> - {{ vaccine.doses }} doses
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Coverage by Vaccine Type -->
+    <div class="report-section">
+      <h2>Coverage by Vaccine Type</h2>
+      <div class="coverage-table-container">
+        <table class="coverage-table">
+          <thead>
+            <tr>
+              <th>Vaccine</th>
+              <th>Target Pop</th>
+              <th>Vaccinated</th>
+              <th>Coverage %</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of coverageByVaccine" [ngClass]="getCoverageStatusClass(item.coverage)">
+              <td><strong>{{ item.vaccine }}</strong></td>
+              <td>{{ item.target }}</td>
+              <td>{{ item.vaccinated }}</td>
+              <td>
+                <span class="coverage-badge" [ngClass]="getCoverageStatusClass(item.coverage)">
+                  {{ item.coverage }}%
+                </span>
+              </td>
+              <td>
+                <span *ngIf="item.status === 'good'">🟢</span>
+                <span *ngIf="item.status === 'warning'">🟡</span>
+                <span *ngIf="item.status === 'error'">🔴</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Coverage by Age Group -->
+    <div class="report-section">
+      <h2>Coverage by Age Group</h2>
+      <div class="age-coverage-table-container">
+        <table class="coverage-table">
+          <thead>
+            <tr>
+              <th>Age Group</th>
+              <th>Vaccinated</th>
+              <th>% Coverage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of coverageByAge">
+              <td><strong>{{ item.ageGroup }}</strong></td>
+              <td>{{ item.vaccinated }}</td>
+              <td>
+                <span class="coverage-badge" [ngClass]="getCoverageStatusClass(item.coverage)">
+                  {{ item.coverage }}%
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Trend Chart Placeholder -->
+    <div class="report-section">
+      <h2>Coverage Trend</h2>
+      <div class="chart-placeholder">
+        <p>Line chart showing coverage over time (monthly)</p>
+        <p class="chart-note">Multiple lines for different vaccine types | Target line at 90%</p>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+

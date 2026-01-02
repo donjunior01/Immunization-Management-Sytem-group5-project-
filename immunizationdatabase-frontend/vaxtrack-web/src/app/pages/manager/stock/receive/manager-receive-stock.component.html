@@ -1,0 +1,150 @@
+<app-layout pageTitle="Receive Vaccine Stock">
+  <div class="receive-stock-page">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a routerLink="/manager/dashboard">Dashboard</a>
+      <span class="separator">></span>
+      <a routerLink="/manager/stock">Stock Management</a>
+      <span class="separator">></span>
+      <span>Receive Stock</span>
+    </div>
+
+    <app-alert 
+      *ngIf="errorMessage" 
+      type="error" 
+      [message]="errorMessage"
+      [show]="!!errorMessage"
+      (dismiss)="errorMessage = ''">
+    </app-alert>
+
+    <div class="page-header">
+      <h1>Receive Vaccine Shipment</h1>
+      <p class="subtitle">Record new vaccine stock received at the facility</p>
+    </div>
+
+    <form [formGroup]="receiveForm" (ngSubmit)="onSubmit()" class="receive-form">
+      <div class="form-section">
+        <h2 class="section-title">Shipment Details</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="vaccineId" class="required">Vaccine</label>
+            <select id="vaccineId" formControlName="vaccineId" class="input" [class.error]="isFieldInvalid('vaccineId')">
+              <option value="">Select vaccine</option>
+              <option *ngFor="let vaccine of availableVaccines" [value]="vaccine.name">{{ vaccine.name }}</option>
+            </select>
+            <span class="input-error" *ngIf="isFieldInvalid('vaccineId')">
+              {{ getFieldError('vaccineId') }}
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="batchNumber" class="required">Batch Number</label>
+            <input
+              type="text"
+              id="batchNumber"
+              formControlName="batchNumber"
+              class="input"
+              [class.error]="isFieldInvalid('batchNumber')"
+              placeholder="Enter unique batch number">
+            <span class="input-error" *ngIf="isFieldInvalid('batchNumber')">
+              {{ getFieldError('batchNumber') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="quantity" class="required">Quantity</label>
+            <input
+              type="number"
+              id="quantity"
+              formControlName="quantity"
+              class="input"
+              [class.error]="isFieldInvalid('quantity')"
+              placeholder="Number of doses"
+              min="1">
+            <span class="input-hint">doses</span>
+            <span class="input-error" *ngIf="isFieldInvalid('quantity')">
+              {{ getFieldError('quantity') }}
+            </span>
+          </div>
+
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expiryDate" class="required">Expiry Date</label>
+            <input
+              type="date"
+              id="expiryDate"
+              formControlName="expiryDate"
+              class="input"
+              [class.error]="isFieldInvalid('expiryDate')"
+              [min]="getTodayDate()">
+            <span class="input-error" *ngIf="isFieldInvalid('expiryDate')">
+              {{ getFieldError('expiryDate') }}
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="receivedDate" class="required">Received Date</label>
+            <input
+              type="date"
+              id="receivedDate"
+              formControlName="receivedDate"
+              class="input"
+              [class.error]="isFieldInvalid('receivedDate')"
+              [max]="getTodayDate()">
+            <span class="input-error" *ngIf="isFieldInvalid('receivedDate')">
+              {{ getFieldError('receivedDate') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="receivedFrom">Received From (Optional)</label>
+          <input
+            type="text"
+            id="receivedFrom"
+            formControlName="receivedFrom"
+            class="input"
+            placeholder="e.g., District Warehouse, Supplier, etc.">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+        <button type="button" class="btn btn-secondary" (click)="onSaveAndAddAnother()" [disabled]="loading || receiveForm.invalid">
+          Save & Add Another
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading || receiveForm.invalid">
+          <span *ngIf="!loading">Save</span>
+          <span *ngIf="loading">Saving...</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" *ngIf="showSuccessModal" (click)="showSuccessModal = false">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="success-icon">✓</div>
+        <h3>Stock Received Successfully</h3>
+        <div class="success-details" *ngIf="successData">
+          <p><strong>Vaccine:</strong> {{ successData.vaccine }}</p>
+          <p><strong>Batch:</strong> {{ successData.batch }}</p>
+          <p><strong>Quantity:</strong> {{ successData.quantity }} doses</p>
+          <p><strong>Expiry:</strong> {{ successData.expiry | date:'dd MMM yyyy' }}</p>
+          <p class="new-total"><strong>New Total Stock:</strong> {{ successData.newTotal }} doses</p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="onViewInventory()">View Inventory</button>
+          <button class="btn btn-primary" (click)="onSaveAndAddAnother()">Receive More Stock</button>
+        </div>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+

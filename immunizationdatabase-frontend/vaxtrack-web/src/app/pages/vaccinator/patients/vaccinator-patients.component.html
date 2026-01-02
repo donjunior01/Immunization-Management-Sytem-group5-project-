@@ -1,0 +1,113 @@
+<app-layout>
+  <div class="patients-page">
+    <div class="page-header">
+      <div>
+        <h1>Patient Management</h1>
+        <p class="subtitle">Register and search for patients</p>
+      </div>
+      <button class="btn btn-primary" (click)="openCreateForm()">+ Register Patient</button>
+    </div>
+
+    <app-alert 
+      *ngIf="errorMessage" 
+      type="error" 
+      [message]="errorMessage"
+      [show]="!!errorMessage"
+      (dismiss)="errorMessage = ''">
+    </app-alert>
+
+    <app-alert 
+      *ngIf="successMessage" 
+      type="success" 
+      [message]="successMessage"
+      [show]="!!successMessage"
+      (dismiss)="successMessage = ''">
+    </app-alert>
+
+    <div class="search-bar">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        placeholder="Search by name, phone, or patient ID..."
+        class="search-input"
+        (keyup.enter)="onSearch()">
+      <button class="btn btn-primary" (click)="onSearch()">Search</button>
+    </div>
+
+    <div class="patients-grid">
+      <div *ngFor="let patient of patients" class="patient-card" (click)="viewPatient(patient)">
+        <div class="patient-header">
+          <h3>{{ patient.firstName }} {{ patient.lastName }}</h3>
+          <span class="patient-age">{{ getPatientAge(patient.birthDate) }} months</span>
+        </div>
+        <div class="patient-details">
+          <p><strong>Guardian:</strong> {{ patient.guardianName }}</p>
+          <p><strong>Phone:</strong> {{ patient.guardianPhone }}</p>
+          <p *ngIf="patient.village"><strong>Village:</strong> {{ patient.village }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Patient Modal -->
+    <div *ngIf="showCreateForm" class="modal-overlay" (click)="closeForm()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Register New Patient</h2>
+          <button class="modal-close" (click)="closeForm()">×</button>
+        </div>
+        <form [formGroup]="patientForm" (ngSubmit)="onSubmit()" class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name *</label>
+              <input type="text" formControlName="firstName" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Last Name *</label>
+              <input type="text" formControlName="lastName" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Date of Birth *</label>
+            <input type="date" formControlName="birthDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Gender *</label>
+            <select formControlName="gender" class="form-control">
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Guardian Name *</label>
+            <input type="text" formControlName="guardianName" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Guardian Phone * (+237XXXXXXXXX)</label>
+            <input type="tel" formControlName="guardianPhone" class="form-control" placeholder="+237XXXXXXXXX">
+          </div>
+          <div class="form-group">
+            <label>National ID</label>
+            <input type="text" formControlName="nationalId" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Village</label>
+            <input type="text" formControlName="village" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <textarea formControlName="address" class="form-control" rows="3"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="patientForm.invalid || loading">
+              Register Patient
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+

@@ -1,0 +1,20 @@
+<div class="layout-container">
+  <app-sidebar
+    [items]="sidebarItems"
+    [user]="currentUser"
+    [roleLabel]="roleLabel"
+    [collapsed]="sidebarCollapsed"
+    (toggleCollapse)="onToggleSidebar()">
+  </app-sidebar>
+
+  <div class="main-wrapper" [class.sidebar-collapsed]="sidebarCollapsed">
+    <app-topbar
+      [sidebarCollapsed]="sidebarCollapsed"
+      (toggleSidebar)="onToggleSidebar()">
+    </app-topbar>
+
+    <main class="main-content">
+      <ng-content></ng-content>
+    </main>
+  </div>
+</div>

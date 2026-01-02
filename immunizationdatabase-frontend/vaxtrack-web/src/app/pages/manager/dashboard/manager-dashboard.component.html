@@ -1,0 +1,239 @@
+<app-layout pageTitle="Facility Manager Dashboard">
+  <div class="manager-dashboard">
+    <!-- Top Statistics Row with Colored Borders -->
+    <div class="stats-row">
+      <div class="stat-card stat-primary">
+        <div class="stat-header">
+          <div class="stat-icon">👥</div>
+          <div class="stat-label">Patients This Month</div>
+        </div>
+        <div class="stat-value">{{ patientsThisMonth }}</div>
+      </div>
+      <div class="stat-card stat-success">
+        <div class="stat-header">
+          <div class="stat-icon">💉</div>
+          <div class="stat-label">Vaccinations This Week</div>
+        </div>
+        <div class="stat-value">{{ vaccinationsThisWeek }}</div>
+      </div>
+      <div class="stat-card stat-info">
+        <div class="stat-header">
+          <div class="stat-icon">📊</div>
+          <div class="stat-label">Coverage Rate</div>
+        </div>
+        <div class="stat-value">{{ coverageRate }}%</div>
+      </div>
+      <div class="stat-card stat-warning">
+        <div class="stat-header">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-label">Low Stock Items</div>
+        </div>
+        <div class="stat-value">{{ lowStockItems }}</div>
+        <div class="stat-trend warning">⚠️</div>
+      </div>
+      <div class="stat-card stat-secondary">
+        <div class="stat-header">
+          <div class="stat-icon">🔄</div>
+          <div class="stat-label">Pending Syncs</div>
+        </div>
+        <div class="stat-value">{{ pendingSyncs }}</div>
+        <div class="stat-trend">🔄</div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content-grid">
+      <!-- Left Column: Vaccine Coverage -->
+      <div class="left-column">
+        <div class="section-card">
+          <div class="section-header">
+            <h3 class="section-title">Vaccination Coverage</h3>
+            <a routerLink="/manager/reports/coverage" class="view-all-link">View Report →</a>
+          </div>
+          <div class="coverage-chart">
+            <div class="coverage-item" *ngFor="let item of coverageByVaccine">
+              <div class="coverage-header">
+                <span class="vaccine-name">{{ item.vaccine }}</span>
+                <span class="coverage-percent" [ngClass]="getCoverageStatusClass(item.coverage)">
+                  {{ item.coverage }}%
+                </span>
+              </div>
+              <div class="coverage-bar">
+                <div
+                  class="coverage-fill"
+                  [ngClass]="getCoverageStatusClass(item.coverage)"
+                  [style.width.%]="item.coverage">
+                </div>
+                <div class="target-line"></div>
+              </div>
+              <div class="coverage-details">
+                <span>{{ item.vaccinated }} / {{ item.total }} vaccinated</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Quick Actions (divided into 3 divs) -->
+      <div class="right-column">
+        <div class="quick-actions-container">
+          <h3 class="quick-actions-title">Quick Actions</h3>
+          <div class="quick-actions-group">
+            <div class="quick-actions-row">
+              <a routerLink="/manager/patients" class="action-card">
+                <div class="action-icon">👶</div>
+                <div class="action-label">Register Patient</div>
+              </a>
+              <a routerLink="/manager/vaccinations/record" class="action-card">
+                <div class="action-icon">💉</div>
+                <div class="action-label">Record Vaccination</div>
+              </a>
+            </div>
+            <div class="quick-actions-row">
+              <a routerLink="/manager/stock/receive" class="action-card">
+                <div class="action-icon">📦</div>
+                <div class="action-label">Receive Stock</div>
+              </a>
+              <a routerLink="/manager/appointments" class="action-card">
+                <div class="action-icon">📅</div>
+                <div class="action-label">View Appointments</div>
+              </a>
+            </div>
+            <div class="quick-actions-row">
+              <a routerLink="/manager/reports" class="action-card">
+                <div class="action-icon">📊</div>
+                <div class="action-label">View Reports</div>
+              </a>
+              <a routerLink="/manager/alerts" class="action-card">
+                <div class="action-icon">🔔</div>
+                <div class="action-label">View Alerts</div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Defaulters and Alerts Section -->
+    <div class="defaulters-alerts-section">
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Defaulters</h3>
+          <a routerLink="/manager/reports/defaulters" class="view-all-link">View List →</a>
+        </div>
+        <div class="defaulter-summary">
+          <div class="defaulter-total">
+            <span class="total-label">Total Overdue:</span>
+            <span class="total-value">{{ totalDefaulters }}</span>
+          </div>
+          <div class="defaulter-breakdown">
+            <div class="breakdown-item">
+              <span class="duration">1-4 weeks:</span>
+              <span class="count">{{ defaultersByDuration['1-4 weeks'] }} children</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="duration">1-3 months:</span>
+              <span class="count">{{ defaultersByDuration['1-3 months'] }} children</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="duration">3+ months:</span>
+              <span class="count">{{ defaultersByDuration['3+ months'] }} children</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" routerLink="/manager/reports/defaulters">
+            Generate Follow-up Report
+          </button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Alerts & Notifications</h3>
+          <a routerLink="/manager/alerts" class="view-all-link">View All →</a>
+        </div>
+        <div class="alerts-list">
+          <div *ngFor="let alert of recentAlerts" class="alert-item" [ngClass]="'alert-' + alert.type">
+            <span class="alert-icon">{{ getAlertIcon(alert.type) }}</span>
+            <div class="alert-content">
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-time">{{ alert.time }}</div>
+            </div>
+          </div>
+          <div *ngIf="recentAlerts.length === 0" class="no-alerts">
+            <p>No alerts at this time</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff Performance Table with Pagination -->
+    <div class="staff-performance-section">
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Staff Performance</h3>
+        </div>
+        <div class="staff-performance-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Staff Name</th>
+                <th>Role</th>
+                <th>Vaccinations This Week</th>
+                <th>Patients Registered</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let staff of paginatedStaffPerformance">
+                <td>{{ staff.name }}</td>
+                <td>{{ staff.role }}</td>
+                <td>{{ staff.vaccinations }}</td>
+                <td>{{ staff.patients }}</td>
+              </tr>
+              <tr *ngIf="paginatedStaffPerformance.length === 0">
+                <td colspan="4" class="no-data">
+                  <div class="empty-state">
+                    <span class="empty-icon">👥</span>
+                    <p>No staff performance data available</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-container" *ngIf="staffPerformance.length > itemsPerPage">
+          <div class="pagination-info">
+            Showing {{ getPaginationStart() }} - {{ getPaginationEnd() }} of {{ staffPerformance.length }}
+          </div>
+          <div class="pagination-controls">
+            <button
+              class="pagination-btn"
+              [disabled]="currentPage === 1"
+              (click)="previousPage()">
+              ← Previous
+            </button>
+            <div class="page-numbers">
+              <button
+                *ngFor="let page of getPageNumbers()"
+                class="page-number"
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)">
+                {{ page }}
+              </button>
+            </div>
+            <button
+              class="pagination-btn"
+              [disabled]="currentPage === totalPages"
+              (click)="nextPage()">
+              Next →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>

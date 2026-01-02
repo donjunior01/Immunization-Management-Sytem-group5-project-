@@ -1,0 +1,165 @@
+<app-layout pageTitle="Stock Adjustment" pageSubtitle="Record stock adjustments for damaged, expired, or lost vaccines">
+  <div class="adjust-stock-page">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a routerLink="/manager/dashboard">Dashboard</a>
+      <span class="separator">></span>
+      <a routerLink="/manager/stock">Stock Management</a>
+      <span class="separator">></span>
+      <span>Stock Adjustment</span>
+    </div>
+
+    <app-alert 
+      *ngIf="errorMessage" 
+      type="error" 
+      [message]="errorMessage"
+      [show]="!!errorMessage"
+      (dismiss)="errorMessage = ''">
+    </app-alert>
+
+    <form [formGroup]="adjustForm" (ngSubmit)="onSubmit()" class="adjust-form">
+      <div class="form-section">
+        <h2 class="section-title">Adjustment Details</h2>
+
+        <div class="form-group">
+          <label class="required">Reason for Adjustment</label>
+          <div class="radio-group">
+            <label class="radio-label" *ngFor="let reason of adjustmentReasons">
+              <input 
+                type="radio" 
+                formControlName="reason" 
+                [value]="reason.value"
+                [class.error]="isFieldInvalid('reason')">
+              <span>{{ reason.label }}</span>
+            </label>
+          </div>
+          <span class="input-error" *ngIf="isFieldInvalid('reason')">
+            {{ getFieldError('reason') }}
+          </span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="required">Vaccine</label>
+            <select 
+              formControlName="vaccineId" 
+              class="input"
+              [class.error]="isFieldInvalid('vaccineId')">
+              <option value="">Select vaccine</option>
+              <option *ngFor="let vaccine of availableVaccines" [value]="vaccine.name">
+                {{ vaccine.name }}
+              </option>
+            </select>
+            <span class="input-error" *ngIf="isFieldInvalid('vaccineId')">
+              {{ getFieldError('vaccineId') }}
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label class="required">Batch Number</label>
+            <select 
+              formControlName="batchNumber" 
+              class="input"
+              [class.error]="isFieldInvalid('batchNumber')"
+              [disabled]="loadingBatches || availableBatches.length === 0">
+              <option value="">Select batch</option>
+              <option *ngFor="let batch of availableBatches" [value]="batch.batchNumber">
+                {{ batch.batchNumber }} ({{ batch.quantity }} doses, expires {{ batch.expiryDate | date:'shortDate' }})
+              </option>
+            </select>
+            <span class="input-hint" *ngIf="loadingBatches">Loading batches...</span>
+            <span class="input-hint" *ngIf="!loadingBatches && selectedBatch">
+              Current quantity: {{ getCurrentQuantity() }} doses
+            </span>
+            <span class="input-error" *ngIf="isFieldInvalid('batchNumber')">
+              {{ getFieldError('batchNumber') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="required">Quantity Change</label>
+          <div class="quantity-input-group">
+            <input 
+              type="number" 
+              formControlName="quantityChange" 
+              class="input"
+              [class.error]="isFieldInvalid('quantityChange')"
+              placeholder="Enter quantity"
+              [min]="1">
+            <span class="input-hint">
+              <span *ngIf="selectedBatch && adjustForm.value.quantityChange">
+                New quantity: {{ getNewQuantity() }} doses
+                <span *ngIf="getNewQuantity() < 0" class="warning-text">⚠️ Will result in negative stock</span>
+              </span>
+              <span *ngIf="!adjustForm.value.quantityChange">Use negative value to subtract (e.g., -5)</span>
+            </span>
+          </div>
+          <span class="input-error" *ngIf="isFieldInvalid('quantityChange')">
+            {{ getFieldError('quantityChange') }}
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label>Notes (Optional)</label>
+          <textarea 
+            formControlName="notes" 
+            class="input" 
+            rows="4"
+            placeholder="Additional details about this adjustment (e.g., reason for damage, location where item was lost, etc.)"></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" routerLink="/manager/stock">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading || adjustForm.invalid">
+          <span *ngIf="!loading">Submit Adjustment</span>
+          <span *ngIf="loading">Processing...</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" *ngIf="showConfirmModal" (click)="showConfirmModal = false">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="warning-icon">⚠️</div>
+        <h3>Confirm Stock Adjustment</h3>
+        <p>You are about to adjust stock:</p>
+        <div class="confirmation-details">
+          <p><strong>Quantity Change:</strong> {{ adjustForm.value.quantityChange }} doses</p>
+          <p><strong>Vaccine:</strong> {{ adjustForm.get('vaccineId')?.value }}</p>
+          <p><strong>Batch:</strong> {{ adjustForm.value.batchNumber }}</p>
+          <p><strong>Reason:</strong> {{ adjustForm.value.reason }}</p>
+          <p *ngIf="selectedBatch"><strong>Current Quantity:</strong> {{ getCurrentQuantity() }} doses</p>
+          <p *ngIf="selectedBatch"><strong>New Quantity:</strong> {{ getNewQuantity() }} doses</p>
+        </div>
+        <p class="warning-text">This action cannot be undone.</p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="showConfirmModal = false">Cancel</button>
+          <button class="btn btn-danger" (click)="confirmAdjustment()">Confirm Adjustment</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" *ngIf="showSuccessModal" (click)="showSuccessModal = false">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="success-icon">✓</div>
+        <h3>Stock Adjusted Successfully</h3>
+        <div class="success-details" *ngIf="successData">
+          <p><strong>Vaccine:</strong> {{ successData.vaccine }}</p>
+          <p><strong>Batch:</strong> {{ successData.batch }}</p>
+          <p><strong>Quantity Change:</strong> {{ successData.quantityChange }} doses</p>
+          <p><strong>Reason:</strong> {{ successData.reason }}</p>
+          <p class="new-total"><strong>New Total Stock:</strong> {{ successData.newQuantity }} doses</p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="onViewInventory()">View Inventory</button>
+          <button class="btn btn-primary" (click)="onAdjustMore()">Adjust More Stock</button>
+        </div>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>

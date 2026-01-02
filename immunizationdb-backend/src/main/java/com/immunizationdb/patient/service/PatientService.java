@@ -26,17 +26,37 @@ public class PatientService {
 
     @Transactional
     public PatientResponse createPatient(CreatePatientRequest request) {
-        log.info("Creating new patient: {}", request.getFullName());
+        // Build full name from firstName/lastName or use provided fullName
+        String fullName = request.getFullName();
+        if ((fullName == null || fullName.trim().isEmpty()) && 
+            (request.getFirstName() != null || request.getLastName() != null)) {
+            fullName = String.format("%s %s", 
+                request.getFirstName() != null ? request.getFirstName().trim() : "",
+                request.getLastName() != null ? request.getLastName().trim() : "").trim();
+        }
+        
+        if (fullName == null || fullName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Patient name is required (provide either fullName or firstName+lastName)");
+        }
+
+        log.info("Creating new patient: {}", fullName);
 
         User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
+        // Use address or village (village is alias for address)
+        String address = request.getAddress();
+        if ((address == null || address.trim().isEmpty()) && request.getVillage() != null) {
+            address = request.getVillage();
+        }
+
         Patient patient = Patient.builder()
-                .fullName(request.getFullName())
+                .fullName(fullName)
                 .dateOfBirth(request.getDateOfBirth())
                 .gender(request.getGender())
                 .guardianName(request.getGuardianName())
                 .phoneNumber(request.getPhoneNumber())
-                .address(request.getAddress())
+                .nationalId(request.getNationalId())
+                .address(address)
                 .facilityId(request.getFacilityId())
                 .createdBy(currentUser.getId())
                 .build();
@@ -88,11 +108,35 @@ public class PatientService {
                 .gender(patient.getGender())
                 .guardianName(patient.getGuardianName())
                 .phoneNumber(patient.getPhoneNumber())
+                .nationalId(patient.getNationalId())
                 .address(patient.getAddress())
                 .facilityId(patient.getFacilityId())
                 .createdAt(patient.getCreatedAt())
                 .age(calculateAge(patient.getDateOfBirth()))
+                .hasSevereAdverseEvents(patient.getHasSevereAdverseEvents())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<PatientResponse> searchPatientsGlobal(String searchTerm) {
+        // Global search without facility restriction (for government officials)
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return List.of();
+        }
+        
+        String searchPattern = "%" + searchTerm.trim() + "%";
+        return patientRepository.findAll().stream()
+                .filter(p -> !p.getDeleted())
+                .filter(p -> 
+                    p.getFullName() != null && p.getFullName().toLowerCase().contains(searchTerm.toLowerCase()) ||
+                    p.getGuardianName() != null && p.getGuardianName().toLowerCase().contains(searchTerm.toLowerCase()) ||
+                    p.getPhoneNumber() != null && p.getPhoneNumber().contains(searchTerm) ||
+                    p.getNationalId() != null && p.getNationalId().contains(searchTerm) ||
+                    (p.getId() != null && p.getId().toString().contains(searchTerm))
+                )
+                .limit(50) // Max 50 results per page
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     private Integer calculateAge(LocalDate dateOfBirth) {

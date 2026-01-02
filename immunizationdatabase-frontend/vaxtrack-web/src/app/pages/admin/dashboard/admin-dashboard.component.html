@@ -1,0 +1,172 @@
+<app-layout pageTitle="Admin Dashboard" pageSubtitle="Manage users, facilities, and system settings">
+  <div class="admin-dashboard">
+    <app-alert 
+      *ngIf="errorMessage" 
+      type="error" 
+      [message]="errorMessage"
+      [show]="!!errorMessage">
+    </app-alert>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <div class="summary-card stat-primary">
+        <div class="card-icon">👥</div>
+        <div class="card-content">
+          <div class="card-value">{{ totalUsers }}</div>
+          <div class="card-label">Total Users</div>
+          <div class="card-trend positive">+12% this month</div>
+        </div>
+      </div>
+      <div class="summary-card stat-success">
+        <div class="card-icon">🏥</div>
+        <div class="card-content">
+          <div class="card-value">{{ activeFacilities }}</div>
+          <div class="card-label">Active Facilities</div>
+          <div class="card-trend positive">+2% new</div>
+        </div>
+      </div>
+      <div class="summary-card stat-info">
+        <div class="card-icon">💉</div>
+        <div class="card-content">
+          <div class="card-value">{{ totalVaccinations | number }}</div>
+          <div class="card-label">Vaccines Administered</div>
+          <div class="card-trend positive">+8% vs last week</div>
+        </div>
+      </div>
+      <div class="summary-card stat-warning">
+        <div class="card-icon">📊</div>
+        <div class="card-content">
+          <div class="card-value">{{ systemHealth }}%</div>
+          <div class="card-label">System Health</div>
+          <div class="card-trend neutral">Stable</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Management Section -->
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">User Management</h2>
+          <p class="section-subtitle">Manage system users and their roles</p>
+        </div>
+        <button class="btn-primary" (click)="openCreateForm()">
+          + Add User
+        </button>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search users..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()"
+        />
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>Facility</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of filteredUsers">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar-small">{{ getUserInitials(user) }}</div>
+                  <div>
+                    <div class="user-name">{{ getUserDisplayName(user) }}</div>
+                    <div class="user-email">{{ user.email || user.username }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="role-badge" [ngClass]="getRoleClass(user.role)">
+                  {{ getRoleDisplayName(user.role) }}
+                </span>
+              </td>
+              <td>{{ user.facilityName || user.facilityId || 'N/A' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="user.isActive ? 'active' : 'inactive'">
+                  {{ user.isActive ? 'active' : 'inactive' }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="filteredUsers.length === 0">
+              <td colspan="4" class="empty-state">No users found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Quick Actions</h2>
+          <p class="section-subtitle">Common tasks and operations</p>
+        </div>
+      </div>
+      <div class="quick-actions-container">
+        <div class="quick-actions-group">
+          <div class="quick-actions-row">
+            <a routerLink="/admin/patients/register" class="action-card">
+              <div class="action-icon">👶</div>
+              <div class="action-label">Register Patient</div>
+            </a>
+            <a routerLink="/admin/vaccinations/record" class="action-card">
+              <div class="action-icon">💉</div>
+              <div class="action-label">Record Vaccination</div>
+            </a>
+            <a routerLink="/admin/patients/search" class="action-card">
+              <div class="action-icon">🔍</div>
+              <div class="action-label">Search Patient</div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Facilities Overview Section -->
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Facilities Overview</h2>
+          <p class="section-subtitle">Health facilities in the system</p>
+        </div>
+        <button class="btn-secondary">+ Add Facility</button>
+      </div>
+      <div class="facilities-grid">
+        <div class="facility-card" *ngFor="let facility of facilities">
+          <div class="facility-header">
+            <div class="facility-icon">🏥</div>
+            <button class="facility-menu">⋯</button>
+          </div>
+          <h3 class="facility-name">{{ facility.name }}</h3>
+          <p class="facility-location">{{ facility.location || facility.district || 'N/A' }}</p>
+          <div class="facility-stats">
+            <div class="facility-stat">
+              <span class="stat-value">{{ facility.userCount || 0 }}</span>
+              <span class="stat-label">users</span>
+            </div>
+            <div class="facility-stat">
+              <span class="stat-value">{{ facility.patientCount || 0 }}</span>
+              <span class="stat-label">patients</span>
+            </div>
+          </div>
+        </div>
+        <div class="facility-card empty" *ngIf="facilities.length === 0">
+          <p>No facilities found</p>
+        </div>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>

@@ -1,0 +1,240 @@
+<app-layout pageTitle="Staff Management">
+  <div class="staff-management-page">
+    <div class="page-header">
+      <div>
+        <h1>Staff Management</h1>
+        <p class="subtitle">Manage staff members at your facility</p>
+      </div>
+      <button class="btn btn-primary" (click)="openAddModal()">+ Add New Staff Member</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <label>Role:</label>
+        <select [(ngModel)]="filterRole" class="input">
+          <option value="all">All</option>
+          <option value="HEALTH_WORKER">Health Worker</option>
+          <option value="DATA_CLERK">Data Clerk</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="filterStatus" class="input">
+          <option value="all">All</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+          <option value="LOCKED">Locked</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Staff Table -->
+    <div class="staff-table-container" *ngIf="!loading">
+      <table class="staff-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let member of getFilteredStaff()">
+            <td><strong>{{ member.fullName || member.username }}</strong></td>
+            <td>{{ getRoleLabel(member.role) }}</td>
+            <td>{{ member.email || 'N/A' }}</td>
+            <td>{{ member.phoneNumber || 'N/A' }}</td>
+            <td>
+              <span class="badge" [ngClass]="getStatusBadgeClass(member.status || 'ACTIVE')">
+                {{ member.status || 'ACTIVE' }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-secondary" (click)="openEditModal(member)">Edit</button>
+              <button class="btn btn-sm btn-danger" (click)="openDeleteModal(member)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="getFilteredStaff().length === 0" class="empty-state">
+        <p>No staff members found</p>
+      </div>
+    </div>
+
+    <!-- Add/Edit Staff Modal -->
+    <div class="modal-overlay" *ngIf="showAddModal || showEditModal" (click)="closeModals()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>{{ showEditModal ? 'Edit Staff Member' : 'Add Staff Member' }}</h3>
+        <form [formGroup]="staffForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label class="required">Full Name</label>
+            <input type="text" formControlName="fullName" class="input">
+          </div>
+          <div class="form-group">
+            <label class="required">Email</label>
+            <input type="email" formControlName="email" class="input">
+          </div>
+          <div class="form-group">
+            <label class="required">Phone Number</label>
+            <div class="phone-input">
+              <span class="phone-prefix">+237</span>
+              <input type="tel" formControlName="phoneNumber" class="input" maxlength="9">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="required">Role</label>
+            <div class="radio-group">
+              <label class="radio-label" *ngFor="let role of roles">
+                <input type="radio" formControlName="role" [value]="role.value">
+                <span>{{ role.label }}</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="required">Username</label>
+            <input type="text" formControlName="username" class="input">
+          </div>
+          <div class="form-group">
+            <label [class.required]="!showEditModal">Password</label>
+            <input type="password" formControlName="password" class="input" [required]="!showEditModal">
+            <small class="input-hint">{{ showEditModal ? 'Leave blank to keep current password' : 'Min 8 characters' }}</small>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || staffForm.invalid">
+              {{ showEditModal ? 'Update' : 'Create' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeModals()">
+      <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header success-header">
+          <div class="success-icon-wrapper">
+            <div class="success-icon-circle">
+              <span class="success-checkmark">✓</span>
+            </div>
+          </div>
+          <div class="modal-title-section">
+            <h2>🎉 {{ successMessage }}</h2>
+            <p class="success-subtitle">The staff member has been {{ showEditModal ? 'updated' : 'added' }} to the system</p>
+          </div>
+          <button class="modal-close" (click)="closeModals()" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body success-body" *ngIf="successDetails">
+          <div class="success-details">
+            <div class="detail-card">
+              <div class="detail-icon">👤</div>
+              <div class="detail-content">
+                <div class="detail-label">Name</div>
+                <div class="detail-value">{{ successDetails.name }}</div>
+              </div>
+            </div>
+            <div class="detail-card" *ngIf="successDetails.username">
+              <div class="detail-icon">🔑</div>
+              <div class="detail-content">
+                <div class="detail-label">Username</div>
+                <div class="detail-value">{{ successDetails.username }}</div>
+              </div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-icon">📧</div>
+              <div class="detail-content">
+                <div class="detail-label">Email</div>
+                <div class="detail-value">{{ successDetails.email }}</div>
+              </div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-icon">🎭</div>
+              <div class="detail-content">
+                <div class="detail-label">Role</div>
+                <div class="detail-value">{{ getRoleLabel(successDetails.role) }}</div>
+              </div>
+            </div>
+            <div class="detail-card" *ngIf="successDetails.status">
+              <div class="detail-icon">✅</div>
+              <div class="detail-content">
+                <div class="detail-label">Status</div>
+                <div class="detail-value">{{ successDetails.status }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer success-footer">
+          <button type="button" class="btn btn-primary" (click)="closeModals()">
+            <span>✓</span> Got it
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay delete-modal-overlay" *ngIf="showDeleteModal" (click)="closeModals()">
+      <div class="modal-content delete-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header delete-header">
+          <div class="delete-icon-wrapper">
+            <div class="delete-icon-circle">
+              <span class="delete-icon">⚠️</span>
+            </div>
+          </div>
+          <div class="modal-title-section">
+            <h2>⚠️ Deactivate Staff Member</h2>
+            <p class="delete-subtitle">Are you sure you want to deactivate this staff member?</p>
+          </div>
+          <button class="modal-close" (click)="closeModals()" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body delete-body" *ngIf="selectedStaff">
+          <div class="delete-details">
+            <div class="detail-card">
+              <div class="detail-icon">👤</div>
+              <div class="detail-content">
+                <div class="detail-label">Name</div>
+                <div class="detail-value">{{ selectedStaff.fullName || selectedStaff.username }}</div>
+              </div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-icon">🎭</div>
+              <div class="detail-content">
+                <div class="detail-label">Role</div>
+                <div class="detail-value">{{ getRoleLabel(selectedStaff.role) }}</div>
+              </div>
+            </div>
+            <div class="detail-card">
+              <div class="detail-icon">📧</div>
+              <div class="detail-content">
+                <div class="detail-label">Email</div>
+                <div class="detail-value">{{ selectedStaff.email || 'N/A' }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="warning-info">
+            <p><strong>This will:</strong></p>
+            <ul>
+              <li>🚫 Disable their login access</li>
+              <li>📋 Preserve their historical records</li>
+              <li>🔄 Can be reactivated later</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer delete-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModals()">Cancel</button>
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="loading">
+            <span *ngIf="!loading">🗑️</span>
+            <span *ngIf="loading">⏳</span>
+            {{ loading ? 'Deactivating...' : 'Deactivate' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+

@@ -1,0 +1,56 @@
+<app-layout pageTitle="Stock Dashboard" pageSubtitle="View current vaccine stock levels">
+  <div class="stock-page">
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="loading">
+      <div class="loading-spinner">⏳</div>
+      <p class="loading-text">Loading stock levels...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state-container" *ngIf="!loading && stockLevels.length === 0">
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h2>No Stock Available</h2>
+        <p>There are no vaccines in stock at this facility.</p>
+      </div>
+    </div>
+
+    <!-- Stock Grid -->
+    <div class="stock-grid" *ngIf="!loading && stockLevels.length > 0">
+      <div 
+        *ngFor="let stock of stockLevels" 
+        class="stock-card" 
+        [ngClass]="getStatusClass(stock.status)">
+        <div class="stock-header">
+          <div class="stock-title">
+            <h3>{{ stock.vaccineName }}</h3>
+            <span class="status-badge" [ngClass]="'badge-' + stock.status.toLowerCase()">
+              {{ stock.status }}
+            </span>
+          </div>
+        </div>
+        
+        <div class="stock-details">
+          <div class="stock-item">
+            <div class="stock-icon">💉</div>
+            <div class="stock-info">
+              <span class="label">Current Quantity</span>
+              <span class="value">{{ stock.currentQuantity || stock.totalQuantity || 0 }} doses</span>
+            </div>
+          </div>
+          
+          <div class="stock-item" *ngIf="stock.oldestExpiryDate">
+            <div class="stock-icon">📅</div>
+            <div class="stock-info">
+              <span class="label">Oldest Expiry Date</span>
+              <span class="value">{{ stock.oldestExpiryDate | date:'mediumDate' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>

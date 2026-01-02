@@ -1,0 +1,119 @@
+<app-layout pageTitle="Defaulter List Report">
+  <div class="defaulters-page">
+    <div class="page-header">
+      <div>
+        <h1>Defaulter List Report</h1>
+        <p class="subtitle">View and manage patients who have missed their scheduled vaccinations</p>
+      </div>
+      <button class="btn btn-primary" (click)="exportReport()">📥 Export Report</button>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <form [formGroup]="filterForm" (ngSubmit)="onFilterChange()">
+        <div class="filter-group">
+          <div class="form-group">
+            <label>Duration:</label>
+            <select formControlName="duration" class="form-input" (change)="onFilterChange()">
+              <option value="all">All Durations</option>
+              <option value="1-4 weeks">1-4 weeks</option>
+              <option value="1-3 months">1-3 months</option>
+              <option value="3+ months">3+ months</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Vaccine:</label>
+            <select formControlName="vaccine" class="form-input" (change)="onFilterChange()">
+              <option value="all">All Vaccines</option>
+              <option *ngFor="let vaccine of vaccines" [value]="vaccine">{{ vaccine }}</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-secondary" (click)="onFilterChange()">Apply Filter</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards" *ngIf="!loading">
+      <div class="summary-card">
+        <div class="summary-icon">👥</div>
+        <div class="summary-value">{{ totalDefaulters }}</div>
+        <div class="summary-label">Total Defaulters</div>
+      </div>
+      <div class="summary-card warning">
+        <div class="summary-icon">⏰</div>
+        <div class="summary-value">{{ defaultersByDuration['1-4 weeks'] }}</div>
+        <div class="summary-label">1-4 Weeks Overdue</div>
+      </div>
+      <div class="summary-card error">
+        <div class="summary-icon">⚠️</div>
+        <div class="summary-value">{{ defaultersByDuration['1-3 months'] }}</div>
+        <div class="summary-label">1-3 Months Overdue</div>
+      </div>
+      <div class="summary-card critical">
+        <div class="summary-icon">🚨</div>
+        <div class="summary-value">{{ defaultersByDuration['3+ months'] }}</div>
+        <div class="summary-label">3+ Months Overdue</div>
+      </div>
+    </div>
+
+    <!-- Defaulters Table -->
+    <div class="defaulters-table-card" *ngIf="!loading">
+      <h3>Defaulters List</h3>
+      <table class="defaulters-table">
+        <thead>
+          <tr>
+            <th>Patient Name</th>
+            <th>Patient ID</th>
+            <th>Vaccine</th>
+            <th>Dose</th>
+            <th>Scheduled Date</th>
+            <th>Days Overdue</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let defaulter of filteredDefaulters">
+            <td><strong>{{ defaulter.patientName }}</strong></td>
+            <td>{{ defaulter.patientId }}</td>
+            <td>{{ defaulter.vaccineName }}</td>
+            <td>Dose {{ defaulter.doseNumber }}</td>
+            <td>{{ defaulter.scheduledDate | date:'shortDate' }}</td>
+            <td>
+              <span class="days-overdue" [ngClass]="getOverdueClass(defaulter.daysOverdue)">
+                {{ defaulter.daysOverdue }} days
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="'status-' + defaulter.status.toLowerCase()">
+                {{ defaulter.status }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-action" (click)="contactPatient(defaulter)" title="Contact Patient">
+                📞
+              </button>
+              <button class="btn-action" (click)="reschedule(defaulter)" title="Reschedule">
+                📅
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredDefaulters.length === 0">
+            <td colspan="8" class="no-data">
+              <div class="empty-state">
+                <div class="empty-icon">✅</div>
+                <p>No defaulters found</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+

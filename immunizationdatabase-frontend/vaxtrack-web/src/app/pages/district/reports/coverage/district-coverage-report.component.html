@@ -1,0 +1,153 @@
+<app-layout pageTitle="Coverage Report">
+  <div class="coverage-report-page">
+    <div class="page-header">
+      <div>
+        <h1>📊 Vaccination Coverage Report</h1>
+        <p class="subtitle">Track vaccination performance and coverage statistics</p>
+      </div>
+      <button class="btn btn-primary" (click)="exportToExcel()" [disabled]="!reportData || loading">
+        📥 Export to Excel
+      </button>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Filters Card -->
+    <div class="filters-card">
+      <form [formGroup]="reportForm" (ngSubmit)="loadReport()">
+        <div class="filter-row">
+          <div class="form-group">
+            <label class="required">Facility</label>
+            <select formControlName="facilityId" class="form-input" (change)="onFacilityChange()">
+              <option value="">Select Facility</option>
+              <option *ngFor="let facility of facilities" [value]="facility.id">
+                {{ facility.name }}
+              </option>
+            </select>
+            <small class="input-hint" *ngIf="facilities.length === 0">
+              Enter facility ID manually or select from dropdown
+            </small>
+          </div>
+          <div class="form-group">
+            <label class="required">Start Date</label>
+            <input type="date" formControlName="startDate" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="required">End Date</label>
+            <input type="date" formControlName="endDate" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || reportForm.invalid">
+              <span *ngIf="!loading">🔍</span>
+              <span *ngIf="loading">⏳</span>
+              {{ loading ? 'Loading...' : 'Generate Report' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+
+    <!-- Report Results -->
+    <div *ngIf="reportData && !loading" class="report-results">
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="summary-icon">👥</div>
+          <div class="summary-value">{{ reportData.totalPatientsRegistered | number }}</div>
+          <div class="summary-label">Total Patients Registered</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">💉</div>
+          <div class="summary-value">{{ reportData.vaccinatedCount | number }}</div>
+          <div class="summary-label">Total Vaccinations</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">📊</div>
+          <div class="summary-value">{{ reportData.coveragePercentage | number:'1.2-2' }}%</div>
+          <div class="summary-label">Coverage Percentage</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-icon">⚠️</div>
+          <div class="summary-value">{{ reportData.penta1Penta3DropoutRate | number:'1.2-2' }}%</div>
+          <div class="summary-label">Penta1/Penta3 Dropout Rate</div>
+        </div>
+      </div>
+
+      <!-- Chart Section -->
+      <div class="chart-card" *ngIf="reportData.vaccinationsByVaccineType && reportData.vaccinationsByVaccineType.length > 0">
+        <h3>Vaccinations by Vaccine Type</h3>
+        <div class="chart-container">
+          <canvas baseChart
+            [data]="barChartData"
+            [type]="barChartType"
+            [options]="barChartOptions">
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Vaccinations Table -->
+      <div class="table-card">
+        <h3>Vaccinations by Vaccine Type</h3>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Vaccine Name</th>
+                <th>Count</th>
+                <th>Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let vaccine of reportData.vaccinationsByVaccineType">
+                <td><strong>{{ vaccine.vaccineName }}</strong></td>
+                <td>{{ vaccine.count | number }}</td>
+                <td>
+                  <span class="percentage-badge">
+                    {{ (vaccine.count / reportData.vaccinatedCount * 100) | number:'1.2-2' }}%
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="reportData.vaccinationsByVaccineType.length === 0">
+                <td colspan="3" class="no-data">No vaccination data available</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Additional Statistics -->
+      <div class="stats-card">
+        <h3>Additional Statistics</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">Target Population</div>
+            <div class="stat-value">{{ reportData.targetPopulation | number }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Vaccinated Count</div>
+            <div class="stat-value">{{ reportData.vaccinatedCount | number }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Coverage Percentage</div>
+            <div class="stat-value">{{ reportData.coveragePercentage | number:'1.2-2' }}%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Penta1/Penta3 Dropout Rate</div>
+            <div class="stat-value">{{ reportData.penta1Penta3DropoutRate | number:'1.2-2' }}%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!reportData && !loading" class="empty-state">
+      <div class="empty-icon">📊</div>
+      <h2>No Report Data</h2>
+      <p>Select a facility and date range, then click "Generate Report" to view coverage statistics.</p>
+    </div>
+  </div>
+</app-layout>
+

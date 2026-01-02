@@ -1,0 +1,108 @@
+<app-layout pageTitle="SMS Logs" pageSubtitle="View and manage SMS messages sent by the system">
+  <div class="sms-logs-page">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a routerLink="/district/dashboard">Dashboard</a>
+      <span class="separator">></span>
+      <span>SMS Logs</span>
+    </div>
+
+    <app-alert 
+      *ngIf="errorMessage" 
+      type="error" 
+      [message]="errorMessage"
+      [show]="!!errorMessage"
+      (dismiss)="errorMessage = ''">
+    </app-alert>
+
+    <!-- Filters -->
+    <div class="filters-section">
+      <form [formGroup]="filterForm" (ngSubmit)="onFilterSubmit()" class="filter-form">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>Start Date</label>
+            <input type="date" formControlName="startDate" class="input">
+          </div>
+          <div class="filter-group">
+            <label>End Date</label>
+            <input type="date" formControlName="endDate" class="input">
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select formControlName="status" class="input">
+              <option value="">All</option>
+              <option value="SENT">Sent</option>
+              <option value="FAILED">Failed</option>
+              <option value="PENDING">Pending</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Phone Number</label>
+            <input type="text" formControlName="recipientPhone" class="input" placeholder="e.g., +254712345678">
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button type="submit" class="btn btn-primary">Apply Filters</button>
+          <button type="button" class="btn btn-secondary" (click)="clearFilters()">Clear</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- SMS Logs Table -->
+    <div class="logs-section">
+      <div class="section-header">
+        <h2>SMS Messages</h2>
+        <span class="count-badge">{{ smsLogs.length }} message(s)</span>
+      </div>
+
+      <app-loader *ngIf="loading"></app-loader>
+
+      <div *ngIf="!loading && smsLogs.length === 0" class="empty-state">
+        <div class="empty-icon">📱</div>
+        <h3>No SMS Logs Found</h3>
+        <p>No SMS messages match your current filters.</p>
+      </div>
+
+      <div *ngIf="!loading && smsLogs.length > 0" class="logs-table-container">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>Phone Number</th>
+              <th>Message</th>
+              <th>Status</th>
+              <th>Sent At</th>
+              <th>Error</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let log of smsLogs" class="log-row">
+              <td class="phone-cell">
+                <span class="phone-number">{{ log.recipientPhone }}</span>
+              </td>
+              <td class="message-cell">
+                <div class="message-content">{{ log.message }}</div>
+              </td>
+              <td class="status-cell">
+                <span class="status-badge" [ngClass]="getStatusClass(log.status)">
+                  <span class="status-icon">{{ getStatusIcon(log.status) }}</span>
+                  {{ log.status }}
+                </span>
+              </td>
+              <td class="date-cell">
+                <span *ngIf="log.sentAt">{{ log.sentAt | date:'short' }}</span>
+                <span *ngIf="!log.sentAt" class="no-date">-</span>
+              </td>
+              <td class="error-cell">
+                <span *ngIf="log.errorMessage" class="error-text" [title]="log.errorMessage">
+                  {{ log.errorMessage.length > 50 ? (log.errorMessage | slice:0:50) + '...' : log.errorMessage }}
+                </span>
+                <span *ngIf="!log.errorMessage" class="no-error">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</app-layout>
+

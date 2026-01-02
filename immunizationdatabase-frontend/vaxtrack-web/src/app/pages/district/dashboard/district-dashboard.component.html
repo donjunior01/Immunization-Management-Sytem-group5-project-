@@ -1,0 +1,150 @@
+<app-layout pageTitle="District Officer Dashboard">
+  <div class="district-dashboard">
+    <!-- Informational Message -->
+    <app-alert *ngIf="infoMessage" type="info" [message]="infoMessage" [show]="!!infoMessage" [dismissible]="true"></app-alert>
+    
+    <!-- Error Message -->
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage" [dismissible]="true"></app-alert>
+    
+    <!-- District Summary Cards -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">🏥</div>
+          <div class="stat-label">Total Facilities</div>
+        </div>
+        <div class="stat-value">{{ totalFacilities }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">💉</div>
+          <div class="stat-label">Vaccinations This Month</div>
+        </div>
+        <div class="stat-value">{{ vaccinationsThisMonth | number }}</div>
+        <div class="stat-trend positive">↑ 12%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">📊</div>
+          <div class="stat-label">District Coverage</div>
+        </div>
+        <div class="stat-value">{{ districtCoverage }}%</div>
+        <div class="stat-trend positive">↑ 2%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-label">Facilities Low Stock</div>
+        </div>
+        <div class="stat-value">{{ facilitiesLowStock }}</div>
+        <div class="stat-trend warning">⚠️</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon">🔴</div>
+          <div class="stat-label">Critical Alerts</div>
+        </div>
+        <div class="stat-value">{{ criticalAlerts }}</div>
+        <div class="stat-trend error">🔴</div>
+      </div>
+    </div>
+
+    <!-- Map View Placeholder -->
+    <div class="section-card map-section">
+      <div class="section-header">
+        <h3 class="section-title">Facility Map</h3>
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-color good"></span> >90% Coverage</span>
+          <span class="legend-item"><span class="legend-color warning"></span> 80-90% Coverage</span>
+          <span class="legend-item"><span class="legend-color error"></span> <80% Coverage</span>
+        </div>
+      </div>
+      <div class="map-placeholder">
+        <p>Interactive map view - Coming soon</p>
+        <p class="map-note">Facilities will be displayed on an interactive map with color-coded performance indicators</p>
+      </div>
+    </div>
+
+    <!-- Facility Performance Table -->
+    <div class="section-card">
+      <div class="section-header">
+        <h3 class="section-title">Facility Performance</h3>
+        <a routerLink="/district/facilities" class="view-all-link">View All →</a>
+      </div>
+      <div class="facility-table-container">
+        <table class="facility-table">
+          <thead>
+            <tr>
+              <th>Facility Name</th>
+              <th>Coverage Rate</th>
+              <th>Vaccinations This Month</th>
+              <th>Stock Status</th>
+              <th>Last Sync</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let facility of facilities" [ngClass]="getCoverageStatusClass(facility.coverage)">
+              <td>
+                <strong>{{ facility.name }}</strong>
+              </td>
+              <td>
+                <span class="coverage-badge" [ngClass]="getCoverageStatusClass(facility.coverage)">
+                  {{ facility.coverage }}%
+                </span>
+              </td>
+              <td>{{ facility.vaccinations | number }}</td>
+              <td>
+                <span class="stock-status">
+                  {{ getStockStatusIcon(facility.stockStatus) }} {{ facility.stockStatus | titlecase }}
+                </span>
+              </td>
+              <td>{{ facility.lastSync }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <app-alert *ngIf="errorMessage" type="warning" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Trend Charts Section -->
+    <div class="charts-section">
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Coverage Trend</h3>
+        </div>
+        <div class="chart-container" *ngIf="hasCoverageChartData">
+          <canvas baseChart
+            #coverageChart
+            [data]="coverageChartData"
+            [type]="coverageChartType"
+            [options]="coverageChartOptions">
+          </canvas>
+        </div>
+        <div class="chart-placeholder" *ngIf="!hasCoverageChartData">
+          <p>Loading coverage trend data...</p>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <h3 class="section-title">Vaccination Volume</h3>
+        </div>
+        <div class="chart-container" *ngIf="hasVolumeChartData">
+          <canvas baseChart
+            #volumeChart
+            [data]="volumeChartData"
+            [type]="volumeChartType"
+            [options]="volumeChartOptions">
+          </canvas>
+        </div>
+        <div class="chart-placeholder" *ngIf="!hasVolumeChartData">
+          <p>Loading vaccination volume data...</p>
+        </div>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>

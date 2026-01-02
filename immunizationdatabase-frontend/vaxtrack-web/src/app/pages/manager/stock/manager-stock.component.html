@@ -1,0 +1,470 @@
+<app-layout pageTitle="Vaccine Inventory">
+  <div class="stock-page">
+    <div class="page-header">
+      <div>
+        <h1>Vaccine Inventory</h1>
+        <p class="subtitle">Last updated: {{ lastUpdated | date:'medium' }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="loadStock()">🔄 Refresh</button>
+        <button class="btn btn-primary" (click)="openReceiveModal()">+ Receive Stock</button>
+        <button class="btn btn-warning" (click)="openAdjustModal()">⚖️ Adjust Stock</button>
+      </div>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Stock Overview Cards -->
+    <div class="stock-overview">
+      <div class="overview-card">
+        <div class="card-icon">📦</div>
+        <div class="card-value">{{ totalVaccineTypes }}</div>
+        <div class="card-label">Total Vaccine Types</div>
+      </div>
+      <div class="overview-card warning">
+        <div class="card-icon">⚠️</div>
+        <div class="card-value">{{ lowStockItems }}</div>
+        <div class="card-label">Low Stock Items</div>
+      </div>
+      <div class="overview-card warning">
+        <div class="card-icon">🟡</div>
+        <div class="card-value">{{ expiringSoon }}</div>
+        <div class="card-label">Expiring Soon</div>
+      </div>
+      <div class="overview-card error">
+        <div class="card-icon">🔴</div>
+        <div class="card-value">{{ outOfStock }}</div>
+        <div class="card-label">Out of Stock</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="filterStatus" (change)="onFilterChange()" class="filter-select">
+          <option value="all">All</option>
+          <option value="good">Good</option>
+          <option value="low">Low</option>
+          <option value="out">Out of Stock</option>
+          <option value="expiring">Expiring Soon</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Stock Table -->
+    <div class="stock-table-card">
+      <div class="table-header">
+        <h3>Stock Levels ({{ filteredStockLevels.length }})</h3>
+      </div>
+      <div class="table-container">
+        <table class="stock-table">
+        <thead>
+          <tr>
+            <th>Vaccine</th>
+            <th>Current Stock</th>
+            <th>Status</th>
+            <th>Oldest Batch</th>
+            <th>Expiry</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let stock of filteredStockLevels">
+            <td><strong>{{ stock.vaccineName }}</strong></td>
+            <td>{{ stock.totalQuantity }} doses</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(stock.status)">
+                {{ getStatusIcon(stock.status) }} {{ getStatusText(stock.status) }}
+              </span>
+            </td>
+            <td>{{ getOldestBatch(stock) }}</td>
+            <td>
+              <span *ngIf="getOldestExpiry(stock); else noExpiry">
+                {{ getOldestExpiry(stock) | date:'shortDate' }}
+              </span>
+              <ng-template #noExpiry>-</ng-template>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-primary" (click)="viewStockDetails(stock)">View Details</button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredStockLevels.length === 0">
+            <td colspan="6" class="no-data">
+              <div class="empty-state">
+                <span class="empty-icon">📦</span>
+                <p>No stock items found</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+
+    <!-- Receive Stock Modal -->
+    <div class="modal-overlay" *ngIf="showReceiveModal" (click)="closeReceiveModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📦 Receive Stock</h2>
+          <button class="modal-close" (click)="closeReceiveModal()">×</button>
+        </div>
+        <form [formGroup]="receiveForm" (ngSubmit)="onReceiveSubmit()" class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Vaccine Type</label>
+              <select formControlName="vaccineId" class="form-input">
+                <option value="">Select Vaccine</option>
+                <option *ngFor="let vaccine of availableVaccines" [value]="vaccine.id">
+                  {{ vaccine.name }}
+                </option>
+              </select>
+              <span class="error-text" *ngIf="isFieldInvalid('vaccineId')">
+                {{ getFieldError('vaccineId') }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="required">Batch Number</label>
+              <input type="text" formControlName="batchNumber" class="form-input" placeholder="e.g., BCG-2024-001">
+              <span class="error-text" *ngIf="isFieldInvalid('batchNumber')">
+                {{ getFieldError('batchNumber') }}
+              </span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Quantity</label>
+              <input type="number" formControlName="quantity" class="form-input" min="1" placeholder="Number of doses">
+              <span class="error-text" *ngIf="isFieldInvalid('quantity')">
+                {{ getFieldError('quantity') }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="required">Expiry Date</label>
+              <input type="date" formControlName="expiryDate" class="form-input">
+              <span class="error-text" *ngIf="isFieldInvalid('expiryDate')">
+                {{ getFieldError('expiryDate') }}
+              </span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Received Date</label>
+              <input type="date" formControlName="receivedDate" class="form-input" [value]="getTodayDate()">
+              <span class="error-text" *ngIf="isFieldInvalid('receivedDate')">
+                {{ getFieldError('receivedDate') }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="required">Received From</label>
+              <input type="text" formControlName="receivedFrom" class="form-input" placeholder="Supplier name">
+              <span class="error-text" *ngIf="isFieldInvalid('receivedFrom')">
+                {{ getFieldError('receivedFrom') }}
+              </span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea formControlName="notes" class="form-input" rows="3" placeholder="Additional notes (optional)"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeReceiveModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || receiveForm.invalid">
+              {{ loading ? 'Saving...' : 'Receive Stock' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Adjust Stock Modal -->
+    <div class="modal-overlay" *ngIf="showAdjustModal" (click)="closeAdjustModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>⚖️ Adjust Stock</h2>
+          <button class="modal-close" (click)="closeAdjustModal()">×</button>
+        </div>
+        <form [formGroup]="adjustForm" (ngSubmit)="onAdjustSubmit()" class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Vaccine</label>
+              <select formControlName="vaccineId" class="form-input" (change)="onVaccineChange()">
+                <option value="">Select Vaccine</option>
+                <option *ngFor="let vaccine of availableVaccines" [value]="vaccine.id">
+                  {{ vaccine.name }}
+                </option>
+              </select>
+              <span class="error-text" *ngIf="isFieldInvalid('vaccineId')">
+                {{ getFieldError('vaccineId') }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="required">Batch Number</label>
+              <select formControlName="batchNumber" class="form-input" (change)="onBatchChange()">
+                <option value="">{{ getBatchPlaceholderText() }}</option>
+                <option *ngFor="let batch of availableBatches" [value]="batch.batchNumber">
+                  {{ batch.batchNumber }} ({{ batch.quantity }} doses, expires {{ batch.expiryDate | date:'shortDate' }})
+                </option>
+              </select>
+              <span class="error-text" *ngIf="isFieldInvalid('batchNumber')">
+                {{ getFieldError('batchNumber') }}
+              </span>
+              <small class="input-hint" *ngIf="availableBatches.length === 0 && !loadingBatches && adjustForm.get('vaccineId')?.value">
+                No batches available for this vaccine. Please receive stock first.
+              </small>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Adjustment Type</label>
+              <select formControlName="adjustmentType" class="form-input">
+                <option value="ADD">Add Stock</option>
+                <option value="SUBTRACT">Subtract Stock</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="required">Quantity Change</label>
+              <input type="number" formControlName="quantityChange" class="form-input" min="1" placeholder="Number of doses">
+              <span class="error-text" *ngIf="isFieldInvalid('quantityChange')">
+                {{ getFieldError('quantityChange') }}
+              </span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="required">Reason</label>
+            <select formControlName="reason" class="form-input">
+              <option value="">Select Reason</option>
+              <option value="DAMAGED">Damaged</option>
+              <option value="EXPIRED">Expired</option>
+              <option value="LOST">Lost</option>
+              <option value="CORRECTION">Correction</option>
+            </select>
+            <span class="error-text" *ngIf="isFieldInvalid('reason')">
+              {{ getFieldError('reason') }}
+            </span>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea formControlName="notes" class="form-input" rows="3" placeholder="Additional details (optional)"></textarea>
+          </div>
+          <div class="info-box" *ngIf="selectedBatch">
+            <strong>Current Batch Quantity:</strong> {{ selectedBatch.quantity }} doses
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeAdjustModal()">Cancel</button>
+            <button type="submit" class="btn btn-warning" [disabled]="loading || adjustForm.invalid">
+              {{ loading ? 'Processing...' : 'Adjust Stock' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal for Receive Stock -->
+  <div class="modal-overlay" *ngIf="showSuccessModal" (click)="showSuccessModal = false">
+    <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header success-header">
+        <div class="success-icon-wrapper">
+          <div class="success-icon-circle">
+            <span class="success-checkmark">✓</span>
+          </div>
+        </div>
+        <div class="modal-title-section">
+          <h2>🎉 Vaccine Batch Received Successfully!</h2>
+          <p class="success-subtitle">The batch has been added to your inventory</p>
+        </div>
+        <button class="modal-close" (click)="showSuccessModal = false" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body success-body">
+        <div class="success-details" *ngIf="createdBatch">
+          <div class="detail-card">
+            <div class="detail-icon">💉</div>
+            <div class="detail-content">
+              <div class="detail-label">Vaccine</div>
+              <div class="detail-value">{{ createdBatch.vaccineName }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">📦</div>
+            <div class="detail-content">
+              <div class="detail-label">Batch Number</div>
+              <div class="detail-value">{{ createdBatch.batchNumber }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">🔢</div>
+            <div class="detail-content">
+              <div class="detail-label">Quantity</div>
+              <div class="detail-value">{{ createdBatch.quantity }} doses</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">📅</div>
+            <div class="detail-content">
+              <div class="detail-label">Received Date</div>
+              <div class="detail-value">{{ createdBatch.receivedDate | date:'dd MMM yyyy' }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">⏰</div>
+            <div class="detail-content">
+              <div class="detail-label">Expiry Date</div>
+              <div class="detail-value">{{ createdBatch.expiryDate | date:'dd MMM yyyy' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer success-footer">
+        <button type="button" class="btn btn-primary" (click)="showSuccessModal = false">
+          <span>✓</span> Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal for Adjust Stock -->
+  <div class="modal-overlay" *ngIf="showAdjustSuccessModal" (click)="showAdjustSuccessModal = false">
+    <div class="modal-content success-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header success-header">
+        <div class="success-icon-wrapper">
+          <div class="success-icon-circle">
+            <span class="success-checkmark">✓</span>
+          </div>
+        </div>
+        <div class="modal-title-section">
+          <h2>⚖️ Stock Adjusted Successfully!</h2>
+          <p class="success-subtitle">The stock adjustment has been recorded</p>
+        </div>
+        <button class="modal-close" (click)="showAdjustSuccessModal = false" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body success-body">
+        <div class="success-details" *ngIf="adjustedBatch">
+          <div class="detail-card">
+            <div class="detail-icon">💉</div>
+            <div class="detail-content">
+              <div class="detail-label">Vaccine</div>
+              <div class="detail-value">{{ adjustedBatch.vaccineName }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">📦</div>
+            <div class="detail-content">
+              <div class="detail-label">Batch Number</div>
+              <div class="detail-value">{{ adjustedBatch.batchNumber }}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">📊</div>
+            <div class="detail-content">
+              <div class="detail-label">Quantity Change</div>
+              <div class="detail-value" [ngClass]="{'positive': adjustedBatch.quantityChange > 0, 'negative': adjustedBatch.quantityChange < 0}">
+                {{ adjustedBatch.quantityChange > 0 ? '+' : '' }}{{ adjustedBatch.quantityChange }} doses
+              </div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">🔢</div>
+            <div class="detail-content">
+              <div class="detail-label">New Quantity</div>
+              <div class="detail-value">{{ adjustedBatch.newQuantity }} doses</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-icon">📝</div>
+            <div class="detail-content">
+              <div class="detail-label">Reason</div>
+              <div class="detail-value">{{ adjustedBatch.reason }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer success-footer">
+        <button type="button" class="btn btn-primary" (click)="showAdjustSuccessModal = false">
+          <span>✓</span> Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Details Modal -->
+  <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetailModal()">
+    <div class="modal-content large detail-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header detail-header">
+        <div class="detail-header-icon">📊</div>
+        <div class="modal-title-section">
+          <h2>Stock Details</h2>
+          <p class="detail-subtitle" *ngIf="selectedStock">{{ selectedStock.vaccineName }}</p>
+        </div>
+        <button class="modal-close" (click)="closeDetailModal()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body detail-body" *ngIf="selectedStock">
+        <div class="stock-summary">
+          <div class="summary-card">
+            <div class="summary-icon">📦</div>
+            <div class="summary-content">
+              <div class="summary-label">Total Quantity</div>
+              <div class="summary-value">{{ selectedStock.totalQuantity }} doses</div>
+            </div>
+          </div>
+          <div class="summary-card" [ngClass]="getStatusClass(selectedStock.status)">
+            <div class="summary-icon">{{ getStatusIcon(selectedStock.status) }}</div>
+            <div class="summary-content">
+              <div class="summary-label">Status</div>
+              <div class="summary-value">{{ getStatusText(selectedStock.status) }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="batches-section" *ngIf="selectedStock.batches && selectedStock.batches.length > 0">
+          <h3 class="section-title">
+            <span class="section-icon">📋</span>
+            Batch Information ({{ selectedStock.batches.length }})
+          </h3>
+          <div class="batches-list">
+            <div class="batch-item" *ngFor="let batch of selectedStock.batches">
+              <div class="batch-header">
+                <div class="batch-number">
+                  <span class="batch-icon">📦</span>
+                  <strong>{{ batch.batchNumber }}</strong>
+                </div>
+                <div class="batch-quantity" [ngClass]="{'low-stock': batch.quantity < 50, 'depleted': batch.isDepleted}">
+                  {{ batch.quantity }} doses
+                </div>
+              </div>
+              <div class="batch-details">
+                <div class="batch-detail-item">
+                  <span class="detail-label-icon">📅</span>
+                  <span class="detail-label">Expiry Date:</span>
+                  <span class="detail-value">{{ batch.expiryDate | date:'dd MMM yyyy' }}</span>
+                </div>
+                <div class="batch-detail-item" *ngIf="batch.receivedDate">
+                  <span class="detail-label-icon">📥</span>
+                  <span class="detail-label">Received:</span>
+                  <span class="detail-value">{{ batch.receivedDate | date:'dd MMM yyyy' }}</span>
+                </div>
+                <div class="batch-status-badge" *ngIf="batch.isDepleted">
+                  <span>⚠️ Depleted</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="no-batches" *ngIf="!selectedStock.batches || selectedStock.batches.length === 0">
+          <div class="empty-state">
+            <span class="empty-icon">📦</span>
+            <p>No batches available for this vaccine</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer detail-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDetailModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</app-layout>
+
+

@@ -72,4 +72,15 @@ public interface VaccinationRepository extends JpaRepository<Vaccination, Long> 
 
     @Query("SELECT COUNT(v) FROM Vaccination v WHERE v.facilityId = :facilityId")
     Long countByFacilityId(@Param("facilityId") String facilityId);
+
+    @Query("SELECT COUNT(v) FROM Vaccination v WHERE v.facilityId = :facilityId " +
+           "AND (v.vaccineName = 'Penta' OR v.vaccineName = 'DTP') " +
+           "AND v.doseNumber = :doseNumber " +
+           "AND v.dateAdministered BETWEEN :startDate AND :endDate")
+    Long countPentaDoseByFacilityAndDateRange(
+        @Param("facilityId") String facilityId,
+        @Param("doseNumber") Integer doseNumber,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate
+    );
 }

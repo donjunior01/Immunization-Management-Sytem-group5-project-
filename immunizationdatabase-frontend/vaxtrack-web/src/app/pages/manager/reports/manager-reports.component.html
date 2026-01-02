@@ -1,0 +1,186 @@
+<app-layout pageTitle="Reports & Analytics">
+  <div class="reports-page">
+    <div class="page-header">
+      <div>
+        <h1>Reports & Analytics</h1>
+        <p class="subtitle">View comprehensive reports and statistics for your facility</p>
+      </div>
+      <button class="btn btn-primary" (click)="exportReport()">📥 Export Report</button>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+
+    <!-- Report Type Selector -->
+    <div class="report-selector-card">
+      <div class="selector-tabs">
+        <button 
+          class="tab-btn" 
+          [class.active]="reportType === 'coverage'"
+          (click)="reportType = 'coverage'; onReportTypeChange()">
+          📊 Coverage Report
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="reportType === 'vaccinations'"
+          (click)="reportType = 'vaccinations'; onReportTypeChange()">
+          💉 Vaccination Stats
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="reportType === 'stock'"
+          (click)="reportType = 'stock'; onReportTypeChange()">
+          📦 Stock Report
+        </button>
+      </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="filters-card">
+      <form [formGroup]="dateRangeForm" (ngSubmit)="onDateRangeChange()">
+        <div class="date-range-group">
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" formControlName="startDate" class="form-input" (change)="onDateRangeChange()">
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" formControlName="endDate" class="form-input" (change)="onDateRangeChange()">
+          </div>
+          <button type="button" class="btn btn-secondary" (click)="onDateRangeChange()">Apply Filter</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Coverage Report -->
+    <div class="report-content" *ngIf="reportType === 'coverage' && coverageData">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value">{{ coverageData.totalPatients }}</div>
+          <div class="stat-label">Total Patients</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💉</div>
+          <div class="stat-value">{{ coverageData.vaccinatedPatients }}</div>
+          <div class="stat-label">Vaccinated Patients</div>
+        </div>
+        <div class="stat-card highlight">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value">{{ coverageData.coverageRate }}%</div>
+          <div class="stat-label">Coverage Rate</div>
+        </div>
+      </div>
+
+      <div class="report-table-card">
+        <h3>Vaccination by Vaccine Type</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Vaccine</th>
+              <th>Total Vaccinations</th>
+              <th>Doses Administered</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of coverageData.byVaccine">
+              <td><strong>{{ item.name }}</strong></td>
+              <td>{{ item.count }}</td>
+              <td>{{ item.doses.join(', ') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Vaccination Stats Report -->
+    <div class="report-content" *ngIf="reportType === 'vaccinations' && vaccinationStats">
+      <div class="stats-grid">
+        <div class="stat-card highlight">
+          <div class="stat-icon">💉</div>
+          <div class="stat-value">{{ vaccinationStats.total }}</div>
+          <div class="stat-label">Total Vaccinations</div>
+        </div>
+      </div>
+
+      <div class="report-table-card">
+        <h3>Vaccinations by Vaccine Type</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Vaccine</th>
+              <th>Count</th>
+              <th>Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of vaccinationStats.byVaccine">
+              <td><strong>{{ item.name }}</strong></td>
+              <td>{{ item.count }}</td>
+              <td>{{ ((item.count / vaccinationStats.total) * 100).toFixed(1) }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Stock Report -->
+    <div class="report-content" *ngIf="reportType === 'stock' && stockReport">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📦</div>
+          <div class="stat-value">{{ stockReport.totalVaccines }}</div>
+          <div class="stat-label">Vaccine Types</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💉</div>
+          <div class="stat-value">{{ stockReport.totalDoses }}</div>
+          <div class="stat-label">Total Doses</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-value">{{ stockReport.lowStock }}</div>
+          <div class="stat-label">Low Stock Items</div>
+        </div>
+        <div class="stat-card error">
+          <div class="stat-icon">🔴</div>
+          <div class="stat-value">{{ stockReport.outOfStock }}</div>
+          <div class="stat-label">Out of Stock</div>
+        </div>
+      </div>
+
+      <div class="report-table-card">
+        <h3>Stock Details</h3>
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Vaccine</th>
+              <th>Quantity</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of stockReport.details">
+              <td><strong>{{ item.name }}</strong></td>
+              <td>{{ item.quantity }} doses</td>
+              <td>
+                <span class="status-badge" [ngClass]="'status-' + item.status.toLowerCase()">
+                  {{ item.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!loading && !coverageData && !vaccinationStats && !stockReport">
+      <div class="empty-icon">📊</div>
+      <p>Select a report type and date range to view data</p>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+  </div>
+</app-layout>
+
+

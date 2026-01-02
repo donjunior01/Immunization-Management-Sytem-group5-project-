@@ -1,0 +1,368 @@
+<app-layout pageTitle="Campaigns Management">
+  <div class="campaigns-page">
+    <div class="page-header">
+      <div>
+        <h1>Campaigns Management</h1>
+        <p class="subtitle">View and manage vaccination campaigns in your district</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" (click)="refreshData()">🔄 Refresh</button>
+        <button class="btn btn-primary" (click)="openCreateModal()">+ Create Campaign</button>
+      </div>
+    </div>
+
+    <app-alert *ngIf="errorMessage" type="error" [message]="errorMessage" [show]="!!errorMessage"></app-alert>
+    <app-alert *ngIf="infoMessage" type="info" [message]="infoMessage" [show]="!!infoMessage"></app-alert>
+
+    <!-- Filters -->
+    <div class="filters-card">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search campaigns by name or vaccine..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearch()">
+      </div>
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="filterStatus" (change)="onFilterChange()" class="filter-select">
+          <option value="all">All</option>
+          <option value="PLANNED">Planned</option>
+          <option value="ACTIVE">Active</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Campaigns Table -->
+    <div class="campaigns-table-card">
+      <div class="table-header">
+        <h3>All Campaigns ({{ filteredCampaigns.length }})</h3>
+      </div>
+      <div class="table-container">
+        <table class="campaigns-table">
+          <thead>
+            <tr>
+              <th>Campaign Name</th>
+              <th>Vaccine</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Progress</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let campaign of filteredCampaigns">
+              <td>
+                <div class="campaign-name">
+                  <strong>{{ campaign.name }}</strong>
+                  <small *ngIf="campaign.description">{{ campaign.description }}</small>
+                </div>
+              </td>
+              <td>{{ campaign.vaccineName }}</td>
+              <td>{{ formatDate(campaign.startDate) }}</td>
+              <td>{{ formatDate(campaign.endDate) }}</td>
+              <td>
+                <div class="progress-container">
+                  <div class="progress-bar">
+                    <div class="progress-fill" [style.width.%]="getProgress(campaign)"></div>
+                  </div>
+                  <span class="progress-text">{{ getProgress(campaign) }}%</span>
+                  <small *ngIf="campaign.targetPopulation">
+                    ({{ campaign.vaccinatedCount || 0 }}/{{ campaign.targetPopulation }})
+                  </small>
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusBadgeClass(campaign.status)">
+                  {{ getStatusLabel(campaign.status) }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button 
+                    class="btn btn-sm btn-info" 
+                    (click)="openViewModal(campaign)"
+                    title="View Details">
+                    👁️ View
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-secondary" 
+                    (click)="openEditModal(campaign)"
+                    title="Edit Campaign">
+                    ✏️ Edit
+                  </button>
+                  <button 
+                    *ngIf="campaign.status === 'PLANNED'" 
+                    class="btn btn-sm btn-success" 
+                    (click)="updateStatus(campaign, 'ACTIVE')"
+                    title="Activate Campaign">
+                    ▶️ Activate
+                  </button>
+                  <button 
+                    *ngIf="campaign.status === 'ACTIVE'" 
+                    class="btn btn-sm btn-warning" 
+                    (click)="updateStatus(campaign, 'COMPLETED')"
+                    title="Complete Campaign">
+                    ✅ Complete
+                  </button>
+                  <button 
+                    *ngIf="campaign.status !== 'CANCELLED' && campaign.status !== 'COMPLETED'" 
+                    class="btn btn-sm btn-danger" 
+                    (click)="updateStatus(campaign, 'CANCELLED')"
+                    title="Cancel Campaign">
+                    ❌ Cancel
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredCampaigns.length === 0">
+              <td colspan="7" class="no-data">
+                <div class="empty-state">
+                  <span class="empty-icon">📢</span>
+                  <p>No campaigns found</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-loader *ngIf="loading"></app-loader>
+
+    <!-- Create Campaign Modal -->
+    <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📢 Create New Campaign</h2>
+          <button class="modal-close" (click)="closeCreateModal()">×</button>
+        </div>
+        <form [formGroup]="campaignForm" (ngSubmit)="onCreateSubmit()" class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Campaign Name</label>
+              <input type="text" formControlName="name" class="form-input" placeholder="Enter campaign name">
+              <span class="error-text" *ngIf="isFieldInvalid('name')">
+                {{ getFieldError('name') }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="required">Vaccine Name</label>
+              <input type="text" formControlName="vaccineName" class="form-input" placeholder="Enter vaccine name">
+              <span class="error-text" *ngIf="isFieldInvalid('vaccineName')">
+                {{ getFieldError('vaccineName') }}
+              </span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea formControlName="description" class="form-input" rows="3" placeholder="Enter campaign description"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Target Age Group</label>
+              <input type="text" formControlName="targetAgeGroup" class="form-input" placeholder="e.g., 0-12 months">
+            </div>
+            <div class="form-group">
+              <label>Target Population</label>
+              <input type="number" formControlName="targetPopulation" class="form-input" placeholder="0" min="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Start Date</label>
+              <input type="date" formControlName="startDate" class="form-input" [min]="getTodayDate()">
+              <span class="error-text" *ngIf="isFieldInvalid('startDate')">
+                {{ getFieldError('startDate') }}
+              </span>
+            </div>
+            <div class="form-group">
+              <label class="required">End Date</label>
+              <input type="date" formControlName="endDate" class="form-input" [min]="campaignForm.get('startDate')?.value || getTodayDate()">
+              <span class="error-text" *ngIf="isFieldInvalid('endDate') || campaignForm.errors?.['dateRangeInvalid']">
+                {{ campaignForm.errors?.['dateRangeInvalid'] ? 'End date must be after start date' : getFieldError('endDate') }}
+              </span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" *ngIf="facilities.length > 0">
+              <label>Facility (Optional)</label>
+              <select formControlName="facilityId" class="form-input">
+                <option value="">All Facilities</option>
+                <option *ngFor="let facility of facilities" [value]="facility.id">{{ facility.name }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" formControlName="nationalId"> National Campaign
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || campaignForm.invalid">
+              {{ loading ? 'Creating...' : 'Create Campaign' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Campaign Modal -->
+    <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>✏️ Edit Campaign</h2>
+          <button class="modal-close" (click)="closeEditModal()">×</button>
+        </div>
+        <form [formGroup]="editCampaignForm" (ngSubmit)="onEditSubmit()" class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Campaign Name</label>
+              <input type="text" formControlName="name" class="form-input" placeholder="Enter campaign name">
+            </div>
+            <div class="form-group">
+              <label class="required">Vaccine Name</label>
+              <input type="text" formControlName="vaccineName" class="form-input" placeholder="Enter vaccine name">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea formControlName="description" class="form-input" rows="3" placeholder="Enter campaign description"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Target Age Group</label>
+              <input type="text" formControlName="targetAgeGroup" class="form-input" placeholder="e.g., 0-12 months">
+            </div>
+            <div class="form-group">
+              <label>Target Population</label>
+              <input type="number" formControlName="targetPopulation" class="form-input" placeholder="0" min="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required">Start Date</label>
+              <input type="date" formControlName="startDate" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="required">End Date</label>
+              <input type="date" formControlName="endDate" class="form-input">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" *ngIf="facilities.length > 0">
+              <label>Facility (Optional)</label>
+              <select formControlName="facilityId" class="form-input">
+                <option value="">All Facilities</option>
+                <option *ngFor="let facility of facilities" [value]="facility.id">{{ facility.name }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" formControlName="nationalId"> National Campaign
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="loading || editCampaignForm.invalid">
+              {{ loading ? 'Updating...' : 'Update Campaign' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- View Campaign Details Modal -->
+    <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+      <div class="modal-content large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>📋 Campaign Details</h2>
+          <button class="modal-close" (click)="closeViewModal()">×</button>
+        </div>
+        <div class="modal-body" *ngIf="selectedCampaign">
+          <div class="details-section">
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>Campaign Name</label>
+                <p class="detail-value">{{ selectedCampaign.name }}</p>
+              </div>
+              <div class="detail-item">
+                <label>Vaccine Name</label>
+                <p class="detail-value">{{ selectedCampaign.vaccineName }}</p>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>Status</label>
+                <p class="detail-value">
+                  <span class="status-badge" [ngClass]="getStatusBadgeClass(selectedCampaign.status)">
+                    {{ getStatusLabel(selectedCampaign.status) }}
+                  </span>
+                </p>
+              </div>
+              <div class="detail-item">
+                <label>Target Age Group</label>
+                <p class="detail-value">{{ selectedCampaign.targetAgeGroup || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>Start Date</label>
+                <p class="detail-value">{{ formatDate(selectedCampaign.startDate) }}</p>
+              </div>
+              <div class="detail-item">
+                <label>End Date</label>
+                <p class="detail-value">{{ formatDate(selectedCampaign.endDate) }}</p>
+              </div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>Target Population</label>
+                <p class="detail-value">{{ selectedCampaign.targetPopulation || 0 | number }}</p>
+              </div>
+              <div class="detail-item">
+                <label>Vaccinated Count</label>
+                <p class="detail-value">{{ selectedCampaign.vaccinatedCount || 0 | number }}</p>
+              </div>
+            </div>
+            <div class="detail-item full-width">
+              <label>Progress</label>
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="getProgress(selectedCampaign)"></div>
+                </div>
+                <span class="progress-text">{{ getProgress(selectedCampaign) }}%</span>
+              </div>
+            </div>
+            <div class="detail-item full-width" *ngIf="selectedCampaign.description">
+              <label>Description</label>
+              <p class="detail-value">{{ selectedCampaign.description }}</p>
+            </div>
+            <div class="detail-row">
+              <div class="detail-item">
+                <label>Campaign Type</label>
+                <p class="detail-value">{{ selectedCampaign.nationalId ? 'National' : (selectedCampaign.districtId ? 'District' : 'Facility') }}</p>
+              </div>
+              <div class="detail-item" *ngIf="selectedCampaign.facilityId">
+                <label>Facility ID</label>
+                <p class="detail-value">{{ selectedCampaign.facilityId }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeViewModal()">Close</button>
+            <button type="button" class="btn btn-primary" (click)="closeViewModal(); openEditModal(selectedCampaign!)">Edit Campaign</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-layout>
+

@@ -12,9 +12,24 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CoverageReportResponse {
+    private Long totalPatientsRegistered;
+    private List<VaccinationByVaccineType> vaccinationsByVaccineType;
+    private Double penta1Penta3DropoutRate;
+    private Double coveragePercentage;
+    private Long targetPopulation;
+    private Long vaccinatedCount;
     private SummaryStats summaryStats;
     private List<VaccineData> vaccineData;
     private List<TrendData> trendData;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VaccinationByVaccineType {
+        private String vaccineName;
+        private Long count;
+    }
 
     @Data
     @Builder

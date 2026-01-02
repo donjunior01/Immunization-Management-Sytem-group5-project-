@@ -1,10 +1,14 @@
 package com.immunizationdb.inventory.controller;
 
+import com.immunizationdb.inventory.dto.AdjustStockRequest;
 import com.immunizationdb.inventory.dto.CreateVaccineBatchRequest;
+import com.immunizationdb.inventory.dto.ReceiveStockRequest;
+import com.immunizationdb.inventory.dto.StockLevelResponse;
 import com.immunizationdb.inventory.dto.VaccineBatchResponse;
 import com.immunizationdb.inventory.service.InventoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,8 +17,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/inventory")
+@RequestMapping("/inventory")
 @RequiredArgsConstructor
+@Slf4j
 @CrossOrigin(origins = "http://localhost:4200")
 public class InventoryController {
 
@@ -25,6 +30,14 @@ public class InventoryController {
     public ResponseEntity<List<VaccineBatchResponse>> getAllBatches(
             @RequestParam(required = false) String facilityId,
             @RequestParam(required = false) String vaccine_name) {
+        // #region agent log
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
+            fw.write(String.format("{\"location\":\"InventoryController.java:25\",\"message\":\"getAllBatches called\",\"data\":{\"hasAuth\":%s,\"authorities\":\"%s\",\"facilityId\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}\n", auth != null, auth != null ? auth.getAuthorities().toString() : "null", facilityId));
+            fw.close();
+        } catch (Exception e) {}
+        // #endregion
         List<VaccineBatchResponse> batches;
         
         if (facilityId != null) {
@@ -141,6 +154,18 @@ public class InventoryController {
         return ResponseEntity.ok(batches);
     }
 
+    @GetMapping("/batches/available/{facilityId}/vaccine/{vaccineName}")
+    @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
+    public ResponseEntity<List<VaccineBatchResponse>> getAvailableBatchesByVaccine(
+            @PathVariable String facilityId,
+            @PathVariable String vaccineName) {
+        // Spring automatically URL-decodes path variables, but log to verify
+        log.info("getAvailableBatchesByVaccine called - facilityId: {}, vaccineName: '{}'", facilityId, vaccineName);
+        List<VaccineBatchResponse> batches = inventoryService.findAvailableBatchesByVaccine(facilityId, vaccineName);
+        log.info("Returning {} batches for facility: {}, vaccine: '{}'", batches.size(), facilityId, vaccineName);
+        return ResponseEntity.ok(batches);
+    }
+
     @GetMapping("/batches/expiring-soon/{facilityId}")
     @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
     public ResponseEntity<List<VaccineBatchResponse>> getExpiringSoonBatches(@PathVariable String facilityId) {
@@ -153,5 +178,83 @@ public class InventoryController {
     public ResponseEntity<Void> deleteBatch(@PathVariable Long batchId) {
         inventoryService.deleteBatch(batchId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/vaccines")
+    @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
+    public ResponseEntity<List<java.util.Map<String, Object>>> getAllVaccines() {
+        // Return list of available vaccine types
+        List<java.util.Map<String, Object>> vaccines = new java.util.ArrayList<>();
+        String[] vaccineNames = {"BCG", "OPV", "DTP", "Measles", "Hepatitis B", "Rotavirus", "COVID-19", "Tetanus", "Yellow Fever", "Meningitis"};
+        
+        for (String name : vaccineNames) {
+            java.util.Map<String, Object> vaccine = new java.util.HashMap<>();
+            vaccine.put("id", name.toLowerCase().replace(" ", "-"));
+            vaccine.put("name", name);
+            vaccine.put("code", name);
+            vaccine.put("isActive", true);
+            vaccine.put("maxDoses", getMaxDosesForVaccine(name));
+            vaccines.add(vaccine);
+        }
+        
+        return ResponseEntity.ok(vaccines);
+    }
+
+    @PostMapping("/stock/receive")
+    @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
+    public ResponseEntity<VaccineBatchResponse> receiveStock(@Valid @RequestBody ReceiveStockRequest request) {
+        // #region agent log
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
+            fw.write(String.format("{\"location\":\"InventoryController.java:receiveStock\",\"message\":\"receiveStock called\",\"data\":{\"username\":\"%s\",\"authorities\":\"%s\",\"batchNumber\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"STOCK_403\"}\n", 
+                auth != null ? auth.getName() : "null", 
+                auth != null ? auth.getAuthorities().toString() : "null",
+                request.getBatchNumber()));
+            fw.close();
+        } catch (Exception e) {}
+        // #endregion
+        VaccineBatchResponse response = inventoryService.receiveStock(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/stock/adjust")
+    @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
+    public ResponseEntity<VaccineBatchResponse> adjustStock(@Valid @RequestBody AdjustStockRequest request) {
+        // This method should only be reached if PreAuthorize passes
+        // #region agent log
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            String username = auth != null ? auth.getName() : "null";
+            String authorities = auth != null ? auth.getAuthorities().toString() : "null";
+            boolean isAuthenticated = auth != null && auth.isAuthenticated();
+            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
+            fw.write(String.format("{\"location\":\"InventoryController.java:adjustStock\",\"message\":\"adjustStock called - PreAuthorize passed\",\"data\":{\"hasAuth\":%s,\"isAuthenticated\":%s,\"username\":\"%s\",\"authorities\":\"%s\",\"batchNumber\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"STOCK_403\"}\n", 
+                auth != null,
+                isAuthenticated,
+                username,
+                authorities,
+                request.getBatchNumber()));
+            fw.close();
+        } catch (Exception e) {}
+        // #endregion
+        VaccineBatchResponse response = inventoryService.adjustStock(request);
+        return ResponseEntity.ok(response);
+    }
+
+    private int getMaxDosesForVaccine(String vaccineName) {
+        return switch (vaccineName) {
+            case "BCG" -> 1;
+            case "OPV" -> 4;
+            case "DTP" -> 3;
+            case "Measles" -> 2;
+            case "Hepatitis B" -> 3;
+            case "Rotavirus" -> 2;
+            case "COVID-19" -> 3;
+            case "Tetanus" -> 5;
+            case "Yellow Fever" -> 1;
+            case "Meningitis" -> 1;
+            default -> 1;
+        };
     }
 }

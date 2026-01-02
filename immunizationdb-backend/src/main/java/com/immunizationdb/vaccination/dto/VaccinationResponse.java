@@ -25,6 +25,9 @@ public class VaccinationResponse {
     private Integer doseNumber;
     private LocalDate dateAdministered;
     private String facilityId;
+    private String administrationSite;
     private String notes;
     private LocalDateTime createdAt;
+    private UUID nextAppointmentId;
+    private LocalDate nextAppointmentDate;
 }
