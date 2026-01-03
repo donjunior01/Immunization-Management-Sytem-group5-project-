@@ -30,7 +30,9 @@ export class DistrictCampaignsComponent implements OnInit {
   showCreateModal = false;
   showEditModal = false;
   showViewModal = false;
+  showSuccessModal = false;
   selectedCampaign: Campaign | null = null;
+  createdCampaign: Campaign | null = null;
   campaignForm: FormGroup;
   editCampaignForm: FormGroup;
 
@@ -76,36 +78,22 @@ export class DistrictCampaignsComponent implements OnInit {
   }
 
   loadFacilities(): void {
-    const user = this.authService.getCurrentUser();
-    let districtId = user?.districtId;
-    const facilityId = user?.facilityId;
-
-    if (!districtId && facilityId) {
-      this.facilityService.getFacilityById(facilityId).subscribe({
-        next: (facility) => {
-          const facilityDistrictId = (facility as any).districtId || facility.district;
-          if (facilityDistrictId) {
-            districtId = facilityDistrictId;
-            this.loadFacilitiesByDistrict(facilityDistrictId);
-          }
-        },
-        error: () => {
-          this.facilities = [];
-        }
-      });
-    } else if (districtId) {
-      this.loadFacilitiesByDistrict(districtId);
-    } else {
-      this.facilities = [];
-    }
-  }
-
-  private loadFacilitiesByDistrict(districtId: string): void {
-    this.facilityService.getFacilitiesByDistrict(districtId).subscribe({
+    // District dashboard plays admin role - load ALL facilities
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:78',message:'Loading all facilities (admin role)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    this.facilityService.getAllFacilities(true).subscribe({
       next: (facilities) => {
-        this.facilities = facilities.map(f => ({ id: f.id, name: f.name || f.id }));
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:85',message:'All facilities loaded',data:{facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        this.facilities = facilities;
       },
-      error: () => {
+      error: (error) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:91',message:'Failed to load all facilities',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.error('Failed to load all facilities:', error);
         this.facilities = [];
       }
     });
@@ -141,16 +129,80 @@ export class DistrictCampaignsComponent implements OnInit {
     }
   }
 
-  private loadCampaignsForDistrict(districtId: string | null, startTime: number): void {
-    this.campaignService.getActiveCampaigns().subscribe({
+  private loadCampaignsInBackground(): void {
+    // Reload campaigns without showing loader
+    const user = this.authService.getCurrentUser();
+    let districtId = user?.districtId;
+    const facilityId = user?.facilityId;
+
+    if (!districtId && facilityId) {
+      this.facilityService.getFacilityById(facilityId).subscribe({
+        next: (facility) => {
+          const facilityDistrictId = (facility as any).districtId || facility.district;
+          if (facilityDistrictId) {
+            districtId = facilityDistrictId;
+            this.loadCampaignsForDistrictInBackground(facilityDistrictId);
+          } else {
+            this.loadCampaignsForDistrictInBackground(null);
+          }
+        },
+        error: () => {
+          this.loadCampaignsForDistrictInBackground(null);
+        }
+      });
+    } else {
+      this.loadCampaignsForDistrictInBackground(districtId || null);
+    }
+  }
+
+  private loadCampaignsForDistrictInBackground(districtId: string | null): void {
+    this.campaignService.getAllCampaigns().subscribe({
       next: (campaigns) => {
         // Filter by district if available
+        let filteredCampaigns = campaigns;
         if (districtId) {
-          this.campaigns = campaigns.filter(c => c.districtId === districtId || c.nationalId);
-        } else {
-          this.campaigns = campaigns;
+          filteredCampaigns = campaigns.filter(c => c.districtId === districtId || c.nationalId);
         }
+        this.campaigns = filteredCampaigns;
         this.applyFilter();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to reload campaigns:', error);
+        // Don't show error message in background reload
+      }
+    });
+  }
+
+  private loadCampaignsForDistrict(districtId: string | null, startTime: number): void {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:130',message:'loadCampaignsForDistrict called',data:{districtId:districtId||'null',startTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    // Clear any previous error messages
+    this.errorMessage = '';
+    this.campaignService.getAllCampaigns().subscribe({
+      next: (campaigns) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:137',message:'Campaigns loaded successfully',data:{campaignsCount:campaigns?.length||0,isArray:Array.isArray(campaigns),firstCampaign:campaigns?.[0]?.['id']||'none',rawResponse:JSON.stringify(campaigns).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        // Clear error message on successful load
+        this.errorMessage = '';
+        // Filter by district if available
+        let filteredCampaigns = campaigns;
+        if (districtId) {
+          filteredCampaigns = campaigns.filter(c => c.districtId === districtId || c.nationalId);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:145',message:'Filtered campaigns by district',data:{districtId,originalCount:campaigns.length,filteredCount:filteredCampaigns.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
+        }
+        this.campaigns = filteredCampaigns;
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:150',message:'Campaigns assigned to component',data:{campaignsCount:this.campaigns.length,filteredCampaignsCount:this.filteredCampaigns.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        this.applyFilter();
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:153',message:'After applyFilter',data:{campaignsCount:this.campaigns.length,filteredCampaignsCount:this.filteredCampaigns.length,searchQuery:this.searchQuery,filterStatus:this.filterStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         ensureMinimumLoadingTime(startTime, () => {
           this.loading = false;
           this.isLoadingData = false;
@@ -158,6 +210,9 @@ export class DistrictCampaignsComponent implements OnInit {
         });
       },
       error: (error) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:154',message:'Failed to load campaigns',data:{errorStatus:error?.status,errorStatusText:error?.statusText,errorMessage:error?.message,errorUrl:error?.url,errorType:error?.constructor?.name,hasError:!!error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         console.error('Failed to load campaigns:', error);
         this.errorMessage = 'Failed to load campaigns. Please try again.';
         this.campaigns = [];
@@ -180,6 +235,9 @@ export class DistrictCampaignsComponent implements OnInit {
   }
 
   applyFilter(): void {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:168',message:'applyFilter called',data:{campaignsCount:this.campaigns.length,searchQuery:this.searchQuery,filterStatus:this.filterStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     let filtered = [...this.campaigns];
 
     if (this.searchQuery) {
@@ -196,6 +254,9 @@ export class DistrictCampaignsComponent implements OnInit {
     }
 
     this.filteredCampaigns = filtered;
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:185',message:'applyFilter completed',data:{filteredCount:this.filteredCampaigns.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
   }
 
   openCreateModal(): void {
@@ -228,20 +289,30 @@ export class DistrictCampaignsComponent implements OnInit {
       targetPopulation: formValue.targetPopulation || 0,
       facilityId: formValue.facilityId || undefined,
       districtId: formValue.districtId || undefined,
-      nationalId: formValue.nationalId || false
+      // Backend expects nationalId as string, convert boolean to string
+      nationalId: formValue.nationalId ? 'true' : undefined
     };
 
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:230',message:'Creating campaign',data:{campaignName:campaign.name,vaccineName:campaign.vaccineName,hasFacilityId:!!campaign.facilityId,hasDistrictId:!!campaign.districtId,nationalId:campaign.nationalId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
+
     this.campaignService.createCampaign(campaign).subscribe({
-      next: () => {
+      next: (createdCampaign) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:248',message:'Campaign created successfully',data:{campaignId:createdCampaign?.id,campaignName:createdCampaign?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
         this.loading = false;
         this.closeCreateModal();
-        this.infoMessage = 'Campaign created successfully!';
-        this.loadCampaigns();
-        setTimeout(() => {
-          this.infoMessage = '';
-        }, 5000);
+        this.createdCampaign = createdCampaign;
+        this.showSuccessModal = true;
+        // Reload campaigns in the background without showing loader
+        this.loadCampaignsInBackground();
       },
       error: (error) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-campaigns.component.ts:256',message:'Failed to create campaign',data:{errorStatus:error?.status,errorMessage:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion
         this.loading = false;
         this.errorMessage = 'Failed to create campaign. Please try again.';
         console.error('Failed to create campaign:', error);
@@ -382,5 +453,10 @@ export class DistrictCampaignsComponent implements OnInit {
   closeViewModal(): void {
     this.showViewModal = false;
     this.selectedCampaign = null;
+  }
+
+  closeSuccessModal(): void {
+    this.showSuccessModal = false;
+    this.createdCampaign = null;
   }
 }

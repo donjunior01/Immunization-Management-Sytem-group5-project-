@@ -27,7 +27,7 @@ export class DistrictFacilitiesComponent implements OnInit {
   filterType = 'all';
   filterActive = 'all';
   private isLoadingData = false;
-  
+
   // Modal states
   showEditModal = false;
   showAssignDistrictModal = false;
@@ -35,7 +35,7 @@ export class DistrictFacilitiesComponent implements OnInit {
   selectedFacility: Facility | null = null;
   facilityForm: FormGroup;
   assignDistrictForm: FormGroup;
-  availableDistricts: string[] = []; // Will be populated from facilities or user input
+  availableDistricts: Array<{id: string, name: string}> = []; // Districts extracted from facilities
 
   constructor(
     private facilityService: FacilityService,
@@ -64,40 +64,41 @@ export class DistrictFacilitiesComponent implements OnInit {
 
   loadFacilities(): void {
     if (this.isLoadingData) return;
-    
+
     this.isLoadingData = true;
     this.loading = true;
     const startTime = Date.now();
-    const user = this.authService.getCurrentUser();
-    let districtId = user?.districtId;
-    const facilityId = user?.facilityId;
+    // District dashboard plays admin role - load ALL facilities
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-facilities.component.ts:65',message:'Loading all facilities (admin role)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
 
-    if (!districtId && facilityId) {
-      this.facilityService.getFacilityById(facilityId).subscribe({
-        next: (facility) => {
-          const facilityDistrictId = (facility as any).districtId || facility.district;
-          if (facilityDistrictId) {
-            districtId = facilityDistrictId;
-            this.loadFacilitiesByDistrict(facilityDistrictId, startTime);
-          } else {
-            this.infoMessage = 'No district assigned. Please contact administrator.';
-            this.loading = false;
-            this.isLoadingData = false;
-          }
-        },
-        error: () => {
-          this.errorMessage = 'Failed to load facility information.';
+    this.facilityService.getAllFacilities(true).subscribe({
+      next: (facilities) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-facilities.component.ts:72',message:'All facilities loaded',data:{facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        ensureMinimumLoadingTime(startTime, () => {
+          this.facilities = facilities;
+          this.filteredFacilities = [...this.facilities];
+          // Extract unique districts from facilities
+          this.extractDistrictsFromFacilities(facilities);
           this.loading = false;
           this.isLoadingData = false;
-        }
-      });
-    } else if (districtId) {
-      this.loadFacilitiesByDistrict(districtId, startTime);
-    } else {
-      this.infoMessage = 'No district assigned. Please contact administrator.';
-      this.loading = false;
-      this.isLoadingData = false;
-    }
+          this.cdr.detectChanges();
+        });
+      },
+      error: (error) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-facilities.component.ts:81',message:'Failed to load all facilities',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.error('Failed to load all facilities:', error);
+        this.errorMessage = 'Failed to load facilities. Please try again.';
+        this.loading = false;
+        this.isLoadingData = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   private loadFacilitiesByDistrict(districtId: string, startTime: number): void {
@@ -138,7 +139,7 @@ export class DistrictFacilitiesComponent implements OnInit {
 
     if (this.searchQuery) {
       const query = this.searchQuery.toLowerCase();
-      filtered = filtered.filter(f => 
+      filtered = filtered.filter(f =>
         f.name.toLowerCase().includes(query) ||
         f.id.toLowerCase().includes(query) ||
         (f.location && f.location.toLowerCase().includes(query))
@@ -226,12 +227,33 @@ export class DistrictFacilitiesComponent implements OnInit {
     });
   }
 
+  private extractDistrictsFromFacilities(facilities: Facility[]): void {
+    const districtMap = new Map<string, string>();
+
+    facilities.forEach(facility => {
+      const districtId = (facility as any).districtId || facility.district;
+      if (districtId && !districtMap.has(districtId)) {
+        // Use district ID as name if no name is available
+        districtMap.set(districtId, districtId);
+      }
+    });
+
+    // Convert map to array and sort
+    this.availableDistricts = Array.from(districtMap.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   openAssignDistrictModal(facility: Facility): void {
     this.selectedFacility = facility;
     const currentDistrictId = (facility as any).districtId || facility.district || '';
     this.assignDistrictForm.patchValue({
       districtId: currentDistrictId
     });
+    // Ensure districts are extracted
+    if (this.availableDistricts.length === 0 && this.facilities.length > 0) {
+      this.extractDistrictsFromFacilities(this.facilities);
+    }
     this.showAssignDistrictModal = true;
   }
 
@@ -282,6 +304,21 @@ export class DistrictFacilitiesComponent implements OnInit {
   closeViewModal(): void {
     this.showViewModal = false;
     this.selectedFacility = null;
+  }
+
+  isFieldInvalid(fieldName: string, form: FormGroup = this.facilityForm): boolean {
+    const field = form.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getFieldError(fieldName: string, form: FormGroup = this.facilityForm): string {
+    const field = form.get(fieldName);
+    if (field && field.errors) {
+      if (field.errors['required']) {
+        return `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
+      }
+    }
+    return '';
   }
 
   getFacilityDistrictId(facility: Facility | null): string {

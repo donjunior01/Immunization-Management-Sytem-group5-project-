@@ -11,10 +11,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 import java.util.UUID;
@@ -98,7 +101,7 @@ public class SmsService {
      * @param patientId Optional patient ID
      * @return SmsLog with status
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SmsLog sendSMS(String phone, String message, UUID appointmentId, UUID patientId) {
         log.info("Attempting to send SMS to: {}", phone);
         
@@ -144,6 +147,10 @@ public class SmsService {
         
         smsLog = smsLogRepository.save(smsLog);
         
+        // Declare trimmed credentials outside try block so they're accessible in catch blocks
+        String trimmedUsername = "";
+        String trimmedApiKey = "";
+        
         try {
             // Debug: Log the actual values (without exposing sensitive data)
             log.debug("SMS Configuration - Username present: {}, API Key present: {}", 
@@ -167,49 +174,169 @@ public class SmsService {
             
             // Build WebClient with Basic Authentication
             // AfricasTalking uses Basic Auth with username and API key
-            String credentials = username.trim() + ":" + apiKey.trim();
+            trimmedUsername = username != null ? username.trim() : "";
+            trimmedApiKey = apiKey != null ? apiKey.trim() : "";
+            
+            // Log credential status (without exposing sensitive data)
+            log.info("SMS Authentication - Username length: {}, API Key length: {}, Username empty: {}, API Key empty: {}", 
+                    trimmedUsername.length(), trimmedApiKey.length(), trimmedUsername.isEmpty(), trimmedApiKey.isEmpty());
+            
+            if (trimmedUsername.isEmpty() || trimmedApiKey.isEmpty()) {
+                log.error("SMS credentials are empty - Username: '{}', API Key length: {}", 
+                        trimmedUsername.isEmpty() ? "EMPTY" : trimmedUsername, trimmedApiKey.length());
+                smsLog.setStatus(SmsLog.SmsStatus.FAILED);
+                smsLog.setErrorMessage("SMS gateway credentials are empty. Please check application.yml or environment variables.");
+                return smsLogRepository.save(smsLog);
+            }
+            
+            String credentials = trimmedUsername + ":" + trimmedApiKey;
             String encodedCredentials = java.util.Base64.getEncoder().encodeToString(credentials.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
-            log.debug("Sending SMS to {} using username: {} (credentials length: {})", normalizedPhone, username, credentials.length());
+            log.info("Sending SMS to {} using username: {} (credentials encoded length: {}, auth header prefix: {})", 
+                    normalizedPhone, trimmedUsername, encodedCredentials.length(), 
+                    encodedCredentials.length() > 0 ? encodedCredentials.substring(0, Math.min(10, encodedCredentials.length())) : "EMPTY");
             
+            // Build WebClient with Basic Authentication configured at the builder level
+            // This ensures authentication is properly applied to all requests
             WebClient webClient = webClientBuilder
                     .baseUrl(AFRICASTALKING_API_URL)
                     .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                    .defaultHeader(HttpHeaders.AUTHORIZATION, "Basic " + encodedCredentials)
                     .build();
             
+            log.debug("WebClient built with base URL: {} and default Authorization header", AFRICASTALKING_API_URL);
+            
             // Prepare request body
+            // AfricasTalking API requires username in both Basic Auth header AND in form data
             String requestBody = String.format(
                     "username=%s&to=%s&message=%s&from=%s",
-                    username,
+                    java.net.URLEncoder.encode(trimmedUsername, java.nio.charset.StandardCharsets.UTF_8),
                     normalizedPhone,
                     java.net.URLEncoder.encode(message, java.nio.charset.StandardCharsets.UTF_8),
-                    senderId != null ? senderId : ""
+                    senderId != null ? java.net.URLEncoder.encode(senderId, java.nio.charset.StandardCharsets.UTF_8) : ""
             );
             
-            log.debug("SMS request body: username={}, to={}, from={}", username, normalizedPhone, senderId);
+            log.debug("SMS request body prepared: username={}, to={}, from={}, message length={}", 
+                    trimmedUsername, normalizedPhone, senderId, message.length());
             
-            // Send SMS via REST API with error handling
-            AfricasTalkingResponse response = webClient.post()
-                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                    .header(HttpHeaders.AUTHORIZATION, "Basic " + encodedCredentials)
-                    .bodyValue(requestBody)
-                    .retrieve()
-                    .onStatus(
-                        status -> status.is4xxClientError() || status.is5xxServerError(),
-                        clientResponse -> {
-                            log.error("AfricasTalking API error: Status {}", clientResponse.statusCode());
-                            return clientResponse.bodyToMono(String.class)
-                                    .defaultIfEmpty("No error body")
-                                    .flatMap(errorBody -> {
-                                        log.error("Error response body: {}", errorBody);
-                                        return reactor.core.publisher.Mono.error(
-                                                new RuntimeException("API Error: " + clientResponse.statusCode() + " - " + errorBody)
-                                        );
-                                    });
+            // Send SMS via REST API with retry logic and error handling
+            AfricasTalkingResponse response = null;
+            int maxRetries = 3;
+            int retryCount = 0;
+            long retryDelayMs = 1000; // Start with 1 second delay
+            
+            while (retryCount < maxRetries) {
+                try {
+                    log.info("SMS Request - Attempt {}: Sending to {}, Phone: {}, Message length: {}", 
+                            retryCount + 1, AFRICASTALKING_API_URL, normalizedPhone, message.length());
+                    
+                    response = webClient.post()
+                            .uri("") // Use relative URI since baseUrl is already set in builder
+                            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                            // Authorization header is already set in defaultHeader, but we set it again to ensure it's present
+                            .header(HttpHeaders.AUTHORIZATION, "Basic " + encodedCredentials)
+                            .bodyValue(requestBody)
+                            .retrieve()
+                            .onStatus(
+                                status -> status.is4xxClientError() || status.is5xxServerError(),
+                                clientResponse -> {
+                                    log.error("AfricasTalking API error: Status {}", clientResponse.statusCode());
+                                    return clientResponse.bodyToMono(String.class)
+                                            .defaultIfEmpty("No error body")
+                                            .flatMap(errorBody -> {
+                                                log.error("Error response body: {}", errorBody);
+                                                // Create WebClientResponseException to be caught by the proper catch block
+                                                // Use the response body as bytes for the exception
+                                                byte[] responseBodyBytes = errorBody.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                                                HttpStatus httpStatus = HttpStatus.resolve(clientResponse.statusCode().value());
+                                                String reasonPhrase = httpStatus != null ? httpStatus.getReasonPhrase() : "Unknown Status";
+                                                return reactor.core.publisher.Mono.error(
+                                                        new WebClientResponseException(
+                                                                clientResponse.statusCode().value(),
+                                                                reasonPhrase,
+                                                                clientResponse.headers().asHttpHeaders(),
+                                                                responseBodyBytes,
+                                                                java.nio.charset.StandardCharsets.UTF_8
+                                                        )
+                                                );
+                                            });
+                                }
+                            )
+                            .bodyToMono(AfricasTalkingResponse.class)
+                            .timeout(java.time.Duration.ofSeconds(30)) // 30 second timeout
+                            .block();
+                    
+                    // If we got here, the request succeeded
+                    break;
+                    
+                } catch (WebClientResponseException e) {
+                    // HTTP errors - don't retry 4xx errors (client errors), but retry 5xx errors (server errors)
+                    // This must be caught BEFORE RuntimeException since it extends RuntimeException
+                    if (e.getStatusCode().is5xxServerError() && retryCount < maxRetries) {
+                        retryCount++;
+                        log.warn("SMS server error {} (attempt {}/{}). Retrying in {}ms...", 
+                                e.getStatusCode(), retryCount, maxRetries, retryDelayMs);
+                        try {
+                            Thread.sleep(retryDelayMs);
+                            retryDelayMs *= 2; // Exponential backoff
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException("SMS retry interrupted", ie);
                         }
-                    )
-                    .bodyToMono(AfricasTalkingResponse.class)
-                    .block();
+                    } else {
+                        // 4xx errors or max retries reached - don't retry
+                        throw e;
+                    }
+                } catch (org.springframework.web.reactive.function.client.WebClientRequestException e) {
+                    // Network errors - retry
+                    // This must be caught BEFORE RuntimeException since it extends RuntimeException
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        log.warn("SMS network error (attempt {}/{}): {}. Retrying in {}ms...", 
+                                retryCount, maxRetries, e.getMessage(), retryDelayMs);
+                        try {
+                            Thread.sleep(retryDelayMs);
+                            retryDelayMs *= 2; // Exponential backoff
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException("SMS retry interrupted", ie);
+                        }
+                    } else {
+                        log.error("SMS request failed after {} attempts due to network error", maxRetries);
+                        throw e;
+                    }
+                } catch (RuntimeException e) {
+                    // Check if this is a timeout exception (wrapped by reactor)
+                    // Reactor's timeout throws RuntimeException with "timeout" in message or cause
+                    // This must be caught AFTER WebClientRequestException and WebClientResponseException
+                    // since those extend RuntimeException
+                    Throwable cause = e.getCause();
+                    String exceptionMessage = e.getMessage();
+                    boolean isTimeout = (exceptionMessage != null && (exceptionMessage.contains("Timeout") || exceptionMessage.contains("timeout"))) ||
+                                       (cause != null && cause.getMessage() != null && cause.getMessage().contains("timeout")) ||
+                                       e.getClass().getSimpleName().contains("Timeout");
+                    
+                    if (isTimeout) {
+                        retryCount++;
+                        if (retryCount < maxRetries) {
+                            log.warn("SMS request timeout (attempt {}/{}). Retrying in {}ms...", retryCount, maxRetries, retryDelayMs);
+                            try {
+                                Thread.sleep(retryDelayMs);
+                                retryDelayMs *= 2; // Exponential backoff
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                                throw new RuntimeException("SMS retry interrupted", ie);
+                            }
+                            continue; // Retry the request
+                        } else {
+                            log.error("SMS request failed after {} attempts due to timeout", maxRetries);
+                            throw new RuntimeException("SMS gateway timeout after " + maxRetries + " attempts", e);
+                        }
+                    }
+                    // If not a timeout, rethrow to be caught by outer catch blocks
+                    throw e;
+                }
+            }
             
             if (response != null && response.getSMSMessageData() != null) {
                 AfricasTalkingSmsMessageData messageData = response.getSMSMessageData();
@@ -235,19 +362,69 @@ public class SmsService {
                 log.error("Invalid response from SMS gateway for: {}", normalizedPhone);
             }
             
-        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+        } catch (WebClientResponseException e) {
             log.error("WebClient error while sending SMS to {}: Status {} - Body: {}", 
                     normalizedPhone, e.getStatusCode(), e.getResponseBodyAsString());
             smsLog.setStatus(SmsLog.SmsStatus.FAILED);
             String errorMsg = "Gateway failure: " + e.getStatusCode();
             if (e.getStatusCode().value() == 401) {
-                errorMsg += " Unauthorized - Please verify your AfricasTalking API credentials (username and API key) in application.yml or environment variables";
+                errorMsg += " Unauthorized - Please verify your AfricasTalking API credentials (username and API key) in application.yml or environment variables. Current username: '" + trimmedUsername + "'";
+            } else if (e.getStatusCode().value() == 403) {
+                errorMsg += " Forbidden - Check your API key permissions";
+            } else if (e.getStatusCode().value() == 429) {
+                errorMsg += " Rate limit exceeded - Too many requests. Please try again later";
+            } else if (e.getStatusCode().is5xxServerError()) {
+                errorMsg += " Server error - SMS gateway is temporarily unavailable. Please try again later";
+            } else {
+                errorMsg += " - " + (e.getResponseBodyAsString() != null && !e.getResponseBodyAsString().isEmpty() 
+                    ? e.getResponseBodyAsString().substring(0, Math.min(200, e.getResponseBodyAsString().length()))
+                    : "Unknown error");
             }
             smsLog.setErrorMessage(errorMsg);
+            } catch (org.springframework.web.reactive.function.client.WebClientRequestException e) {
+                log.error("Network error while sending SMS to {}: {}", normalizedPhone, e.getMessage(), e);
+                smsLog.setStatus(SmsLog.SmsStatus.FAILED);
+                String errorMsg = "Network error - Unable to connect to SMS gateway";
+                String errorMessage = e.getMessage() != null ? e.getMessage() : "";
+                if (errorMessage.contains("Connection refused")) {
+                    errorMsg += ": Connection refused. Please check your network connection and ensure the backend can reach the internet";
+                } else if (errorMessage.contains("timeout")) {
+                    errorMsg += ": Connection timeout. Please try again later";
+                } else if (errorMessage.contains("Failed to resolve") || errorMessage.contains("Name resolution")) {
+                    errorMsg += ": DNS resolution failed. Please check your internet connection and DNS settings. The SMS gateway URL is: " + AFRICASTALKING_API_URL;
+                } else if (errorMessage.contains("UnknownHostException") || errorMessage.contains("getaddrinfo")) {
+                    errorMsg += ": Cannot resolve hostname. Please check your internet connection and DNS settings. The SMS gateway URL is: " + AFRICASTALKING_API_URL;
+                } else {
+                    errorMsg += ": " + errorMessage;
+                }
+                smsLog.setErrorMessage(errorMsg);
+        } catch (RuntimeException e) {
+            // Check if this is a timeout exception (wrapped by reactor)
+            // Reactor's timeout throws RuntimeException with "timeout" in message or cause
+            // This catch block must come AFTER WebClientRequestException and WebClientResponseException
+            // since those extend RuntimeException
+            Throwable cause = e.getCause();
+            String exceptionMessage = e.getMessage();
+            boolean isTimeout = (exceptionMessage != null && (exceptionMessage.contains("Timeout") || exceptionMessage.contains("timeout"))) ||
+                               (cause != null && cause.getMessage() != null && cause.getMessage().contains("timeout")) ||
+                               e.getClass().getSimpleName().contains("Timeout");
+            
+            if (isTimeout) {
+                log.error("Timeout while sending SMS to {}: {}", normalizedPhone, e.getMessage());
+                smsLog.setStatus(SmsLog.SmsStatus.FAILED);
+                smsLog.setErrorMessage("Gateway timeout - SMS gateway did not respond in time. Please try again later");
+            } else {
+                // Re-throw if not a timeout - let Exception catch block handle it
+                throw e;
+            }
         } catch (Exception e) {
             log.error("Exception while sending SMS to {}: {}", normalizedPhone, e.getMessage(), e);
             smsLog.setStatus(SmsLog.SmsStatus.FAILED);
-            smsLog.setErrorMessage("Gateway failure: " + e.getMessage());
+            String errorMsg = "Gateway failure: " + (e.getMessage() != null ? e.getMessage() : "Unknown error");
+            if (errorMsg.length() > 500) {
+                errorMsg = errorMsg.substring(0, 500) + "...";
+            }
+            smsLog.setErrorMessage(errorMsg);
         }
         
         return smsLogRepository.save(smsLog);
@@ -259,6 +436,18 @@ public class SmsService {
     @Transactional
     public SmsLog sendSMS(String phone, String message) {
         return sendSMS(phone, message, null, null);
+    }
+    
+    /**
+     * Delete SMS log by ID
+     */
+    @Transactional
+    public void deleteSmsLog(Long id) {
+        if (!smsLogRepository.existsById(id)) {
+            throw new RuntimeException("SMS log not found with ID: " + id);
+        }
+        smsLogRepository.deleteById(id);
+        log.info("Deleted SMS log with ID: {}", id);
     }
     
     /**

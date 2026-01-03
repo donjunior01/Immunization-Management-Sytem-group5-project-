@@ -168,9 +168,17 @@
         </div>
         <form [formGroup]="assignDistrictForm" (ngSubmit)="onAssignDistrictSubmit()" class="modal-body">
           <div class="form-group">
-            <label class="required">District ID</label>
-            <input type="text" formControlName="districtId" class="form-input" placeholder="Enter district ID (e.g., DISTRICT_001)">
+            <label class="required">District</label>
+            <select formControlName="districtId" class="form-input" title="Select district to assign to facility">
+              <option value="">-- Select District --</option>
+              <option *ngFor="let district of availableDistricts" [value]="district.id">
+                {{ district.name }}
+              </option>
+            </select>
             <small class="form-hint">Assigning a district to this facility will allow users in this facility to access district-level data.</small>
+            <span class="error-text" *ngIf="isFieldInvalid('districtId', assignDistrictForm)">
+              {{ getFieldError('districtId', assignDistrictForm) }}
+            </span>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="closeAssignDistrictModal()">Cancel</button>

@@ -73,6 +73,7 @@ com\immunizationdb\reporting\dto\StockReportResponse$StockAlert$StockAlertBuilde
 com\immunizationdb\adverseevent\repository\AdverseEventRepository.class
 com\immunizationdb\auth\config\AuthSecurityConfig.class
 com\immunizationdb\adverseevent\dto\AdverseEventResponse$AdverseEventResponseBuilder.class
+com\immunizationdb\reporting\controller\ReportingController$ExportRequest.class
 com\immunizationdb\campaign\service\CampaignService.class
 com\immunizationdb\inventory\entity\StockMovement$MovementType.class
 com\immunizationdb\inventory\entity\StockMovement$StockMovementBuilder.class
@@ -106,10 +107,12 @@ com\immunizationdb\adverseevent\dto\AdverseEventResponse.class
 com\immunizationdb\campaign\dto\CreateCampaignRequest$CreateCampaignRequestBuilder.class
 com\immunizationdb\patient\dto\CreatePatientRequest.class
 com\immunizationdb\adverseevent\dto\CreateAdverseEventRequest$CreateAdverseEventRequestBuilder.class
+com\immunizationdb\sms\dto\SendSmsRequest$SendSmsRequestBuilder.class
 com\immunizationdb\appointment\entity\Appointment$AppointmentStatus.class
 com\immunizationdb\reporting\dto\NationalStatisticsResponse$RecentActivity.class
 com\immunizationdb\auth\dto\LoginResponse$LoginResponseBuilder.class
 com\immunizationdb\reporting\dto\CoverageReportResponse$VaccineData$VaccineDataBuilder.class
+com\immunizationdb\sms\dto\SendSmsRequest.class
 com\immunizationdb\auth\service\AuthService.class
 com\immunizationdb\auth\config\DataInitializer.class
 com\immunizationdb\auth\controller\AuthController$MessageResponse.class

@@ -1,17 +1,19 @@
 .landing-page {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 // Header
 .header {
-  background: white;
-  border-bottom: 1px solid #e9ecef;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  border-bottom: 2px solid rgba(226, 232, 240, 0.8);
   padding: 1rem 2rem;
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06),
+              0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
   .header-content {
     max-width: 1200px;
@@ -30,12 +32,19 @@
     .logo-icon {
       width: 40px;
       height: 40px;
-      background: #20b2aa;
-      border-radius: 8px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+      }
     }
 
     .logo-text {
@@ -57,7 +66,7 @@
       transition: color 0.3s;
 
       &:hover {
-        color: #20b2aa;
+        color: #3b82f6;
       }
     }
   }
@@ -81,16 +90,18 @@
     }
 
     .btn-get-started {
-      background: #20b2aa;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: white;
       text-decoration: none;
       font-weight: 600;
       padding: 0.625rem 1.5rem;
-      border-radius: 6px;
-      transition: background 0.3s;
+      border-radius: 12px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 
       &:hover {
-        background: #1a9b94;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
       }
     }
   }
@@ -112,8 +123,8 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: #e8f5f4;
-      color: #20b2aa;
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
       padding: 0.5rem 1rem;
       border-radius: 20px;
       font-size: 0.875rem;
@@ -133,7 +144,7 @@
       margin: 0 0 1.5rem 0;
 
       .highlight {
-        color: #20b2aa;
+        color: #3b82f6;
       }
     }
 
@@ -163,7 +174,7 @@
         font-size: 0.875rem;
 
         .check {
-          color: #20b2aa;
+          color: #3b82f6;
           font-weight: bold;
         }
       }
@@ -200,7 +211,7 @@
 
       .stat-icon {
         font-size: 2rem;
-        color: #20b2aa;
+        color: #3b82f6;
         margin-bottom: 0.5rem;
       }
 
@@ -231,7 +242,7 @@
 
 // Statistics Section
 .stats-section {
-  background: #20b2aa;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   padding: 4rem 2rem;
   color: white;
 
@@ -276,7 +287,7 @@
     margin: 0 0 1rem 0;
 
     .highlight {
-      color: #20b2aa;
+      color: #3b82f6;
     }
   }
 
@@ -293,15 +304,20 @@
     gap: 2rem;
 
     .feature-card {
-      background: #f8f9fa;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
       padding: 2rem;
-      border-radius: 12px;
+      border-radius: 24px;
       text-align: center;
-      transition: transform 0.3s, box-shadow 0.3s;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06),
+                  0 1px 4px rgba(0, 0, 0, 0.04);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
       &:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12),
+                    0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: rgba(59, 130, 246, 0.3);
       }
 
       .feature-icon {
@@ -345,7 +361,7 @@
       .impact-title {
         font-size: 2.5rem;
         font-weight: 700;
-        color: #20b2aa;
+        color: #3b82f6;
         margin: 0 0 1.5rem 0;
       }
 
@@ -369,7 +385,7 @@
           color: #2c3e50;
 
           .check-icon {
-            color: #20b2aa;
+            color: #3b82f6;
             font-weight: bold;
             flex-shrink: 0;
           }
@@ -390,9 +406,9 @@
         text-align: center;
 
         &.highlight-card {
-          background: #20b2aa;
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
           color: white;
-          border-color: #20b2aa;
+          border-color: #3b82f6;
 
           .impact-stat-icon,
           .impact-stat-value,
@@ -404,7 +420,7 @@
         .impact-stat-icon {
           font-size: 2.5rem;
           margin-bottom: 1rem;
-          color: #20b2aa;
+          color: #3b82f6;
         }
 
         .impact-stat-value {
@@ -425,7 +441,7 @@
 
 // CTA Section
 .cta-section {
-  background: linear-gradient(135deg, #20b2aa 0%, #1a9b94 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   padding: 5rem 2rem;
   text-align: center;
   color: white;
@@ -478,7 +494,7 @@
       .logo-icon {
         width: 32px;
         height: 32px;
-        background: #20b2aa;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         border-radius: 6px;
         display: flex;
         align-items: center;
@@ -502,19 +518,22 @@
 
 // Buttons
 .btn-primary {
-  background: #20b2aa;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   text-decoration: none;
   font-weight: 600;
   padding: 0.875rem 2rem;
-  border-radius: 8px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: background 0.3s;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  border: none;
 
   &:hover {
-    background: #1a9b94;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
   }
 
   .arrow {
@@ -540,8 +559,10 @@
   transition: border-color 0.3s, color 0.3s;
 
   &:hover {
-    border-color: #20b2aa;
-    color: #20b2aa;
+    border-color: #3b82f6;
+    color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
   }
 
   &.btn-large {

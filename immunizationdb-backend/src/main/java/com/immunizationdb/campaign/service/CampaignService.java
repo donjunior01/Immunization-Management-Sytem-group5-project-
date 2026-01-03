@@ -72,6 +72,20 @@ public class CampaignService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<CampaignResponse> getAllCampaigns(String facilityId) {
+        if (facilityId != null) {
+            return campaignRepository.findByFacilityId(facilityId)
+                    .stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+        return campaignRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public CampaignResponse updateCampaignStatus(Long campaignId, Campaign.CampaignStatus status) {
         Campaign campaign = campaignRepository.findById(campaignId)

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { LayoutComponent } from '../../../shared/components/layout/layout.component';
@@ -16,6 +16,8 @@ import { BaseChartDirective } from 'ng2-charts';
 
 Chart.register(...registerables);
 
+declare var L: any; // Leaflet
+
 @Component({
   selector: 'app-district-dashboard',
   standalone: true,
@@ -23,9 +25,12 @@ Chart.register(...registerables);
   templateUrl: './district-dashboard.component.html',
   styleUrl: './district-dashboard.component.scss'
 })
-export class DistrictDashboardComponent implements OnInit {
+export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('coverageChart') coverageChart?: BaseChartDirective;
   @ViewChild('volumeChart') volumeChart?: BaseChartDirective;
+
+  private map: any = null;
+  private mapMarkers: any[] = [];
 
   // Helper getters to ensure type safety
   get hasCoverageChartData(): boolean {
@@ -263,69 +268,66 @@ export class DistrictDashboardComponent implements OnInit {
       // #region agent log
       fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:264',message:'DistrictId resolution complete',data:{resolvedDistrictId:districtId,hasDistrictId:!!districtId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
       // #endregion
-      // Load facilities for the district
-      if (districtId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:230',message:'Loading facilities by district',data:{districtId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-        // #endregion
-        this.facilityService.getFacilitiesByDistrict(districtId).subscribe({
-          next: (facilities) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:234',message:'Facilities loaded by district',data:{districtId,facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-            // #endregion
-            // Update total facilities count for district (keep national stats as fallback)
-            if (facilities.length > 0) {
-              this.totalFacilities = facilities.length;
-            }
-            this.facilities = facilities.map(f => ({
-              id: f.id,
-              name: f.name || f.id,
-              coverage: 0,
-              vaccinations: 0,
-              stockStatus: 'good',
-              lastSync: 'N/A',
-              status: 'good'
-            }));
-            facilitiesLoaded = true;
-            
-            // Load detailed stats for each facility
-            this.loadFacilityDetails(() => {
-              facilityDetailsLoaded = true;
-              checkComplete();
-            });
-          },
-          error: (error) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:252',message:'Failed to load facilities by district',data:{districtId,error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-            // #endregion
-            console.error('Failed to load facilities by district:', error);
-            this.errorMessage = 'Failed to load district facilities. Using national statistics.';
-            // Don't fallback to all facilities to avoid 404 - just use national stats
-            facilitiesLoaded = true;
-            facilityDetailsLoaded = true;
-            checkComplete();
+      // District dashboard plays admin role - load ALL facilities
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:267',message:'Loading all facilities (admin role)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      this.facilityService.getAllFacilities(true).subscribe({
+        next: (facilities) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:271',message:'All facilities loaded',data:{facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          // Update total facilities count
+          if (facilities.length > 0) {
+            this.totalFacilities = facilities.length;
           }
-        });
-      } else {
-        // No district ID available - skip loading facilities, use national stats only
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:312',message:'No districtId available, using national stats',data:{hasFacilityId:!!facilityId,userFacilityId:facilityId,userDistrictId:user?.districtId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-        // #endregion
-        console.warn('No districtId available for user, using national statistics only');
-        
-        // Show informational message to user (not an error)
-        if (!facilityId) {
-          this.infoMessage = 'Your account is not assigned to a district or facility. Displaying national statistics. Please contact your administrator to assign you to a district.';
-        } else {
-          this.infoMessage = 'Your facility is not assigned to a district. Displaying national statistics. Please contact your administrator to update your facility\'s district assignment.';
+          this.facilities = facilities.map(f => ({
+            id: f.id,
+            name: f.name || f.id,
+            coverage: 0,
+            vaccinations: 0,
+            stockStatus: 'good',
+            lastSync: 'N/A',
+            status: 'good',
+            location: f.location || '',
+            type: f.type || ''
+          }));
+          facilitiesLoaded = true;
+          
+          // Load detailed stats for each facility
+          this.loadFacilityDetails(() => {
+            facilityDetailsLoaded = true;
+            // Update map markers after facilities are loaded
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:298',message:'Facilities loaded, checking map',data:{hasMap:!!this.map,facilitiesCount:this.facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            if (this.map) {
+              this.updateMapMarkers();
+            } else {
+              // Map not initialized yet, try to initialize it
+              setTimeout(() => {
+                if (!this.map) {
+                  this.initializeMap();
+                }
+                if (this.map) {
+                  this.updateMapMarkers();
+                }
+              }, 600);
+            }
+            checkComplete();
+          });
+        },
+        error: (error) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:290',message:'Failed to load all facilities',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          console.error('Failed to load all facilities:', error);
+          this.errorMessage = 'Failed to load facilities. Using national statistics.';
+          facilitiesLoaded = true;
+          facilityDetailsLoaded = true;
+          checkComplete();
         }
-        
-        facilitiesLoaded = true;
-        facilityDetailsLoaded = true;
-        // Still try to load trend data
-        this.loadTrendData();
-        checkComplete();
-      }
+      });
     });
   }
 
@@ -388,6 +390,24 @@ export class DistrictDashboardComponent implements OnInit {
             
             // Update low stock count from facilities
             this.facilitiesLowStock = this.facilities.filter(f => f.stockStatus === 'low' || f.stockStatus === 'out').length;
+            
+            // Update map markers after facilities are loaded with coverage data
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:383',message:'Facilities loaded with coverage, updating map',data:{hasMap:!!this.map,facilitiesCount:this.facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            if (this.map) {
+              setTimeout(() => this.updateMapMarkers(), 100);
+            } else {
+              // Map not initialized yet, try to initialize it
+              setTimeout(() => {
+                if (!this.map) {
+                  this.initializeMap();
+                }
+                if (this.map) {
+                  this.updateMapMarkers();
+                }
+              }, 600);
+            }
             
             this.cdr.detectChanges();
             if (onComplete) onComplete();
@@ -524,5 +544,150 @@ export class DistrictDashboardComponent implements OnInit {
         // Charts will remain empty, which is fine
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    // Initialize map after view is ready
+    setTimeout(() => {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:525',message:'ngAfterViewInit - initializing map',data:{facilitiesCount:this.facilities.length,hasMap:!!this.map,leafletLoaded:typeof L !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      this.initializeMap();
+    }, 500);
+  }
+
+  ngOnDestroy(): void {
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+    this.mapMarkers = [];
+  }
+
+  private initializeMap(): void {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:538',message:'initializeMap called',data:{leafletLoaded:typeof L !== 'undefined',facilitiesCount:this.facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    if (typeof L === 'undefined') {
+      console.warn('Leaflet not loaded');
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:541',message:'Leaflet not loaded',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      return;
+    }
+
+    // Check if map container exists
+    const mapContainer = document.getElementById('facility-map');
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:545',message:'Checking map container',data:{mapContainerExists:!!mapContainer},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    if (!mapContainer) {
+      console.warn('Map container not found');
+      return;
+    }
+
+    // Default center: Kenya (Nairobi)
+    const defaultCenter: [number, number] = [-1.2921, 36.8219];
+    
+    // Initialize map
+    this.map = L.map('facility-map', {
+      center: defaultCenter,
+      zoom: 6,
+      zoomControl: true
+    });
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(this.map);
+
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:567',message:'Map initialized',data:{facilitiesCount:this.facilities.length,willUpdateMarkers:this.facilities.length > 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+
+    // Add markers when facilities are loaded
+    if (this.facilities.length > 0) {
+      this.updateMapMarkers();
+    }
+  }
+
+  private updateMapMarkers(): void {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:573',message:'updateMapMarkers called',data:{hasMap:!!this.map,leafletLoaded:typeof L !== 'undefined',facilitiesCount:this.facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    if (!this.map || typeof L === 'undefined') {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:576',message:'updateMapMarkers early return',data:{hasMap:!!this.map,leafletLoaded:typeof L !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      return;
+    }
+
+    // Clear existing markers
+    this.mapMarkers.forEach(marker => marker.remove());
+    this.mapMarkers = [];
+
+    if (this.facilities.length === 0) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:582',message:'No facilities to display',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      return;
+    }
+
+    // Generate coordinates for facilities (mock data - in production, use actual coordinates)
+    const bounds: [number, number][] = [];
+    
+    this.facilities.forEach((facility, index) => {
+      // Generate mock coordinates around Kenya
+      // In production, these should come from the backend or geocoding service
+      // Using a deterministic approach based on facility ID for consistency
+      const hash = facility.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+      const lat = -1.2921 + ((hash % 100) / 100 - 0.5) * 2; // Kenya latitude range
+      const lng = 36.8219 + (((hash * 7) % 100) / 100 - 0.5) * 2; // Kenya longitude range
+      
+      // Determine marker color based on coverage
+      let markerColor = '#ef4444'; // Red for <80%
+      if (facility.coverage >= 90) {
+        markerColor = '#22c55e'; // Green for >=90%
+      } else if (facility.coverage >= 80) {
+        markerColor = '#f59e0b'; // Orange for 80-90%
+      }
+
+      // Create custom icon
+      const customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+
+      // Create marker
+      const marker = L.marker([lat, lng], { icon: customIcon })
+        .addTo(this.map)
+        .bindPopup(`
+          <div style="min-width: 200px;">
+            <h4 style="margin: 0 0 8px 0; font-weight: 600;">${facility.name}</h4>
+            <p style="margin: 4px 0; font-size: 0.875rem;"><strong>Coverage:</strong> ${facility.coverage}%</p>
+            <p style="margin: 4px 0; font-size: 0.875rem;"><strong>Vaccinations:</strong> ${facility.vaccinations}</p>
+            <p style="margin: 4px 0; font-size: 0.875rem;"><strong>Stock:</strong> ${facility.stockStatus}</p>
+            ${facility.location ? `<p style="margin: 4px 0; font-size: 0.875rem;"><strong>Location:</strong> ${facility.location}</p>` : ''}
+          </div>
+        `);
+
+      this.mapMarkers.push(marker);
+      bounds.push([lat, lng]);
+    });
+
+    // Fit map to show all markers
+    if (bounds.length > 0) {
+      this.map.fitBounds(bounds, { padding: [50, 50] });
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:627',message:'Map markers added and bounds fitted',data:{markersCount:this.mapMarkers.length,boundsCount:bounds.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+    } else {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:630',message:'No bounds to fit',data:{markersCount:this.mapMarkers.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+    }
   }
 }

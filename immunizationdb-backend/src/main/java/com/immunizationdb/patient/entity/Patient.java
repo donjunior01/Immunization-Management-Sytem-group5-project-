@@ -51,6 +51,7 @@ public class Patient {
     private String facilityId;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean deleted = false;
 
     @Column(name = "deleted_at")
@@ -63,6 +64,7 @@ public class Patient {
     private Long createdBy;
 
     @Column(name = "has_severe_adverse_events", nullable = false)
+    @Builder.Default
     private Boolean hasSevereAdverseEvents = false;
 
     @PrePersist

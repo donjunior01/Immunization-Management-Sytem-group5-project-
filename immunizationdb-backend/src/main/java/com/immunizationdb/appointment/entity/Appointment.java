@@ -54,6 +54,7 @@ public class Appointment {
     private String notes;
 
     @Column(name = "sms_sent", nullable = false)
+    @Builder.Default
     private Boolean smsSent = false;
 
     @Column(name = "sms_sent_at")
@@ -92,6 +93,8 @@ public class Appointment {
         RESCHEDULED
     }
 }
+
+
 
 
 

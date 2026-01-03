@@ -92,7 +92,8 @@ management:
 # SMS Gateway Configuration
 sms:
   africastalking:
-    api-key: ${AFRICASTALKING_API_KEY:atsk_728d2eb7d0bc2bb28ba9f1756faccb369a19923e7f728a20e4725526934843fb25dc8853}
+    url: https://api.africastalking.com/version1/messaging
+    api-key: ${AFRICASTALKING_API_KEY:atsk_0af9b7a0b348b497c087daf72f2ac03f4a548273e70eacec16c2723de1e847ca9cf1a331}
     username: ${AFRICASTALKING_USERNAME:sandbox}
     sender-id: ${AFRICASTALKING_SENDER_ID:ImmunizationDB}
     enabled: ${SMS_ENABLED:true}

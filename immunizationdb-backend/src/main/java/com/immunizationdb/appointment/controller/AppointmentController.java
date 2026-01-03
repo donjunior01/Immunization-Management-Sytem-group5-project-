@@ -70,6 +70,22 @@ public class AppointmentController {
     public ResponseEntity<AppointmentResponse> updateAppointment(
             @PathVariable UUID id,
             @Valid @RequestBody CreateAppointmentRequest request) {
+        // #region agent log
+        try {
+            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
+            fw.write(String.format("{\"location\":\"AppointmentController.java:updateAppointment\",\"message\":\"Received update request\",\"data\":{\"id\":\"%s\",\"patientId\":\"%s\",\"facilityId\":\"%s\",\"vaccineName\":\"%s\",\"doseNumber\":%d,\"appointmentDate\":\"%s\",\"appointmentTime\":\"%s\",\"notes\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"APPOINTMENT_UPDATE\"}\n", 
+                id.toString(), 
+                request.getPatientId() != null ? request.getPatientId().toString() : "null",
+                request.getFacilityId() != null ? request.getFacilityId() : "null",
+                request.getVaccineName() != null ? request.getVaccineName() : "null",
+                request.getDoseNumber() != null ? request.getDoseNumber() : -1,
+                request.getAppointmentDate() != null ? request.getAppointmentDate().toString() : "null",
+                request.getAppointmentTime() != null ? request.getAppointmentTime().toString() : "null",
+                request.getNotes() != null ? request.getNotes().replace("\"", "\\\"") : "null",
+                System.currentTimeMillis()));
+            fw.close();
+        } catch (Exception e) {}
+        // #endregion
         AppointmentResponse response = appointmentService.updateAppointment(id, request);
         return ResponseEntity.ok(response);
     }

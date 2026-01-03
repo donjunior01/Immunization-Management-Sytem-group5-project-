@@ -36,6 +36,14 @@ public class CampaignController {
         return ResponseEntity.ok(campaigns);
     }
 
+    @GetMapping
+    @PreAuthorize("hasAnyRole('FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
+    public ResponseEntity<List<CampaignResponse>> getAllCampaigns(
+            @RequestParam(required = false) String facilityId) {
+        List<CampaignResponse> campaigns = campaignService.getAllCampaigns(facilityId);
+        return ResponseEntity.ok(campaigns);
+    }
+
     @GetMapping("/facility/{facilityId}")
     @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
     public ResponseEntity<List<CampaignResponse>> getCampaignsByFacility(@PathVariable String facilityId) {

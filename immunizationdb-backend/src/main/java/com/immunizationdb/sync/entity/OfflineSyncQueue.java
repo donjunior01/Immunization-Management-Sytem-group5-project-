@@ -41,9 +41,11 @@ public class OfflineSyncQueue {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "sync_status", nullable = false, length = 20)
+    @Builder.Default
     private SyncStatus syncStatus = SyncStatus.PENDING;
 
     @Column(name = "retry_count")
+    @Builder.Default
     private Integer retryCount = 0;
 
     @Column(name = "error_message", columnDefinition = "TEXT")

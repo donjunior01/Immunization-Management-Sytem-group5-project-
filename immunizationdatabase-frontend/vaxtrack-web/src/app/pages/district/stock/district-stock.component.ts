@@ -75,42 +75,23 @@ export class DistrictStockComponent implements OnInit {
   }
 
   loadFacilities(): void {
-    const user = this.authService.getCurrentUser();
-    let districtId = user?.districtId;
-    const facilityId = user?.facilityId;
-
-    if (!districtId && facilityId) {
-      this.facilityService.getFacilityById(facilityId).subscribe({
-        next: (facility) => {
-          const facilityDistrictId = (facility as any).districtId || facility.district;
-          if (facilityDistrictId) {
-            districtId = facilityDistrictId;
-            this.loadFacilitiesByDistrict(facilityDistrictId);
-          } else {
-            this.facilities = [];
-            this.infoMessage = 'No district assigned. Please contact administrator.';
-          }
-        },
-        error: () => {
-          this.facilities = [];
-        }
-      });
-    } else if (districtId) {
-      this.loadFacilitiesByDistrict(districtId);
-    } else {
-      this.facilities = [];
-      this.infoMessage = 'No district assigned. Please contact administrator.';
-    }
-  }
-
-  private loadFacilitiesByDistrict(districtId: string): void {
-    this.facilityService.getFacilitiesByDistrict(districtId).subscribe({
+    // District dashboard plays admin role - load ALL facilities
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-stock.component.ts:77',message:'Loading all facilities (admin role)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    this.facilityService.getAllFacilities(true).subscribe({
       next: (facilities) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-stock.component.ts:82',message:'All facilities loaded',data:{facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         this.facilities = facilities.map(f => ({ id: f.id, name: f.name || f.id }));
         this.loadAllStock();
       },
       error: (error) => {
-        console.error('Failed to load facilities:', error);
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-stock.component.ts:88',message:'Failed to load all facilities',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.error('Failed to load all facilities:', error);
         this.errorMessage = 'Failed to load facilities. Please try again.';
         this.facilities = [];
       }

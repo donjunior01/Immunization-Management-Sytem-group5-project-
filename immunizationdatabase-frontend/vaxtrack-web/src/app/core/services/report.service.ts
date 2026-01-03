@@ -7,12 +7,12 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root'
 })
 export class ReportService {
-  private apiUrl = `${environment.apiUrl}/reports`;
+  private apiUrl = `${environment.apiUrl}/api/v1/reports`;
 
   constructor(private http: HttpClient) {}
 
   getCoverageReport(facilityId: string, startDate: string, endDate: string): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/api/v1/reports/coverage`, {
+    return this.http.get(`${this.apiUrl}/coverage`, {
       params: { facility_id: facilityId, start_date: startDate, end_date: endDate }
     });
   }
@@ -42,13 +42,13 @@ export class ReportService {
   }
 
   getNationalStatistics(): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/api/v1/reports/national-stats`);
+    return this.http.get(`${this.apiUrl}/national-stats`);
   }
 
   getDashboardStats(facilityId?: string): Observable<any> {
     if (facilityId) {
-      return this.http.get(`${environment.apiUrl}/api/v1/reports/dashboard/${facilityId}`);
+      return this.http.get(`${this.apiUrl}/dashboard/${facilityId}`);
     }
-    return this.http.get(`${environment.apiUrl}/api/v1/reports/dashboard-stats`);
+    return this.http.get(`${this.apiUrl}/dashboard-stats`);
   }
 }

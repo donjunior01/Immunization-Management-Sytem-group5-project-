@@ -47,10 +47,12 @@ public class Campaign {
     private Integer targetPopulation;
 
     @Column(name = "vaccinated_count")
+    @Builder.Default
     private Integer vaccinatedCount = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    @Builder.Default
     private CampaignStatus status = CampaignStatus.PLANNED;
 
     @Column(name = "facility_id", length = 50)

@@ -35,8 +35,8 @@ public class GlobalExceptionHandler {
             }
             errorsJson.append("}");
             java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
-            fw.write(String.format("{\"location\":\"GlobalExceptionHandler.java:25\",\"message\":\"Validation error\",\"data\":{\"errors\":%s},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"VACCINATION_ERROR\"}\n", 
-                errorsJson.toString(), System.currentTimeMillis()));
+            fw.write(String.format("{\"location\":\"GlobalExceptionHandler.java:handleValidationExceptions\",\"message\":\"Validation error\",\"data\":{\"errors\":%s,\"targetClass\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"APPOINTMENT_UPDATE\"}\n", 
+                errorsJson.toString(), ex.getTarget() != null ? ex.getTarget().getClass().getSimpleName() : "unknown", System.currentTimeMillis()));
             fw.close();
         } catch (Exception e) {}
         // #endregion

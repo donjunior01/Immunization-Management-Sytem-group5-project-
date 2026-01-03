@@ -20,7 +20,6 @@ export class LoginComponent implements OnInit {
   loading = false;
   errorMessage = '';
   showError = false;
-  activeTab: 'signin' | 'register' = 'signin';
   showPassword = false;
   rememberMe = false;
 
@@ -38,6 +37,35 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     if (this.authService.isAuthenticated()) {
       this.redirectToDashboard();
+    } else {
+      // Load remembered credentials if available
+      this.loadRememberedCredentials();
+    }
+  }
+
+  private loadRememberedCredentials(): void {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:loadRememberedCredentials',message:'Loading remembered credentials',data:{hasRememberMe:localStorage.getItem('rememberMe')==='true'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
+    // #endregion
+    const rememberMe = localStorage.getItem('rememberMe') === 'true';
+    if (rememberMe) {
+      const savedUsername = localStorage.getItem('savedUsername');
+      const savedPassword = localStorage.getItem('savedPassword');
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:loadRememberedCredentials',message:'Found remembered credentials',data:{hasUsername:!!savedUsername,hasPassword:!!savedPassword},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
+      // #endregion
+      
+      if (savedUsername && savedPassword) {
+        this.loginForm.patchValue({
+          usernameOrEmail: savedUsername,
+          password: savedPassword
+        });
+        this.rememberMe = true;
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:loadRememberedCredentials',message:'Credentials loaded into form',data:{rememberMe:this.rememberMe},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
+        // #endregion
+      }
     }
   }
 
@@ -53,11 +81,28 @@ export class LoginComponent implements OnInit {
         password: this.loginForm.value.password
       };
 
-      // Store remember me preference
+      // Store remember me preference and credentials
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:onSubmit',message:'Storing remember me preference',data:{rememberMe:this.rememberMe,hasUsername:!!credentials.usernameOrEmail,hasPassword:!!credentials.password},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
+      // #endregion
       if (this.rememberMe) {
         localStorage.setItem('rememberMe', 'true');
+        if (credentials.usernameOrEmail) {
+          localStorage.setItem('savedUsername', credentials.usernameOrEmail);
+        }
+        if (credentials.password) {
+          localStorage.setItem('savedPassword', credentials.password);
+        }
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:onSubmit',message:'Credentials saved to localStorage',data:{rememberMe:localStorage.getItem('rememberMe'),hasUsername:!!localStorage.getItem('savedUsername'),hasPassword:!!localStorage.getItem('savedPassword')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
+        // #endregion
       } else {
         localStorage.removeItem('rememberMe');
+        localStorage.removeItem('savedUsername');
+        localStorage.removeItem('savedPassword');
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:onSubmit',message:'Credentials removed from localStorage',data:{rememberMe:localStorage.getItem('rememberMe')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
+        // #endregion
       }
 
       this.authService.login(credentials, this.rememberMe).subscribe({

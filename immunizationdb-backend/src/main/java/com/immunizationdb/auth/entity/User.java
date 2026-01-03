@@ -55,12 +55,15 @@ public class User implements UserDetails {
     private String fullName;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean active = true;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean locked = false;
 
     @Column(name = "failed_login_attempts", nullable = false)
+    @Builder.Default
     private Integer failedLoginAttempts = 0;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -70,6 +73,7 @@ public class User implements UserDetails {
     private Long createdBy;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean deleted = false;
 
     @Column(name = "deleted_at")

@@ -4,6 +4,8 @@ import com.immunizationdb.reporting.dto.*;
 import com.immunizationdb.reporting.service.ReportingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -80,6 +82,68 @@ public class ReportingController {
             @RequestParam List<String> facilityIds) {
         FacilityComparisonResponse report = reportingService.getFacilityComparison(facilityIds);
         return ResponseEntity.ok(report);
+    }
+
+    @PostMapping("/export")
+    @PreAuthorize("hasAnyRole('FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
+    public ResponseEntity<byte[]> exportReport(
+            @RequestBody(required = false) ExportRequest request) {
+        // Handle request body or query params
+        String facilityId = request != null ? request.getFacilityId() : null;
+        LocalDate startDate = request != null && request.getStartDate() != null 
+            ? LocalDate.parse(request.getStartDate()) 
+            : LocalDate.now().minusDays(30);
+        LocalDate endDate = request != null && request.getEndDate() != null 
+            ? LocalDate.parse(request.getEndDate()) 
+            : LocalDate.now();
+        
+        // Get coverage report data
+        CoverageReportResponse report = reportingService.getCoverageReport(facilityId, startDate, endDate);
+        
+        // Generate CSV content
+        StringBuilder csv = new StringBuilder();
+        csv.append("Coverage Report\n");
+        csv.append("Facility ID,").append(facilityId != null ? facilityId : "ALL").append("\n");
+        csv.append("Start Date,").append(startDate).append("\n");
+        csv.append("End Date,").append(endDate).append("\n\n");
+        
+        csv.append("Summary\n");
+        csv.append("Total Patients Registered,").append(report.getTotalPatientsRegistered()).append("\n");
+        csv.append("Target Population,").append(report.getTargetPopulation()).append("\n");
+        csv.append("Vaccinated Count,").append(report.getVaccinatedCount()).append("\n");
+        csv.append("Coverage Percentage,").append(String.format("%.2f", report.getCoveragePercentage())).append("%\n");
+        csv.append("Penta1-Penta3 Dropout Rate,").append(String.format("%.2f", report.getPenta1Penta3DropoutRate())).append("%\n\n");
+        
+        csv.append("Vaccinations by Vaccine Type\n");
+        csv.append("Vaccine Name,Count\n");
+        for (CoverageReportResponse.VaccinationByVaccineType v : report.getVaccinationsByVaccineType()) {
+            csv.append(v.getVaccineName()).append(",").append(v.getCount()).append("\n");
+        }
+        
+        byte[] csvBytes = csv.toString().getBytes();
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", 
+            "coverage-report-" + startDate + "-" + endDate + ".csv");
+        
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(csvBytes);
+    }
+    
+    // Inner class for request body
+    public static class ExportRequest {
+        private String facilityId;
+        private String startDate;
+        private String endDate;
+        
+        public String getFacilityId() { return facilityId; }
+        public void setFacilityId(String facilityId) { this.facilityId = facilityId; }
+        public String getStartDate() { return startDate; }
+        public void setStartDate(String startDate) { this.startDate = startDate; }
+        public String getEndDate() { return endDate; }
+        public void setEndDate(String endDate) { this.endDate = endDate; }
     }
 }
 

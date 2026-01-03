@@ -95,61 +95,16 @@ export class DistrictCoverageReportComponent implements OnInit {
   }
 
   loadFacilities(): void {
+    // District dashboard plays admin role - load ALL facilities
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:97',message:'Loading all facilities (admin role)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     const user = this.authService.getCurrentUser();
-    let districtId = user?.districtId;
-    const facilityId = user?.facilityId;
     
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:97',message:'loadFacilities started',data:{hasUser:!!user,hasDistrictId:!!districtId,hasFacilityId:!!facilityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-    // #endregion
-
-    // If no districtId but user has facilityId, try to get districtId from facility
-    if (!districtId && facilityId) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:104',message:'Attempting to get districtId from facility',data:{facilityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-      // #endregion
-      this.facilityService.getFacilityById(facilityId).subscribe({
-        next: (facility) => {
-          // Check both districtId and district properties (backend may use either)
-          const facilityDistrictId = (facility as any).districtId || facility.district;
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:109',message:'Facility loaded for districtId resolution',data:{facilityId:facility?.id,facilityDistrictId,hasDistrictId:!!facilityDistrictId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
-          if (facilityDistrictId) {
-            districtId = facilityDistrictId;
-            // Load facilities with resolved districtId
-            this.loadFacilitiesByDistrict(facilityDistrictId, user);
-          } else {
-            // No districtId available, use user's facility only
-            this.loadUserFacilityOnly(user);
-          }
-        },
-        error: (error) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:120',message:'Failed to load facility for districtId',data:{facilityId,error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
-          console.warn('Failed to load facility to get districtId:', error);
-          // Fallback to user's facility only
-          this.loadUserFacilityOnly(user);
-        }
-      });
-    } else if (districtId) {
-      // Load facilities with districtId
-      this.loadFacilitiesByDistrict(districtId, user);
-    } else {
-      // No districtId or facilityId - use user's facility only if available
-      this.loadUserFacilityOnly(user);
-    }
-  }
-
-  private loadFacilitiesByDistrict(districtId: string, user: any): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:137',message:'Loading facilities by district',data:{districtId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-    // #endregion
-    this.facilityService.getFacilitiesByDistrict(districtId).subscribe({
+    this.facilityService.getAllFacilities(true).subscribe({
       next: (facilities) => {
         // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:141',message:'Facilities loaded by district',data:{districtId,facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:105',message:'All facilities loaded',data:{facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
         this.facilities = facilities.map(f => ({ id: f.id, name: f.name || f.id }));
         if (user?.facilityId && this.facilities.length > 0) {
@@ -162,27 +117,12 @@ export class DistrictCoverageReportComponent implements OnInit {
       },
       error: (error) => {
         // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:152',message:'Failed to load facilities by district',data:{districtId,error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:117',message:'Failed to load all facilities',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
-        console.error('Error loading facilities by district:', error);
-        // Fallback to user's facility only (don't call getAllFacilities to avoid 404)
-        this.loadUserFacilityOnly(user);
+        console.error('Error loading all facilities:', error);
+        this.facilities = [];
       }
     });
-  }
-
-  private loadUserFacilityOnly(user: any): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:162',message:'Loading user facility only',data:{hasFacilityId:!!user?.facilityId,facilityId:user?.facilityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-    // #endregion
-    // Don't call getAllFacilities to avoid 404 - just use user's facility if available
-    if (user?.facilityId) {
-      this.facilities = [{ id: user.facilityId, name: user.facilityName || user.facilityId }];
-      this.reportForm.patchValue({ facilityId: user.facilityId });
-      this.selectedFacilityId = user.facilityId;
-    } else {
-      this.facilities = [];
-    }
   }
 
   onFacilityChange(): void {
@@ -272,7 +212,8 @@ export class DistrictCoverageReportComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `coverage-report-${formValue.startDate}-${formValue.endDate}.xlsx`;
+        // Backend returns CSV, so use .csv extension
+        a.download = `coverage-report-${formValue.startDate}-${formValue.endDate}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -280,7 +221,7 @@ export class DistrictCoverageReportComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error exporting report:', error);
-        this.errorMessage = 'Failed to export report';
+        this.errorMessage = 'Failed to export report. Please try again.';
       }
     });
   }

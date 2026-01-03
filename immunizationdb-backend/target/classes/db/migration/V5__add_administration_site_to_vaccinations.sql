@@ -11,3 +11,5 @@ WHERE administration_site IS NULL;
 ALTER TABLE vaccinations 
 ALTER COLUMN administration_site SET NOT NULL;
 
+
+

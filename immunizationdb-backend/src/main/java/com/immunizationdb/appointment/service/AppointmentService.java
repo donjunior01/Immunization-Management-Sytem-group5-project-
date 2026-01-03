@@ -10,6 +10,7 @@ import com.immunizationdb.sms.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -113,27 +114,36 @@ public class AppointmentService {
         Appointment updated = appointmentRepository.save(appointment);
         
         // Send SMS notification immediately when appointment is rescheduled
+        // Use a separate try-catch to ensure SMS failures don't affect the transaction
         try {
             Patient patient = patientRepository.findById(appointment.getPatientId()).orElse(null);
             if (patient != null && patient.getPhoneNumber() != null && !patient.getPhoneNumber().trim().isEmpty()) {
                 String message = buildRescheduleMessage(patient, updated);
-                smsService.sendSMS(
-                        patient.getPhoneNumber(),
-                        message,
-                        updated.getId(),
-                        patient.getId()
-                );
-                // Mark SMS as sent
-                updated.setSmsSent(true);
-                updated.setSmsSentAt(java.time.LocalDateTime.now());
-                updated = appointmentRepository.save(updated);
-                log.info("Reschedule SMS sent successfully for appointment: {} (patient: {})", 
-                        updated.getId(), patient.getId());
+                // Send SMS - if it fails, we'll catch and log but not fail the transaction
+                try {
+                    smsService.sendSMS(
+                            patient.getPhoneNumber(),
+                            message,
+                            updated.getId(),
+                            patient.getId()
+                    );
+                    // Mark SMS as sent only if SMS was successfully sent
+                    updated.setSmsSent(true);
+                    updated.setSmsSentAt(java.time.LocalDateTime.now());
+                    updated = appointmentRepository.save(updated);
+                    log.info("Reschedule SMS sent successfully for appointment: {} (patient: {})", 
+                            updated.getId(), patient.getId());
+                } catch (Exception smsException) {
+                    // Log SMS failure but don't fail the appointment update
+                    log.error("Failed to send reschedule SMS for appointment: {} (patient: {}). Error: {}", 
+                            id, patient.getId(), smsException.getMessage(), smsException);
+                    // Don't set SMS flags if SMS failed
+                }
             } else {
                 log.warn("Cannot send reschedule SMS: patient not found or no phone number for appointment: {}", id);
             }
         } catch (Exception e) {
-            log.error("Failed to send reschedule SMS for appointment: {}", id, e);
+            log.error("Unexpected error while attempting to send reschedule SMS for appointment: {}", id, e);
             // Don't fail the appointment update if SMS fails
         }
         
