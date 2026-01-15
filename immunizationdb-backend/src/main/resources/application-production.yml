@@ -1,0 +1,46 @@
+spring:
+  # Production Database Configuration (overrides default)
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/immunizationdb}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA Configuration for Production
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Don't auto-create tables in production
+    show-sql: false  # Disable SQL logging in production
+
+  # Flyway Migration Configuration
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE:true}
+    validate-on-migrate: true
+    out-of-order: false
+
+# Server Configuration
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /api
+
+# Logging Configuration for Production
+logging:
+  level:
+    root: INFO
+    com.immunizationdb: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  file:
+    name: ${LOG_FILE:logs/immunizationdb.log}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+

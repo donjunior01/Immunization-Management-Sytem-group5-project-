@@ -149,25 +149,7 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        loadComponent: () => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.routes.ts:152',message:'Loading manager dashboard component',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'CHUNK_LOAD'})}).catch(()=>{});
-          // #endregion
-          return import('./pages/manager/dashboard/manager-dashboard.component')
-            .then(m => {
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.routes.ts:155',message:'Manager dashboard component loaded successfully',data:{hasComponent:!!m.ManagerDashboardComponent},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'CHUNK_LOAD'})}).catch(()=>{});
-              // #endregion
-              return m.ManagerDashboardComponent;
-            })
-            .catch(error => {
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app.routes.ts:160',message:'Failed to load manager dashboard component',data:{error:error?.message||String(error),errorType:error?.constructor?.name,errorStack:error?.stack?.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'CHUNK_LOAD'})}).catch(()=>{});
-              // #endregion
-              console.error('Failed to load manager dashboard component:', error);
-              throw error;
-            });
-        }
+        loadComponent: () => import('./pages/manager/dashboard/manager-dashboard.component').then(m => m.ManagerDashboardComponent)
       },
       {
         path: 'patients',

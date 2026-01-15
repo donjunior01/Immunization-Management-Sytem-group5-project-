@@ -30,14 +30,6 @@ public class InventoryController {
     public ResponseEntity<List<VaccineBatchResponse>> getAllBatches(
             @RequestParam(required = false) String facilityId,
             @RequestParam(required = false) String vaccine_name) {
-        // #region agent log
-        try {
-            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
-            fw.write(String.format("{\"location\":\"InventoryController.java:25\",\"message\":\"getAllBatches called\",\"data\":{\"hasAuth\":%s,\"authorities\":\"%s\",\"facilityId\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"E\"}\n", auth != null, auth != null ? auth.getAuthorities().toString() : "null", facilityId));
-            fw.close();
-        } catch (Exception e) {}
-        // #endregion
         List<VaccineBatchResponse> batches;
         
         if (facilityId != null) {
@@ -203,17 +195,6 @@ public class InventoryController {
     @PostMapping("/stock/receive")
     @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
     public ResponseEntity<VaccineBatchResponse> receiveStock(@Valid @RequestBody ReceiveStockRequest request) {
-        // #region agent log
-        try {
-            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
-            fw.write(String.format("{\"location\":\"InventoryController.java:receiveStock\",\"message\":\"receiveStock called\",\"data\":{\"username\":\"%s\",\"authorities\":\"%s\",\"batchNumber\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"STOCK_403\"}\n", 
-                auth != null ? auth.getName() : "null", 
-                auth != null ? auth.getAuthorities().toString() : "null",
-                request.getBatchNumber()));
-            fw.close();
-        } catch (Exception e) {}
-        // #endregion
         VaccineBatchResponse response = inventoryService.receiveStock(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -221,23 +202,6 @@ public class InventoryController {
     @PostMapping("/stock/adjust")
     @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
     public ResponseEntity<VaccineBatchResponse> adjustStock(@Valid @RequestBody AdjustStockRequest request) {
-        // This method should only be reached if PreAuthorize passes
-        // #region agent log
-        try {
-            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            String username = auth != null ? auth.getName() : "null";
-            String authorities = auth != null ? auth.getAuthorities().toString() : "null";
-            boolean isAuthenticated = auth != null && auth.isAuthenticated();
-            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
-            fw.write(String.format("{\"location\":\"InventoryController.java:adjustStock\",\"message\":\"adjustStock called - PreAuthorize passed\",\"data\":{\"hasAuth\":%s,\"isAuthenticated\":%s,\"username\":\"%s\",\"authorities\":\"%s\",\"batchNumber\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"STOCK_403\"}\n", 
-                auth != null,
-                isAuthenticated,
-                username,
-                authorities,
-                request.getBatchNumber()));
-            fw.close();
-        } catch (Exception e) {}
-        // #endregion
         VaccineBatchResponse response = inventoryService.adjustStock(request);
         return ResponseEntity.ok(response);
     }

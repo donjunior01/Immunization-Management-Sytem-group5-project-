@@ -100,13 +100,6 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         String authority = "ROLE_" + role.name();
-        // #region agent log
-        try {
-            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
-            fw.write(String.format("{\"location\":\"User.java:98\",\"message\":\"getAuthorities called\",\"data\":{\"username\":\"%s\",\"role\":\"%s\",\"authority\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"A\"}\n", username, role != null ? role.name() : "null", authority));
-            fw.close();
-        } catch (Exception e) {}
-        // #endregion
         return List.of(new SimpleGrantedAuthority(authority));
     }
 

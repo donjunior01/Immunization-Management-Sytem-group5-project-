@@ -1,3 +1,5 @@
+// Enhanced Vaccinator Dashboard Styles - Matching Manager Dashboard Design
+
 .vaccinator-dashboard {
   padding: clamp(1.5rem, 4vw, 3rem);
   display: flex;
@@ -11,7 +13,7 @@
   // Dashboard Search Section
   .dashboard-search-section {
     position: relative;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 
     .search-bar-container {
       display: flex;
@@ -53,6 +55,18 @@
         flex-shrink: 0;
         padding: 0.625rem 1.25rem;
         font-size: 0.875rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
       }
     }
 
@@ -185,14 +199,11 @@
   }
 
   @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 
+  // Enhanced Statistics Row
   .stats-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -374,771 +385,727 @@
     }
   }
 
-  .dashboard-main {
+  // Enhanced Main Content Grid
+  .main-content-grid {
     display: grid;
-    grid-template-columns: 60% 40%;
+    grid-template-columns: 1fr 480px;
     gap: clamp(1.5rem, 3vw, 2.5rem);
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 
     @media (max-width: 1200px) {
       grid-template-columns: 1fr;
     }
 
-    .dashboard-left {
+    .left-column {
       display: flex;
       flex-direction: column;
-      gap: clamp(1.5rem, 3vw, 2.5rem);
+      gap: 2rem;
     }
 
-    .dashboard-right {
-      display: flex;
-      flex-direction: column;
-      gap: clamp(1.5rem, 3vw, 2.5rem);
-    }
-  }
+    .right-column {
+      .quick-actions-container {
+        background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+        border-radius: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 2px solid #e2e8f0;
+        padding: clamp(1.5rem, 3vw, 2rem);
+        position: sticky;
+        top: 2rem;
 
-  .summary-cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+        @media (max-width: 1200px) {
+          position: relative;
+          top: 0;
+        }
 
-    .summary-card {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      transition: transform 0.3s, box-shadow 0.3s;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-      }
-
-      .card-icon {
-        font-size: 2.5rem;
-        width: 60px;
-        height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        border-radius: 12px;
-        flex-shrink: 0;
-      }
-
-      .card-content {
-        flex: 1;
-
-        .card-value {
-          font-size: 2rem;
+        .quick-actions-title {
+          font-size: clamp(1.5rem, 3vw, 1.75rem);
           font-weight: 700;
-          color: #2c3e50;
-          margin-bottom: 0.25rem;
-        }
-
-        .card-label {
-          font-size: 0.875rem;
-          color: #6c757d;
-          margin-bottom: 0.5rem;
-        }
-
-        .card-trend {
-          font-size: 0.75rem;
-          font-weight: 500;
-          color: #28a745;
-        }
-      }
-    }
-  }
-
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .section-card {
-    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
-    border-radius: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06),
-                0 1px 4px rgba(0, 0, 0, 0.04);
-    padding: clamp(1.5rem, 3vw, 2.25rem);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    position: relative;
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 24px;
-      padding: 2px;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask-composite: exclude;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
-
-    &:hover {
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1),
-                  0 4px 12px rgba(0, 0, 0, 0.06);
-      transform: translateY(-4px);
-
-      &::before {
-        opacity: 1;
-      }
-    }
-
-    .section-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      padding: 1.5rem;
-
-      .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.75rem;
-        padding-bottom: 1.25rem;
-        border-bottom: 3px solid #e2e8f0;
-        position: relative;
-
-        .section-header-right {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        &::after {
-          content: '';
-          position: absolute;
-          bottom: -3px;
-          left: 0;
-          width: 80px;
-          height: 3px;
-          background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-          border-radius: 3px;
-        }
-
-        .section-title {
-          font-size: 1.75rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          margin: 0;
-          letter-spacing: -0.01em;
+          margin: 0 0 clamp(1.25rem, 2.5vw, 1.75rem) 0;
+          padding-bottom: clamp(0.75rem, 1.5vw, 1.25rem);
+          border-bottom: 2px solid #e2e8f0;
+          position: relative;
+
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border-radius: 3px;
+          }
         }
 
-        .section-date {
-          font-size: 0.9375rem;
+        .quick-actions-group {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+
+          .quick-actions-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+
+            .action-card {
+              background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+              padding: clamp(1.25rem, 2.5vw, 1.75rem) clamp(1rem, 2vw, 1.25rem);
+              border-radius: 20px;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+              text-decoration: none;
+              text-align: center;
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              border: 2px solid #e2e8f0;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              gap: clamp(0.75rem, 1.5vw, 0.875rem);
+              position: relative;
+              overflow: hidden;
+
+              &:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+                border-color: #3b82f6;
+                background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+
+                .action-icon {
+                  transform: scale(1.15) rotate(5deg);
+                }
+
+                .action-label {
+                  color: #3b82f6;
+                }
+              }
+
+              .action-icon {
+                font-size: 3rem;
+                filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+                transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                z-index: 1;
+              }
+
+              .action-label {
+                font-weight: 700;
+                color: #334155;
+                font-size: 1rem;
+                line-height: 1.4;
+                transition: color 0.3s ease;
+                position: relative;
+                z-index: 1;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Enhanced Section Cards
+  .section-card {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    border: 2px solid #e2e8f0;
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+
+    &:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      transform: translateY(-4px);
+      border-color: #cbd5e1;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.75rem;
+      padding-bottom: clamp(0.75rem, 1.5vw, 1.25rem);
+      border-bottom: 2px solid #e2e8f0;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #2563eb);
+        border-radius: 3px;
+      }
+
+      .section-title {
+        font-size: clamp(1.5rem, 3vw, 1.75rem);
+        font-weight: 700;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+
+      .view-all-link {
+        color: #3b82f6;
+        text-decoration: none;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        padding: 0.625rem 1.25rem;
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+        border: 2px solid rgba(59, 130, 246, 0.2);
+
+        &:hover {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          border-color: #3b82f6;
+        }
+      }
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+
+      .filter-tab {
+        background: #f1f5f9;
+        border: none;
+        padding: 0.625rem 1.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #64748b;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+
+        &.active {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        &:hover:not(.active) {
+          background: #e2e8f0;
+          color: #1e293b;
+        }
+      }
+    }
+  }
+
+  // Appointments List
+  .appointments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .appointment-card {
+      display: flex;
+      gap: 1rem;
+      padding: 1.25rem;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+      background: linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%);
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #3b82f6;
+        transform: translateX(8px);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+      }
+
+      .appointment-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+
+      .appointment-info {
+        flex: 1;
+        min-width: 0;
+
+        .appointment-name {
+          font-weight: 700;
+          color: #1e293b;
+          font-size: 1.0625rem;
+          margin-bottom: 0.375rem;
+        }
+
+        .appointment-details {
+          font-size: 0.875rem;
+          color: #64748b;
+          margin-bottom: 0.375rem;
+
+          .separator {
+            margin: 0 0.5rem;
+            color: #cbd5e1;
+          }
+        }
+
+        .appointment-vaccine,
+        .appointment-time {
+          font-size: 0.875rem;
+          color: #475569;
+          font-weight: 600;
+        }
+      }
+
+      .appointment-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-self: center;
+
+        .btn-action-sm {
+          padding: 0.5rem 1rem;
+          border-radius: 10px;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          text-decoration: none;
+          text-align: center;
+          transition: all 0.3s ease;
+          background: #f1f5f9;
+          color: #475569;
+          border: 2px solid #e2e8f0;
+
+          &:hover {
+            background: #e2e8f0;
+            transform: translateY(-2px);
+          }
+
+          &.btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-color: transparent;
+
+            &:hover {
+              box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Patients Stock Section
+  .patients-stock-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    margin-bottom: 2.5rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Patients List
+  .patients-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+
+    .patient-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1.25rem;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+      background: linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%);
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #3b82f6;
+        transform: translateX(8px);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+      }
+
+      .patient-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.125rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+
+      .patient-info {
+        flex: 1;
+        min-width: 0;
+
+        .patient-name {
+          font-weight: 700;
+          color: #1e293b;
+          font-size: 1rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .patient-details,
+        .patient-contact {
+          font-size: 0.875rem;
+          color: #64748b;
+
+          .separator {
+            margin: 0 0.5rem;
+            color: #cbd5e1;
+          }
+        }
+      }
+
+      .patient-action {
+        font-size: 1.5rem;
+        color: #3b82f6;
+        align-self: center;
+      }
+    }
+  }
+
+  // Stock List
+  .stock-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .stock-item {
+      padding: 1.25rem;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+      background: linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateX(8px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      .stock-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+
+        .vaccine-name {
+          font-weight: 700;
+          color: #1e293b;
+          font-size: 1rem;
+        }
+
+        .stock-badge {
+          font-size: 0.75rem;
+          font-weight: 700;
+          padding: 0.375rem 0.75rem;
+          border-radius: 10px;
+
+          &.status-good {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+          }
+
+          &.status-low {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+          }
+
+          &.status-critical {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+          }
+        }
+      }
+
+      .stock-bar {
+        height: 10px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 0.75rem;
+
+        .stock-fill {
+          height: 100%;
+          border-radius: 10px;
+          transition: width 0.6s ease;
+
+          &.status-good {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+          }
+
+          &.status-low {
+            background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+          }
+
+          &.status-critical {
+            background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+          }
+        }
+      }
+
+      .stock-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .stock-quantity {
+          font-size: 0.875rem;
           color: #64748b;
           font-weight: 600;
         }
 
-        .view-all-link {
-          color: #3b82f6;
-          text-decoration: none;
-          font-size: 0.9375rem;
+        .stock-alert {
+          font-size: 0.8125rem;
           font-weight: 700;
-          padding: 0.625rem 1.25rem;
-          border-radius: 12px;
-          transition: all 0.3s ease;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: rgba(59, 130, 246, 0.08);
-
-          &:hover {
-            background: #3b82f6;
-            color: white;
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-          }
+          color: #ef4444;
         }
       }
+    }
+  }
 
-      .filter-tabs {
+  // Vaccinations Sync Section
+  .vaccinations-sync-section {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Vaccinations List
+  .vaccinations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+
+    .vaccination-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      border-radius: 14px;
+      border: 2px solid #e2e8f0;
+      background: linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateX(4px);
+        border-color: #3b82f6;
+      }
+
+      .vaccination-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
         display: flex;
-        gap: var(--space-2);
-        margin-bottom: var(--space-4);
-        border-bottom: 1px solid var(--gray-200);
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
 
-        .filter-tab {
-          background: none;
-          border: none;
-          padding: var(--space-2) var(--space-3);
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: var(--gray-600);
-          cursor: pointer;
-          border-bottom: 2px solid transparent;
-          transition: all 0.2s;
+      .vaccination-info {
+        flex: 1;
 
-          &.active {
-            color: var(--primary-500);
-            border-bottom-color: var(--primary-500);
-          }
+        .vaccination-name {
+          font-weight: 700;
+          color: #1e293b;
+          font-size: 0.9375rem;
+        }
 
-          &:hover:not(.active) {
-            color: var(--gray-900);
+        .vaccination-details {
+          font-size: 0.8125rem;
+          color: #64748b;
+
+          .separator {
+            margin: 0 0.5rem;
+            color: #cbd5e1;
           }
         }
       }
 
-      .search-bar {
-        position: relative;
-        margin-bottom: var(--space-4);
-
-        .search-icon {
-          position: absolute;
-          left: var(--space-3);
-          top: 50%;
-          transform: translateY(-50%);
-          color: var(--gray-500);
-        }
-
-        .search-input {
-          width: 100%;
-          padding: var(--space-2) var(--space-3) var(--space-2) 2.5rem;
-          border: 1px solid var(--gray-300);
-          border-radius: 6px;
-          font-size: 0.875rem;
-
-          &:focus {
-            outline: none;
-            border-color: var(--primary-500);
-            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-          }
-        }
-      }
-
-      .appointments-list {
-        .appointment-card {
-          display: flex;
-          gap: var(--space-3);
-          padding: var(--space-4);
-          border: 1px solid var(--gray-200);
-          border-radius: 8px;
-          margin-bottom: var(--space-3);
-          transition: all 0.2s;
-
-          &:hover {
-            border-color: var(--primary-500);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-
-          .appointment-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: var(--primary-500);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            flex-shrink: 0;
-          }
-
-          .appointment-info {
-            flex: 1;
-
-            .appointment-name {
-              font-weight: 600;
-              color: var(--gray-900);
-              margin-bottom: var(--space-1);
-            }
-
-            .appointment-details {
-              font-size: 0.875rem;
-              color: var(--gray-600);
-              margin-bottom: var(--space-1);
-
-              .separator {
-                margin: 0 var(--space-1);
-                color: var(--gray-400);
-              }
-            }
-
-            .appointment-vaccine,
-            .appointment-time {
-              font-size: 0.875rem;
-              color: var(--gray-500);
-            }
-          }
-
-          .appointment-actions {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-2);
-            align-self: flex-start;
-          }
-        }
-      }
-
-      .quick-actions {
+      .vaccination-status {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
         display: flex;
-        flex-direction: column;
-        gap: var(--space-2);
-
-        .quick-action-btn {
-          display: flex;
-          align-items: center;
-          gap: var(--space-3);
-          padding: var(--space-3);
-          border: 1px solid var(--gray-300);
-          border-radius: 6px;
-          text-decoration: none;
-          color: var(--gray-700);
-          transition: all 0.2s;
-
-          &:hover {
-            border-color: var(--primary-500);
-            background: var(--primary-50);
-            color: var(--primary-700);
-          }
-
-          .action-icon {
-            font-size: 1.25rem;
-          }
-        }
-      }
-
-      .stock-table {
-        .stock-row {
-          display: grid;
-          grid-template-columns: 2fr 1fr 1fr;
-          gap: var(--space-3);
-          padding: var(--space-3) 0;
-          border-bottom: 1px solid var(--gray-200);
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          .stock-vaccine {
-            font-weight: 500;
-            color: var(--gray-900);
-          }
-
-          .stock-quantity {
-            color: var(--gray-600);
-            font-size: 0.875rem;
-          }
-
-          .stock-status-badge {
-            font-size: 0.75rem;
-            font-weight: 500;
-          }
-        }
-      }
-
-      .recent-vaccinations {
-        .vaccination-item {
-          padding: var(--space-3) 0;
-          border-bottom: 1px solid var(--gray-200);
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          .vaccination-name {
-            font-weight: 500;
-            color: var(--gray-900);
-            margin-bottom: var(--space-1);
-          }
-
-          .vaccination-details {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-
-            .separator {
-              margin: 0 var(--space-1);
-              color: var(--gray-400);
-            }
-          }
-        }
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: var(--space-8);
-        color: var(--gray-500);
-
-        .empty-icon {
-          font-size: 3rem;
-          margin-bottom: var(--space-2);
-          opacity: 0.5;
-        }
-      }
-
-      .empty-state-small {
-        text-align: center;
-        padding: var(--space-4);
-        color: var(--gray-500);
+        align-items: center;
+        justify-content: center;
         font-size: 0.875rem;
-      }
-
-      .search-bar-small {
-        position: relative;
-        margin-bottom: 1rem;
-
-        .search-icon {
-          position: absolute;
-          left: 0.75rem;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #6c757d;
-        }
-
-        .search-input-small {
-          width: 100%;
-          padding: 0.625rem 0.75rem 0.625rem 2.5rem;
-          border: 1px solid #e9ecef;
-          border-radius: 8px;
-          font-size: 0.875rem;
-
-          &:focus {
-            outline: none;
-            border-color: #20b2aa;
-          }
-        }
-      }
-
-      .schedule-list,
-      .patients-list,
-      .stock-list {
-        .schedule-item,
-        .patient-item,
-        .stock-item {
-          padding: 1rem 0;
-          border-bottom: 1px solid #e9ecef;
-
-          &:last-child {
-            border-bottom: none;
-          }
-        }
-      }
-
-      .schedule-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-
-        .schedule-info {
-          flex: 1;
-
-          .patient-name {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.25rem;
-          }
-
-          .appointment-details {
-            font-size: 0.875rem;
-            color: #6c757d;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-
-            .separator {
-              color: #adb5bd;
-            }
-          }
-        }
-
-        .schedule-time {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 0.5rem;
-
-          .time {
-            font-size: 0.875rem;
-            color: #6c757d;
-          }
-        }
-      }
-
-      .patient-item {
-        .patient-info {
-          .patient-name {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.25rem;
-          }
-
-          .patient-details,
-          .patient-contact {
-            font-size: 0.875rem;
-            color: #6c757d;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 0.25rem;
-
-            .separator {
-              color: #adb5bd;
-            }
-          }
-        }
-      }
-
-      .stock-item {
-        .stock-info {
-          margin-bottom: 0.75rem;
-
-          .vaccine-name {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.25rem;
-          }
-
-          .stock-quantity {
-            font-size: 0.875rem;
-            color: #6c757d;
-          }
-        }
-
-        .stock-status {
-          .progress-bar {
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 0.5rem;
-
-            .progress-fill {
-              height: 100%;
-              transition: width 0.3s;
-            }
-
-            &.status-good .progress-fill {
-              background: #28a745;
-            }
-
-            &.status-low .progress-fill {
-              background: #ffc107;
-            }
-
-            &.status-critical .progress-fill {
-              background: #dc3545;
-            }
-          }
-
-          .stock-alert {
-            font-size: 0.75rem;
-            color: #dc3545;
-            margin-top: 0.25rem;
-          }
-        }
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: 2rem;
-        color: #6c757d;
+        align-self: center;
       }
     }
+  }
 
-    .sync-card {
-      grid-column: 1 / -1;
+  // Sync Card
+  .sync-card {
+    .sync-content {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
 
-      .sync-content {
+      .sync-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 50%;
         display: flex;
         align-items: center;
-        gap: 1rem;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+      }
 
-        .sync-icon {
-          width: 48px;
-          height: 48px;
-          background: #e8f5e9;
-          color: #28a745;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+      .sync-info {
+        flex: 1;
+
+        .sync-title {
+          font-weight: 700;
+          color: #1e293b;
+          font-size: 1.25rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .sync-time {
+          font-size: 0.9375rem;
+          color: #64748b;
+        }
+      }
+
+      .btn-sync {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        padding: 0.875rem 1.75rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+      }
+    }
+  }
+
+  // Empty State
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    color: #64748b;
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+      display: block;
+    }
+
+    p {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 1rem 0;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+    }
+  }
+
+  // Loading State
+  app-loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+  }
+
+  // Responsive adjustments
+  @media (max-width: 1400px) {
+    .main-content-grid {
+      grid-template-columns: 1fr 420px;
+    }
+
+    .stats-row .stat-card {
+      min-width: 200px;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .main-content-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .stats-row {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .section-card {
+      .section-header {
+        .section-title {
           font-size: 1.5rem;
-          font-weight: bold;
-          flex-shrink: 0;
-        }
-
-        .sync-info {
-          flex: 1;
-
-          .sync-title {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 0.25rem;
-          }
-
-          .sync-time {
-            font-size: 0.875rem;
-            color: #6c757d;
-          }
-        }
-
-        .btn-sync {
-          background: #20b2aa;
-          color: white;
-          border: none;
-          padding: 0.625rem 1.25rem;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.3s;
-
-          &:hover {
-            background: #1a9b94;
-          }
         }
       }
     }
   }
-}
 
-.btn-action {
-  background: #20b2aa;
-  color: white;
-  text-decoration: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: background 0.3s;
-  display: inline-block;
-
-  &:hover {
-    background: #1a9b94;
-  }
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-
-  &.status-scheduled {
-    background: #e3f2fd;
-    color: #1976d2;
-  }
-
-  &.status-completed {
-    background: #e8f5e9;
-    color: #388e3c;
-  }
-
-  &.status-pending {
-    background: #fff3e0;
-    color: #f57c00;
-  }
-
-  &.status-good {
-    background: #e8f5e9;
-    color: #388e3c;
-  }
-
-  &.status-low {
-    background: #fff3e0;
-    color: #f57c00;
-  }
-
-  &.status-critical {
-    background: #ffebee;
-    color: #c62828;
-  }
-}
-
-// Responsive
-@media (max-width: 1400px) {
-  .stats-row .stat-card {
-    min-width: 200px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .stats-row {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  }
-
-  .dashboard-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .section-card {
-    .section-header {
-      .section-title {
-        font-size: 1.5rem;
-      }
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .vaccinator-dashboard {
+  @media (max-width: 768px) {
     padding: 1.5rem 1rem;
     gap: 1.5rem;
-
-    .dashboard-search-section {
-      margin-bottom: 1.5rem;
-
-      .search-bar-container {
-        padding: 0.875rem 1rem;
-        flex-wrap: wrap;
-
-        .search-input {
-          font-size: 0.9375rem;
-        }
-
-        .btn {
-          padding: 0.5rem 1rem;
-          font-size: 0.8125rem;
-        }
-      }
-
-      .quick-search-results {
-        max-height: 400px;
-
-        .search-results-list .quick-result-item {
-          padding: 0.875rem 1rem;
-          flex-wrap: wrap;
-
-          .result-avatar {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-          }
-
-          .result-info {
-            .result-name {
-              font-size: 0.9375rem;
-            }
-
-            .result-details {
-              font-size: 0.8125rem;
-              flex-direction: column;
-              align-items: flex-start;
-              gap: 0.25rem;
-            }
-          }
-        }
-      }
-    }
 
     .stats-row {
       grid-template-columns: 1fr;
@@ -1155,6 +1122,47 @@
       }
     }
 
+    .main-content-grid {
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+
+      .right-column .quick-actions-container {
+        padding: 1.5rem;
+
+        .quick-actions-title {
+          font-size: 1.5rem;
+        }
+
+        .quick-actions-group {
+          .quick-actions-row {
+            grid-template-columns: 1fr;
+            gap: 0.875rem;
+
+            .action-card {
+              padding: 1.5rem 1rem;
+
+              .action-icon {
+                font-size: 2.5rem;
+              }
+
+              .action-label {
+                font-size: 0.9375rem;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .patients-stock-section {
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .vaccinations-sync-section {
+      gap: 1.5rem;
+    }
+
     .section-card {
       padding: 1.5rem;
       border-radius: 20px;
@@ -1167,12 +1175,11 @@
         .section-title {
           font-size: 1.375rem;
         }
-      }
-  }
 
-  .greeting-section {
-    flex-direction: column;
-    align-items: flex-start !important;
+        .view-all-link {
+          align-self: flex-end;
+        }
+      }
     }
   }
 }

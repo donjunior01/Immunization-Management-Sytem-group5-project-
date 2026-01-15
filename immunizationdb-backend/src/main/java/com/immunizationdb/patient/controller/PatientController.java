@@ -27,17 +27,6 @@ public class PatientController {
     @PostMapping
     @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
     public ResponseEntity<PatientResponse> createPatient(@Valid @RequestBody CreatePatientRequest request) {
-        // #region agent log
-        try {
-            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
-            fw.write(String.format("{\"location\":\"PatientController.java:29\",\"message\":\"createPatient called\",\"data\":{\"username\":\"%s\",\"authorities\":\"%s\",\"principal\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"AUTH_403\"}\n", 
-                auth != null ? auth.getName() : "null", 
-                auth != null ? auth.getAuthorities().toString() : "null",
-                auth != null && auth.getPrincipal() != null ? auth.getPrincipal().getClass().getSimpleName() : "null"));
-            fw.close();
-        } catch (Exception e) {}
-        // #endregion
         PatientResponse response = patientService.createPatient(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

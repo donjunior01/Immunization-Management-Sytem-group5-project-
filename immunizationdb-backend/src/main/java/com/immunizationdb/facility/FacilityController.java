@@ -23,14 +23,6 @@ public class FacilityController {
     @PreAuthorize("hasAnyRole('HEALTH_WORKER', 'FACILITY_MANAGER', 'GOVERNMENT_OFFICIAL')")
     public ResponseEntity<List<Facility>> getAllFacilities(
             @RequestParam(required = false, defaultValue = "true") Boolean activeOnly) {
-        // #region agent log
-        try {
-            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
-            fw.write(String.format("{\"location\":\"FacilityController.java:24\",\"message\":\"getAllFacilities called\",\"data\":{\"hasAuth\":%s,\"authorities\":\"%s\",\"principal\":\"%s\",\"activeOnly\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"B\"}\n", auth != null, auth != null ? auth.getAuthorities().toString() : "null", auth != null ? auth.getPrincipal().toString() : "null", activeOnly));
-            fw.close();
-        } catch (Exception e) {}
-        // #endregion
         log.info("GET /api/facilities - activeOnly: {}", activeOnly);
         
         List<Facility> facilities = activeOnly ? 
@@ -122,4 +114,3 @@ public class FacilityController {
         return ResponseEntity.ok(facilityService.countActiveFacilities());
     }
 }
-

@@ -69,21 +69,6 @@ public class AuthSecurityConfig {
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            System.out.println("[DEBUG] AccessDeniedHandler called: " + accessDeniedException.getMessage());
-                            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-                            String username = auth != null ? auth.getName() : "null";
-                            String authorities = auth != null ? auth.getAuthorities().toString() : "null";
-                            System.out.println("[DEBUG] AccessDeniedHandler - username: " + username + ", authorities: " + authorities);
-                            // Log to file
-                            try {
-                                java.io.FileWriter fw = new java.io.FileWriter("c:\\Users\\THE TECHNOLOGUE\\Documents\\INGE-4-ISI-2025-2026\\SEMESTER-1\\Mobile Development\\Project\\medConnect\\Immunization-Management-Sytem-group5-project-\\.cursor\\debug.log", true);
-                                fw.write(String.format("{\"location\":\"AuthSecurityConfig.java:AccessDeniedHandler\",\"message\":\"AccessDeniedHandler invoked\",\"data\":{\"hasAuth\":%s,\"username\":\"%s\",\"authorities\":\"%s\",\"requestURI\":\"%s\"},\"timestamp\":%d,\"sessionId\":\"debug-session\",\"runId\":\"run1\",\"hypothesisId\":\"H7\"}\n", 
-                                    auth != null, username, authorities, request.getRequestURI(), System.currentTimeMillis()));
-                                fw.close();
-                            } catch (Exception e) {
-                                System.err.println("[DEBUG] Error writing AccessDeniedHandler log: " + e.getMessage());
-                            }
-                            // Send 403 response
                             response.setStatus(HttpStatus.FORBIDDEN.value());
                             response.setContentType("application/json");
                             response.getWriter().write("{\"error\":\"Access forbidden: Insufficient permissions\"}");

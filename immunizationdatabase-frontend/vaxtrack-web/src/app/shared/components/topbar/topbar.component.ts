@@ -1,6 +1,6 @@
-import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, inject, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models/user.model';
@@ -12,12 +12,14 @@ import { User } from '../../../core/models/user.model';
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss'
 })
-export class TopbarComponent implements OnInit {
+export class TopbarComponent implements OnInit, OnDestroy {
   @Input() sidebarCollapsed: boolean = false;
   @Output() toggleSidebar = new EventEmitter<void>();
   @Output() toggleNotifications = new EventEmitter<void>();
 
   private authService = inject(AuthService);
+  private router = inject(Router);
+  private elementRef = inject(ElementRef);
   
   currentUser: User | null = null;
   notificationCount: number = 0;
@@ -27,39 +29,124 @@ export class TopbarComponent implements OnInit {
   showRecentSearches: boolean = false;
   recentSearches: string[] = [];
   showLogoutConfirm: boolean = false;
+  
+  // Notifications data
+  notifications: Array<{id: string, type: string, title: string, time: string, read: boolean}> = [];
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
     
-    // Simulate notification count - replace with actual service
-    this.notificationCount = 3;
+    // Load notifications - replace with actual service
+    this.loadNotifications();
+  }
+  
+  ngOnDestroy(): void {
+    // Cleanup
+  }
+
+  // Click outside handler to close dropdowns
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    const topbar = this.elementRef.nativeElement;
+    
+    // Check if click is outside the topbar component or on a non-dropdown element
+    if (!topbar.contains(target)) {
+      this.closeDropdowns();
+    }
+  }
+  
+  private loadNotifications(): void {
+    // Simulated notifications - replace with actual API call
+    this.notifications = [
+      { id: '1', type: 'error', title: 'Measles vaccine out of stock', time: '2 hours ago', read: false },
+      { id: '2', type: 'warning', title: 'Penta stock below reorder point', time: '5 hours ago', read: false },
+      { id: '3', type: 'info', title: 'OPV batch expiring in 14 days', time: 'Yesterday', read: true }
+    ];
+    this.notificationCount = this.notifications.filter(n => !n.read).length;
   }
 
   onToggleSidebar(): void {
     this.toggleSidebar.emit();
   }
 
-  onToggleNotifications(): void {
+  onToggleNotifications(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
     this.showNotificationsDropdown = !this.showNotificationsDropdown;
+    this.showProfileDropdown = false; // Close profile dropdown
     this.toggleNotifications.emit();
   }
 
-  onSearch(event: Event): void {
-    const query = (event.target as HTMLInputElement).value;
-    this.searchQuery = query;
-    // Implement search logic
-  }
-
-  onProfileClick(): void {
+  onProfileClick(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
     this.showProfileDropdown = !this.showProfileDropdown;
+    this.showNotificationsDropdown = false; // Close notifications dropdown
   }
 
   hideRecentSearches(): void {
     setTimeout(() => {
       this.showRecentSearches = false;
     }, 200);
+  }
+  
+  // Navigation methods for dropdown items
+  navigateToProfile(): void {
+    this.closeDropdowns();
+    const role = this.currentUser?.role;
+    if (role === 'HEALTH_WORKER' || role === 'VACCINATOR') {
+      this.router.navigate(['/vaccinator/dashboard']);
+    } else if (role === 'FACILITY_MANAGER') {
+      this.router.navigate(['/manager/dashboard']);
+    } else if (role === 'GOVERNMENT_OFFICIAL') {
+      this.router.navigate(['/admin/dashboard']);
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
+  
+  navigateToSettings(): void {
+    this.closeDropdowns();
+    const role = this.currentUser?.role;
+    if (role === 'GOVERNMENT_OFFICIAL' || role === 'FACILITY_MANAGER') {
+      this.router.navigate(['/admin/settings']);
+    } else {
+      // For health workers, navigate to their dashboard (no dedicated settings page)
+      this.router.navigate(['/vaccinator/dashboard']);
+    }
+  }
+  
+  navigateToHelp(): void {
+    this.closeDropdowns();
+    // Navigate to help page or open help modal
+    this.router.navigate(['/landing']);
+  }
+  
+  navigateToAlerts(): void {
+    this.closeNotifications();
+    const role = this.currentUser?.role;
+    if (role === 'FACILITY_MANAGER') {
+      this.router.navigate(['/manager/alerts']);
+    } else if (role === 'HEALTH_WORKER' || role === 'VACCINATOR') {
+      this.router.navigate(['/vaccinator/stock']);
+    } else {
+      this.router.navigate(['/admin/dashboard']);
+    }
+  }
+  
+  markAllAsRead(): void {
+    this.notifications.forEach(n => n.read = true);
+    this.notificationCount = 0;
+  }
+  
+  markNotificationAsRead(notification: any): void {
+    notification.read = true;
+    this.notificationCount = this.notifications.filter(n => !n.read).length;
   }
 
   getUserInitials(): string {
