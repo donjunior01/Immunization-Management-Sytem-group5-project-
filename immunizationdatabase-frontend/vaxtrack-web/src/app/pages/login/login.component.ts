@@ -44,17 +44,10 @@ export class LoginComponent implements OnInit {
   }
 
   private loadRememberedCredentials(): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:loadRememberedCredentials',message:'Loading remembered credentials',data:{hasRememberMe:localStorage.getItem('rememberMe')==='true'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
-    // #endregion
     const rememberMe = localStorage.getItem('rememberMe') === 'true';
     if (rememberMe) {
       const savedUsername = localStorage.getItem('savedUsername');
       const savedPassword = localStorage.getItem('savedPassword');
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:loadRememberedCredentials',message:'Found remembered credentials',data:{hasUsername:!!savedUsername,hasPassword:!!savedPassword},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
-      // #endregion
       
       if (savedUsername && savedPassword) {
         this.loginForm.patchValue({
@@ -62,9 +55,6 @@ export class LoginComponent implements OnInit {
           password: savedPassword
         });
         this.rememberMe = true;
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:loadRememberedCredentials',message:'Credentials loaded into form',data:{rememberMe:this.rememberMe},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
-        // #endregion
       }
     }
   }
@@ -82,9 +72,6 @@ export class LoginComponent implements OnInit {
       };
 
       // Store remember me preference and credentials
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:onSubmit',message:'Storing remember me preference',data:{rememberMe:this.rememberMe,hasUsername:!!credentials.usernameOrEmail,hasPassword:!!credentials.password},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
-      // #endregion
       if (this.rememberMe) {
         localStorage.setItem('rememberMe', 'true');
         if (credentials.usernameOrEmail) {
@@ -93,20 +80,15 @@ export class LoginComponent implements OnInit {
         if (credentials.password) {
           localStorage.setItem('savedPassword', credentials.password);
         }
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:onSubmit',message:'Credentials saved to localStorage',data:{rememberMe:localStorage.getItem('rememberMe'),hasUsername:!!localStorage.getItem('savedUsername'),hasPassword:!!localStorage.getItem('savedPassword')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
-        // #endregion
       } else {
         localStorage.removeItem('rememberMe');
         localStorage.removeItem('savedUsername');
         localStorage.removeItem('savedPassword');
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:onSubmit',message:'Credentials removed from localStorage',data:{rememberMe:localStorage.getItem('rememberMe')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'REMEMBER_ME'})}).catch(()=>{});
-        // #endregion
       }
 
       this.authService.login(credentials, this.rememberMe).subscribe({
         next: (response) => {
+          console.log('Login successful:', response);
           // Keep loader visible for 300ms, then redirect
           // Use the response user directly to avoid timing issues
           setTimeout(() => {
@@ -115,6 +97,7 @@ export class LoginComponent implements OnInit {
           }, 300);
         },
         error: (error) => {
+          console.error('Login error:', error);
           this.loading = false;
           // Handle different error response formats
           if (error.error?.message) {
@@ -126,12 +109,11 @@ export class LoginComponent implements OnInit {
           } else if (error.status === 401) {
             this.errorMessage = 'Invalid username or password';
           } else if (error.status === 0) {
-            this.errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+            this.errorMessage = 'Cannot connect to server. Please check if the backend is running at http://localhost:8080/api';
           } else {
             this.errorMessage = 'An error occurred during login. Please try again.';
           }
           this.showError = true;
-          console.error('Login error:', error);
         }
       });
     } else {
@@ -151,10 +133,6 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:102',message:'redirectToDashboardWithUser called',data:{hasUser:!!user,userRole:user?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-
     // Handle both frontend and backend role names
     const role = (user.role as string).toUpperCase();
     let dashboardRoute = '/login';
@@ -172,24 +150,12 @@ export class LoginComponent implements OnInit {
       dashboardRoute = '/vaccinator/dashboard';
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:128',message:'Dashboard route determined',data:{role,dashboardRoute},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-
     console.log('Redirecting to:', dashboardRoute, 'for role:', role, 'User:', user);
 
     // Use setTimeout to ensure guards are ready
     setTimeout(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:132',message:'Attempting navigation',data:{dashboardRoute},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-
       this.router.navigate([dashboardRoute], { replaceUrl: true }).then(
         (success) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:134',message:'Navigation result',data:{success,dashboardRoute},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
-
           if (success) {
             console.log('Successfully navigated to:', dashboardRoute);
           } else {
@@ -199,19 +165,11 @@ export class LoginComponent implements OnInit {
           }
         }
       ).catch(error => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:156',message:'Navigation error caught',data:{error:error?.message||String(error),errorType:error?.constructor?.name,errorStack:error?.stack?.substring(0,500),dashboardRoute,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'CHUNK_LOAD'})}).catch(()=>{});
-        // #endregion
-
         console.error('Navigation error:', error);
 
         // Check if it's a chunk loading error
         const errorMessage = error?.message || String(error);
         if (errorMessage.includes('chunk') || errorMessage.includes('Failed to fetch') || errorMessage.includes('ERR_CONNECTION_REFUSED')) {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'login.component.ts:165',message:'Chunk loading error detected',data:{errorMessage,dashboardRoute,devServerRunning:typeof window!=='undefined'&&window.location?.hostname==='localhost'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'CHUNK_LOAD'})}).catch(()=>{});
-          // #endregion
-
           console.error('Chunk loading error detected. This usually means:');
           console.error('1. Dev server is not running - please start with: ng serve');
           console.error('2. Build cache is corrupted - try: ng serve --delete-output-path');

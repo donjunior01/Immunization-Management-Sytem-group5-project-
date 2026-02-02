@@ -62,5 +62,3 @@ export interface CreateAdverseEventRequest {
   actionTaken?: string;
 }
 
-
-

@@ -409,16 +409,7 @@ export class ManagerStockComponent implements OnInit {
 
       // Log user role before making request
       const currentUser = this.authService.getCurrentUser();
-      console.log('Adjusting stock - User role:', currentUser?.role, 'Facility ID:', currentUser?.facilityId);
-      // #region agent log
-      try {
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-stock.component.ts:397',message:'Before adjustStock request',data:{userRole:currentUser?.role,facilityId:currentUser?.facilityId,userId:currentUser?.id,adjustRequest},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'}),keepalive:true}).catch((e)=>{console.debug('[DebugLog] Failed to send log:',e.message||'Connection refused')});
-      } catch(e) {
-        console.debug('[DebugLog] Failed to create log request:',e);
-      }
-      // #endregion
-      
-      this.loading = true;
+      console.log('Adjusting stock - User role:', currentUser?.role, 'Facility ID:', currentUser?.facilityId);this.loading = true;
       this.stockService.adjustStock(adjustRequest).subscribe({
         next: (response) => {
           this.loading = false;

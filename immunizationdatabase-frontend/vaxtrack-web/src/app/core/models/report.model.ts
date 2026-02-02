@@ -39,11 +39,3 @@ export interface Facility {
   isActive: boolean;
 }
 
-
-
-
-
-
-
-
-

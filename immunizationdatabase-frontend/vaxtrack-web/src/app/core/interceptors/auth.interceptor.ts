@@ -77,22 +77,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // Handle 403 Forbidden - insufficient permissions
       if (error.status === 403) {
         // Could show a toast notification here
-        console.warn('Access forbidden:', error.error?.message || 'Insufficient permissions');
-        // #region agent log
-        try {
-          const currentUser = authService.getCurrentUser();
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.interceptor.ts:78',message:'403 Forbidden error',data:{url:req.url,method:req.method,userRole:currentUser?.role,userId:currentUser?.id,errorStatus:error.status,errorMessage:error.error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'}),keepalive:true}).catch((e)=>{console.debug('[DebugLog] Failed to send log:',e.message||'Connection refused')});
-        } catch(e) {
-          console.debug('[DebugLog] Failed to create log request:',e);
-        }
-        // #endregion
-      }
+        console.warn('Access forbidden:', error.error?.message || 'Insufficient permissions');}
 
       // Return error for component handling
       return throwError(() => error);
     })
   );
 };
-
-
 

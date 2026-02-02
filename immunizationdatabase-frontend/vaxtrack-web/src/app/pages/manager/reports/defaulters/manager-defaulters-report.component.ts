@@ -153,28 +153,16 @@ export class ManagerDefaultersReportComponent implements OnInit, OnDestroy {
             this.loadingTimeout = undefined;
           }
           this.loading = false;
-          this.cdr.detectChanges();
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-defaulters-report.component.ts:loadDefaulters:finally',message:'Loading set to false in finally',data:{loading:this.loading,defaultersCount:this.defaulters.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER_INFINITE'})}).catch(()=>{});
-          // #endregion
-        }
+          this.cdr.detectChanges();}
       },
-      error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-defaulters-report.component.ts:loadDefaulters:error',message:'Defaulters load error',data:{error:error?.message||'Unknown error',status:error?.status,loading:this.loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER_INFINITE'})}).catch(()=>{});
-        // #endregion
-        if (this.loadingTimeout) {
+      error: (error) => {if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
           this.loadingTimeout = undefined;
         }
         console.error('Failed to load defaulters:', error);
         this.errorMessage = 'Failed to load defaulters. Please try again.';
         this.loading = false;
-        this.cdr.detectChanges();
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-defaulters-report.component.ts:loadDefaulters:error:after',message:'Loading set to false after error',data:{loading:this.loading,error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER_INFINITE'})}).catch(()=>{});
-        // #endregion
-      }
+        this.cdr.detectChanges();}
     });
   }
 

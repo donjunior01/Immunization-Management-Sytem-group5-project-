@@ -68,17 +68,8 @@ export class DistrictFacilitiesComponent implements OnInit {
     this.isLoadingData = true;
     this.loading = true;
     const startTime = Date.now();
-    // District dashboard plays admin role - load ALL facilities
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-facilities.component.ts:65',message:'Loading all facilities (admin role)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-
-    this.facilityService.getAllFacilities(true).subscribe({
-      next: (facilities) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-facilities.component.ts:72',message:'All facilities loaded',data:{facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        ensureMinimumLoadingTime(startTime, () => {
+    // District dashboard plays admin role - load ALL facilitiesthis.facilityService.getAllFacilities(true).subscribe({
+      next: (facilities) => {ensureMinimumLoadingTime(startTime, () => {
           this.facilities = facilities;
           this.filteredFacilities = [...this.facilities];
           // Extract unique districts from facilities
@@ -88,11 +79,7 @@ export class DistrictFacilitiesComponent implements OnInit {
           this.cdr.detectChanges();
         });
       },
-      error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-facilities.component.ts:81',message:'Failed to load all facilities',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        console.error('Failed to load all facilities:', error);
+      error: (error) => {console.error('Failed to load all facilities:', error);
         this.errorMessage = 'Failed to load facilities. Please try again.';
         this.loading = false;
         this.isLoadingData = false;

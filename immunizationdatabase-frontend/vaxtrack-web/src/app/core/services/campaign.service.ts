@@ -56,25 +56,11 @@ export class CampaignService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
 
-  getAllCampaigns(facilityId?: string): Observable<Campaign[]> {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:58',message:'getAllCampaigns called',data:{apiUrl:this.apiUrl,fullUrl:`${this.apiUrl}/api/campaigns`,hasFacilityId:!!facilityId,facilityId:facilityId||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    let params = new HttpParams();
+  getAllCampaigns(facilityId?: string): Observable<Campaign[]> {let params = new HttpParams();
     if (facilityId) {
       params = params.set('facilityId', facilityId);
     }
-    const url = `${this.apiUrl}/api/campaigns`;
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:67',message:'Making HTTP GET request for all campaigns',data:{url,paramsCount:params.keys().length,params:Array.from(params.keys())},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    return this.http.get<any[]>(url, { params }).pipe(
-      // #region agent log
-      tap((response) => {
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:71',message:'HTTP response received',data:{responseCount:response?.length||0,isArray:Array.isArray(response),firstItem:response?.[0]?.['id']||'none',responseSample:JSON.stringify(response).substring(0,1000)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      }),
-      // #endregion
-      // Map backend response to frontend Campaign interface
+    const url = `${this.apiUrl}/api/campaigns`;return this.http.get<any[]>(url, { params }).pipe(// Map backend response to frontend Campaign interface
       map((response: any[]): Campaign[] => {
         return response.map((campaign: any): Campaign => ({
           id: campaign.id,
@@ -95,34 +81,14 @@ export class CampaignService {
           createdAt: campaign.createdAt,
           updatedAt: campaign.updatedAt
         }));
-      }),
-      // #region agent log
-      tap((mappedCampaigns) => {
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:95',message:'Campaigns mapped to frontend interface',data:{mappedCount:mappedCampaigns.length,firstCampaignId:mappedCampaigns[0]?.id||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      })
-      // #endregion
-    );
+      }),);
   }
 
-  getActiveCampaigns(facilityId?: string): Observable<Campaign[]> {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:58',message:'getActiveCampaigns called',data:{apiUrl:this.apiUrl,fullUrl:`${this.apiUrl}/api/campaigns/active`,hasFacilityId:!!facilityId,facilityId:facilityId||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    let params = new HttpParams();
+  getActiveCampaigns(facilityId?: string): Observable<Campaign[]> {let params = new HttpParams();
     if (facilityId) {
       params = params.set('facilityId', facilityId);
     }
-    const url = `${this.apiUrl}/api/campaigns/active`;
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:65',message:'Making HTTP GET request',data:{url,paramsCount:params.keys().length,params:Array.from(params.keys())},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    return this.http.get<any[]>(url, { params }).pipe(
-      // #region agent log
-      tap((response) => {
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:71',message:'HTTP response received',data:{responseCount:response?.length||0,isArray:Array.isArray(response),firstItem:response?.[0]?.['id']||'none',responseSample:JSON.stringify(response).substring(0,1000)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      }),
-      // #endregion
-      // Map backend response to frontend Campaign interface
+    const url = `${this.apiUrl}/api/campaigns/active`;return this.http.get<any[]>(url, { params }).pipe(// Map backend response to frontend Campaign interface
       map((response: any[]): Campaign[] => {
         return response.map((campaign: any): Campaign => ({
           id: campaign.id,
@@ -143,13 +109,7 @@ export class CampaignService {
           createdAt: campaign.createdAt,
           updatedAt: campaign.updatedAt
         }));
-      }),
-      // #region agent log
-      tap((mappedCampaigns) => {
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:95',message:'Campaigns mapped to frontend interface',data:{mappedCount:mappedCampaigns.length,firstCampaignId:mappedCampaigns[0]?.id||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      })
-      // #endregion
-    );
+      }),);
   }
 
   getCampaignsByFacility(facilityId: string): Observable<Campaign[]> {
@@ -162,17 +122,7 @@ export class CampaignService {
     return this.http.get<Campaign[]>(`${this.apiUrl}/api/campaigns/active`);
   }
 
-  createCampaign(campaign: CreateCampaignRequest): Observable<Campaign> {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:165',message:'createCampaign called',data:{campaignName:campaign.name,url:`${this.apiUrl}/api/campaigns`,requestBody:JSON.stringify(campaign).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
-    return this.http.post<any>(`${this.apiUrl}/api/campaigns`, campaign).pipe(
-      // #region agent log
-      tap((response) => {
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:169',message:'Campaign creation response received',data:{campaignId:response?.id,campaignName:response?.name,responseSample:JSON.stringify(response).substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      }),
-      // #endregion
-      // Map backend response to frontend Campaign interface
+  createCampaign(campaign: CreateCampaignRequest): Observable<Campaign> {return this.http.post<any>(`${this.apiUrl}/api/campaigns`, campaign).pipe(// Map backend response to frontend Campaign interface
       map((response: any): Campaign => ({
         id: response.id,
         name: response.name,
@@ -195,11 +145,7 @@ export class CampaignService {
     );
   }
 
-  updateCampaignStatus(campaignId: number, status: Campaign['status']): Observable<Campaign> {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'campaign.service.ts:91',message:'updateCampaignStatus called',data:{campaignId,status,url:`${this.apiUrl}/api/campaigns/${campaignId}/status`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
-    const params = new HttpParams().set('status', status);
+  updateCampaignStatus(campaignId: number, status: Campaign['status']): Observable<Campaign> {const params = new HttpParams().set('status', status);
     return this.http.patch<Campaign>(`${this.apiUrl}/api/campaigns/${campaignId}/status`, null, {
       params
     });

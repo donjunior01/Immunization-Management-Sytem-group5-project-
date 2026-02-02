@@ -57,8 +57,7 @@ export class AdminDashboardComponent implements OnInit {
     this.isLoadingData = true;
     this.loading = true;
     const startTime = Date.now();
-    
-    
+
     let usersLoaded = false;
     let facilitiesLoaded = false;
     let smsLoaded = false;
@@ -127,7 +126,6 @@ export class AdminDashboardComponent implements OnInit {
       }
     });
   }
-
 
   loadFacilities(startTime: number, checkComplete: () => void, onComplete: () => void): void {
     this.facilityService.getAllFacilities().subscribe({

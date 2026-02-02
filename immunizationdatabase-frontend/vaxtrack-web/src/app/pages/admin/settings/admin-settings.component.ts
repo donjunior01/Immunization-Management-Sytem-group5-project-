@@ -23,4 +23,3 @@ import { LayoutComponent } from '../../../shared/components/layout/layout.compon
 })
 export class AdminSettingsComponent {}
 
-

@@ -203,8 +203,6 @@ export class PatientDetailComponent implements OnInit {
     });
   }
 
-
-
   loadVaccinations(patientId: string): void {
     // Vaccinations are loaded with patient details
     // This method is kept for potential future use

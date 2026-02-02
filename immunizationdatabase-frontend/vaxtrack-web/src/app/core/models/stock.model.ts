@@ -52,5 +52,3 @@ export interface AdjustStockRequest {
   notes?: string;
 }
 
-
-

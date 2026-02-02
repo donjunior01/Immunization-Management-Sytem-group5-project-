@@ -8,5 +8,3 @@ export const environment = {
   retryDelay: 1000
 };
 
-
-

@@ -145,11 +145,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
     private stockService: StockService
   ) {}
 
-  ngOnInit(): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:133',message:'ngOnInit called',data:{hasCoverageChartData:!!this.coverageChartData,hasCoverageLabels:!!this.coverageChartData?.labels,coverageLabelsType:typeof this.coverageChartData?.labels,coverageLabelsLength:this.coverageChartData?.labels?.length,hasVolumeChartData:!!this.volumeChartData,hasVolumeLabels:!!this.volumeChartData?.labels,volumeLabelsType:typeof this.volumeChartData?.labels,volumeLabelsLength:this.volumeChartData?.labels?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    this.loadDashboardData();
+  ngOnInit(): void {this.loadDashboardData();
   }
 
   loadDashboardData(): void {
@@ -164,13 +160,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
 
     const user = this.authService.getCurrentUser();
     let districtId = user?.districtId;
-    const facilityId = user?.facilityId;
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:168',message:'loadDashboardData started',data:{hasUser:!!user,hasDistrictId:!!districtId,hasFacilityId:!!facilityId,userId:user?.id,userRole:user?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-    // #endregion
-
-    // Track loading states
+    const facilityId = user?.facilityId;// Track loading states
     let statsLoaded = false;
     let facilitiesLoaded = false;
     let facilityDetailsLoaded = false;
@@ -188,41 +178,21 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
 
     // If no districtId but user has facilityId, try to get districtId from facility
     const resolveDistrictId = (onResolved: () => void) => {
-      if (districtId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:185',message:'DistrictId already available',data:{districtId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-        // #endregion
-        districtIdResolved = true;
+      if (districtId) {districtIdResolved = true;
         onResolved();
         return;
       }
 
-      if (facilityId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:192',message:'Attempting to get districtId from facility',data:{facilityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-        // #endregion
-        // Try to get districtId from user's facility
+      if (facilityId) {// Try to get districtId from user's facility
         this.facilityService.getFacilityById(facilityId).subscribe({
           next: (facility) => {
             // Check both districtId and district properties (backend may use either)
-            const facilityDistrictId = (facility as any).districtId || facility.district;
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:210',message:'Facility loaded for districtId resolution',data:{facilityId:facility?.id,facilityDistrictId,facilityDistrict:facility?.district,hasDistrictId:!!facilityDistrictId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-            // #endregion
-            if (facilityDistrictId) {
-              districtId = facilityDistrictId;
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:201',message:'DistrictId resolved from facility',data:{resolvedDistrictId:districtId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-              // #endregion
-            }
+            const facilityDistrictId = (facility as any).districtId || facility.district;if (facilityDistrictId) {
+              districtId = facilityDistrictId;}
             districtIdResolved = true;
             onResolved();
           },
-          error: (error) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:225',message:'Failed to load facility for districtId',data:{facilityId,error:error?.message,errorStatus:error?.status,errorStatusText:error?.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-            // #endregion
-            console.warn('Failed to load facility to get districtId:', error);
+          error: (error) => {console.warn('Failed to load facility to get districtId:', error);
             // Handle specific error cases
             if (error?.status === 404) {
               console.warn(`Facility with ID ${facilityId} not found. User may have invalid facilityId.`);
@@ -233,11 +203,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
             onResolved();
           }
         });
-      } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:232',message:'No districtId or facilityId available',data:{hasUser:!!user,userFacilityId:user?.facilityId,userDistrictId:user?.districtId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-        // #endregion
-        districtIdResolved = true;
+      } else {districtIdResolved = true;
         onResolved();
       }
     };
@@ -264,20 +230,8 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
     });
 
     // Resolve districtId first (from user or facility), then load facilities
-    resolveDistrictId(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:264',message:'DistrictId resolution complete',data:{resolvedDistrictId:districtId,hasDistrictId:!!districtId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-      // #endregion
-      // District dashboard plays admin role - load ALL facilities
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:267',message:'Loading all facilities (admin role)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      this.facilityService.getAllFacilities(true).subscribe({
-        next: (facilities) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:271',message:'All facilities loaded',data:{facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
-          // Update total facilities count
+    resolveDistrictId(() => {// District dashboard plays admin role - load ALL facilitiesthis.facilityService.getAllFacilities(true).subscribe({
+        next: (facilities) => {// Update total facilities count
           if (facilities.length > 0) {
             this.totalFacilities = facilities.length;
           }
@@ -297,11 +251,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
           // Load detailed stats for each facility
           this.loadFacilityDetails(() => {
             facilityDetailsLoaded = true;
-            // Update map markers after facilities are loaded
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:298',message:'Facilities loaded, checking map',data:{hasMap:!!this.map,facilitiesCount:this.facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            if (this.map) {
+            // Update map markers after facilities are loadedif (this.map) {
               this.updateMapMarkers();
             } else {
               // Map not initialized yet, try to initialize it
@@ -317,11 +267,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
             checkComplete();
           });
         },
-        error: (error) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:290',message:'Failed to load all facilities',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
-          console.error('Failed to load all facilities:', error);
+        error: (error) => {console.error('Failed to load all facilities:', error);
           this.errorMessage = 'Failed to load facilities. Using national statistics.';
           facilitiesLoaded = true;
           facilityDetailsLoaded = true;
@@ -391,11 +337,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
             // Update low stock count from facilities
             this.facilitiesLowStock = this.facilities.filter(f => f.stockStatus === 'low' || f.stockStatus === 'out').length;
             
-            // Update map markers after facilities are loaded with coverage data
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:383',message:'Facilities loaded with coverage, updating map',data:{hasMap:!!this.map,facilitiesCount:this.facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-            // #endregion
-            if (this.map) {
+            // Update map markers after facilities are loaded with coverage dataif (this.map) {
               setTimeout(() => this.updateMapMarkers(), 100);
             } else {
               // Map not initialized yet, try to initialize it
@@ -467,18 +409,10 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
 
     // Load coverage report to get trend data
     this.reportService.getCoverageReport('', startDateStr, endDate).subscribe({
-      next: (report: any) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:358',message:'loadTrendData report received',data:{hasTrendData:!!report.trendData,trendDataIsArray:Array.isArray(report.trendData),trendDataLength:report.trendData?.length,hasCoverageChartDataBefore:!!this.coverageChartData,hasCoverageLabelsBefore:!!this.coverageChartData?.labels},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-        if (report.trendData && Array.isArray(report.trendData) && report.trendData.length > 0) {
+      next: (report: any) => {if (report.trendData && Array.isArray(report.trendData) && report.trendData.length > 0) {
           // Update coverage trend chart
           const newLabels = report.trendData.map((t: any) => t.month || '');
-          const newData = report.trendData.map((t: any) => t.coverage || 0);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:365',message:'Before coverageChartData assignment',data:{newLabelsLength:newLabels.length,newDataLength:newData.length,hasCoverageChartData:!!this.coverageChartData,hasCoverageLabels:!!this.coverageChartData?.labels},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-          // #endregion
-          this.coverageChartData = {
+          const newData = report.trendData.map((t: any) => t.coverage || 0);this.coverageChartData = {
             labels: newLabels,
             datasets: [{
               label: 'Coverage %',
@@ -497,14 +431,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
               borderDash: [5, 5],
               fill: false
             }]
-          };
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:385',message:'After coverageChartData assignment',data:{hasCoverageChartData:!!this.coverageChartData,hasCoverageLabels:!!this.coverageChartData?.labels,coverageLabelsType:typeof this.coverageChartData?.labels,coverageLabelsLength:this.coverageChartData?.labels?.length,coverageLabelsIsArray:Array.isArray(this.coverageChartData?.labels)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:405',message:'Coverage chart data updated',data:{labelsLength:this.coverageChartData?.labels?.length ?? 0,datasetsLength:this.coverageChartData?.datasets?.length ?? 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-          // #endregion
-          // Trigger change detection - ng2-charts will automatically update when data changes
+          };// Trigger change detection - ng2-charts will automatically update when data changes
           this.cdr.detectChanges();
         }
 
@@ -515,11 +442,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
             // Estimate: coverage * 1000 (assuming base target)
             return Math.round((t.coverage || 0) * 10);
           });
-          const volumeLabels = report.trendData.map((t: any) => t.month || '');
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:400',message:'Before volumeChartData assignment',data:{volumeLabelsLength:volumeLabels.length,estimatedVaccinationsLength:estimatedVaccinations.length,hasVolumeChartData:!!this.volumeChartData,hasVolumeLabels:!!this.volumeChartData?.labels},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
-          this.volumeChartData = {
+          const volumeLabels = report.trendData.map((t: any) => t.month || '');this.volumeChartData = {
             labels: volumeLabels,
             datasets: [{
               label: 'Vaccinations',
@@ -528,14 +451,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
               borderColor: 'rgba(59, 130, 246, 1)',
               borderWidth: 2
             }]
-          };
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:412',message:'After volumeChartData assignment',data:{hasVolumeChartData:!!this.volumeChartData,hasVolumeLabels:!!this.volumeChartData?.labels,volumeLabelsType:typeof this.volumeChartData?.labels,volumeLabelsLength:this.volumeChartData?.labels?.length,volumeLabelsIsArray:Array.isArray(this.volumeChartData?.labels)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:420',message:'Volume chart data updated',data:{labelsLength:this.volumeChartData?.labels?.length ?? 0,datasetsLength:this.volumeChartData?.datasets?.length ?? 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-          // #endregion
-          // Trigger change detection - ng2-charts will automatically update when data changes
+          };// Trigger change detection - ng2-charts will automatically update when data changes
           this.cdr.detectChanges();
         }
       },
@@ -548,11 +464,7 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
 
   ngAfterViewInit(): void {
     // Initialize map after view is ready
-    setTimeout(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:525',message:'ngAfterViewInit - initializing map',data:{facilitiesCount:this.facilities.length,hasMap:!!this.map,leafletLoaded:typeof L !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      this.initializeMap();
+    setTimeout(() => {this.initializeMap();
     }, 500);
   }
 
@@ -564,24 +476,12 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
     this.mapMarkers = [];
   }
 
-  private initializeMap(): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:538',message:'initializeMap called',data:{leafletLoaded:typeof L !== 'undefined',facilitiesCount:this.facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    if (typeof L === 'undefined') {
-      console.warn('Leaflet not loaded');
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:541',message:'Leaflet not loaded',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      return;
+  private initializeMap(): void {if (typeof L === 'undefined') {
+      console.warn('Leaflet not loaded');return;
     }
 
     // Check if map container exists
-    const mapContainer = document.getElementById('facility-map');
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:545',message:'Checking map container',data:{mapContainerExists:!!mapContainer},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    if (!mapContainer) {
+    const mapContainer = document.getElementById('facility-map');if (!mapContainer) {
       console.warn('Map container not found');
       return;
     }
@@ -600,38 +500,20 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19
-    }).addTo(this.map);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:567',message:'Map initialized',data:{facilitiesCount:this.facilities.length,willUpdateMarkers:this.facilities.length > 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-
-    // Add markers when facilities are loaded
+    }).addTo(this.map);// Add markers when facilities are loaded
     if (this.facilities.length > 0) {
       this.updateMapMarkers();
     }
   }
 
-  private updateMapMarkers(): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:573',message:'updateMapMarkers called',data:{hasMap:!!this.map,leafletLoaded:typeof L !== 'undefined',facilitiesCount:this.facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    if (!this.map || typeof L === 'undefined') {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:576',message:'updateMapMarkers early return',data:{hasMap:!!this.map,leafletLoaded:typeof L !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      return;
+  private updateMapMarkers(): void {if (!this.map || typeof L === 'undefined') {return;
     }
 
     // Clear existing markers
     this.mapMarkers.forEach(marker => marker.remove());
     this.mapMarkers = [];
 
-    if (this.facilities.length === 0) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:582',message:'No facilities to display',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-      return;
+    if (this.facilities.length === 0) {return;
     }
 
     // Generate coordinates for facilities (mock data - in production, use actual coordinates)
@@ -680,14 +562,6 @@ export class DistrictDashboardComponent implements OnInit, AfterViewInit, OnDest
 
     // Fit map to show all markers
     if (bounds.length > 0) {
-      this.map.fitBounds(bounds, { padding: [50, 50] });
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:627',message:'Map markers added and bounds fitted',data:{markersCount:this.mapMarkers.length,boundsCount:bounds.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-    } else {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-dashboard.component.ts:630',message:'No bounds to fit',data:{markersCount:this.mapMarkers.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
-    }
+      this.map.fitBounds(bounds, { padding: [50, 50] });} else {}
   }
 }

@@ -76,33 +76,19 @@ export class VaccinatorDashboardComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:63',message:'ngOnInit called',data:{currentLoading:this.loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-    // #endregion
-    this.loadDashboardData();
+  ngOnInit(): void {this.loadDashboardData();
   }
 
   loadDashboardData(): void {
     // Prevent multiple simultaneous loads
-    if (this.isLoadingData) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:67',message:'loadDashboardData already in progress, skipping',data:{currentLoading:this.loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-      // #endregion
-      return;
+    if (this.isLoadingData) {return;
     }
 
     this.isLoadingData = true;
     this.loading = true;
     const startTime = Date.now();
     const user = this.authService.getCurrentUser();
-    const facilityId = user?.facilityId;
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:67',message:'loadDashboardData started',data:{facilityId,useMockAuth:environment.useMockAuth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-    // #endregion
-
-    // Load data from backend API
+    const facilityId = user?.facilityId;// Load data from backend API
 
     // Load appointments and stock in parallel, but ensure loading stops even if one fails
     let appointmentsLoaded = false;
@@ -110,26 +96,10 @@ export class VaccinatorDashboardComponent implements OnInit {
     let patientsLoaded = false;
     let isComplete = false;
 
-    const checkComplete = () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:84',message:'checkComplete called',data:{appointmentsLoaded,stockLoaded,patientsLoaded,isComplete,currentLoading:this.loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-      // #endregion
-      if (appointmentsLoaded && stockLoaded && patientsLoaded && !isComplete) {
+    const checkComplete = () => {if (appointmentsLoaded && stockLoaded && patientsLoaded && !isComplete) {
         isComplete = true;
-        clearTimeout(timeoutId); // Clear timeout since we're completing normally
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:87',message:'All loaded, setting loading=false',data:{startTime,elapsed:Date.now()-startTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-        // #endregion
-        ensureMinimumLoadingTime(startTime, () => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:98',message:'ensureMinimumLoadingTime callback executed',data:{currentLoading:this.loading,beforeSet:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-          // #endregion
-          this.loading = false;
-          this.isLoadingData = false; // Reset loading flag
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:102',message:'Loading set to false',data:{currentLoading:this.loading,afterSet:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-          // #endregion
-          this.cdr.detectChanges(); // Force change detection
+        clearTimeout(timeoutId); // Clear timeout since we're completing normallyensureMinimumLoadingTime(startTime, () => {this.loading = false;
+          this.isLoadingData = false; // Reset loading flagthis.cdr.detectChanges(); // Force change detection
           // Double-check after a brief delay to ensure it's set
           setTimeout(() => {
             if (this.loading) {
@@ -145,19 +115,11 @@ export class VaccinatorDashboardComponent implements OnInit {
     // Safety timeout - ensure loader stops after 3 seconds max (reduced from 5)
     const timeoutId = setTimeout(() => {
       if (!isComplete) {
-        console.warn('Dashboard loading timeout - forcing completion');
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:94',message:'Timeout triggered',data:{appointmentsLoaded,stockLoaded,patientsLoaded,isComplete},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-        // #endregion
-        appointmentsLoaded = true;
+        console.warn('Dashboard loading timeout - forcing completion');appointmentsLoaded = true;
         stockLoaded = true;
         patientsLoaded = true;
         isComplete = true;
-        ensureMinimumLoadingTime(startTime, () => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:101',message:'Timeout callback executed',data:{currentLoading:this.loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER'})}).catch(()=>{});
-          // #endregion
-          this.loading = false;
+        ensureMinimumLoadingTime(startTime, () => {this.loading = false;
           this.isLoadingData = false; // Reset loading flag
           this.cdr.detectChanges(); // Force change detection
           // Force change detection
@@ -201,28 +163,15 @@ export class VaccinatorDashboardComponent implements OnInit {
       }
     });
 
-    // Load stock levels
-    // #region agent log
-    const currentUserForStock = this.authService.getCurrentUser();
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:135',message:'Calling getStockLevels',data:{facilityId,userRole:currentUserForStock?.role,hasToken:!!this.authService.getToken()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    this.stockService.getStockLevels(facilityId).subscribe({
+    // Load stock levelsthis.stockService.getStockLevels(facilityId).subscribe({
       next: (stockLevels) => {
         this.lowStockVaccines = stockLevels.filter(s =>
           s.status === 'LOW' || s.status === 'CRITICAL'
-        ).slice(0, 5);
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:137',message:'getStockLevels success',data:{stockCount:stockLevels.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-        stockLoaded = true;
+        ).slice(0, 5);stockLoaded = true;
         checkComplete();
         clearTimeout(timeoutId);
       },
-      error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:144',message:'getStockLevels error',data:{status:error.status,statusText:error.statusText,error:error.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-        // Log detailed error for debugging
+      error: (error) => {// Log detailed error for debugging
         if (error.status === 403 || error.status === 404) {
           console.error('Failed to load stock:', error);
           this.lowStockVaccines = [];
@@ -244,26 +193,13 @@ export class VaccinatorDashboardComponent implements OnInit {
       }
     });
 
-    // Load patients count and recent patients
-    // #region agent log
-    const currentUser = this.authService.getCurrentUser();
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:168',message:'Calling searchPatients',data:{facilityId,userRole:currentUser?.role,hasToken:!!this.authService.getToken()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    this.patientService.searchPatients('', facilityId).subscribe({
+    // Load patients count and recent patientsthis.patientService.searchPatients('', facilityId).subscribe({
       next: (response) => {
         this.totalPatients = response.patients?.length || 0;
         this.recentPatients = response.patients?.slice(0, 3) || [];
         patientsLoaded = true;
-        checkComplete();
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:171',message:'searchPatients success',data:{patientCount:response.patients?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-      },
-      error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:174',message:'searchPatients error',data:{status:error.status,statusText:error.statusText,error:error.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-        console.error('Failed to load patients:', error);
+        checkComplete();},
+      error: (error) => {console.error('Failed to load patients:', error);
         this.totalPatients = 0;
         this.recentPatients = [];
         patientsLoaded = true;
@@ -279,7 +215,6 @@ export class VaccinatorDashboardComponent implements OnInit {
       }
     });
   }
-
 
   getUserFirstName(): string {
     const user = this.authService.getCurrentUser();
@@ -312,13 +247,7 @@ export class VaccinatorDashboardComponent implements OnInit {
     this.searching = true;
     this.showNoResults = false;
     const user = this.authService.getCurrentUser();
-    const facilityId = user?.facilityId;
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:performQuickSearch',message:'Performing quick search',data:{query,hasFacilityId:!!facilityId,offlineMode:typeof window !== 'undefined' && window.navigator && !window.navigator.onLine},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SEARCH'})}).catch(()=>{});
-    // #endregion
-
-    this.patientService.searchPatients(query, facilityId).subscribe({
+    const facilityId = user?.facilityId;this.patientService.searchPatients(query, facilityId).subscribe({
       next: (response) => {
         const allResults = response.patients || [];
         this.searchResults = allResults.slice(0, 10); // Show first 10 results
@@ -330,11 +259,7 @@ export class VaccinatorDashboardComponent implements OnInit {
         this.showNoResults = this.searchResults.length === 0;
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-dashboard.component.ts:performQuickSearch',message:'Search error',data:{status:error.status,errorMessage:error.error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SEARCH'})}).catch(()=>{});
-        // #endregion
-        console.warn('Search failed:', error);
+      error: (error) => {console.warn('Search failed:', error);
         this.searchResults = [];
         this.searching = false;
         this.showNoResults = true;

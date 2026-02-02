@@ -120,7 +120,6 @@ export class PatientSearchComponent implements OnInit {
     }
   }
 
-
   applyFilters(patients: Patient[]): Patient[] {
     return patients.filter(patient => {
       // Age filter

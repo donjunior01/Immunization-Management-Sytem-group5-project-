@@ -111,44 +111,22 @@ export class RecordVaccinationComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    // #region agent log
-    console.log('🟢 ngOnInit CALLED');
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:114',message:'ngOnInit called',data:{showAdverseEventForm:this.showAdverseEventForm,hasAdverseEventForm:!!this.adverseEventForm,adverseEventFormType:typeof this.adverseEventForm},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
-    this.checkOfflineStatus();
+  ngOnInit(): void {this.checkOfflineStatus();
     
     // Check both route params and query params for patientId
     const routePatientId = this.route.snapshot.paramMap.get('patientId');
     const queryPatientId = this.route.snapshot.queryParamMap.get('patientId');
-    const patientId = routePatientId || queryPatientId;
-    
-    // #region agent log
-    console.log('🟡 Patient ID check:', {routePatientId, queryPatientId, patientId});
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:123',message:'Patient ID check',data:{routePatientId,queryPatientId,patientId,hasPatientId:!!patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-    // #endregion
-    
-    if (patientId) {
+    const patientId = routePatientId || queryPatientId;if (patientId) {
       this.loadPatient(patientId);
       this.selectedPatient = { id: patientId } as Patient;
       this.vaccinationForm.patchValue({ patientId });
       // Auto-open modal if patientId is provided
-      setTimeout(() => {
-        // #region agent log
-        console.log('🟡 Auto-opening modal for patientId:', patientId);
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:132',message:'Auto-opening modal',data:{patientId,showRecordModal:this.showRecordModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H4'})}).catch(()=>{});
-        // #endregion
-        this.openRecordModal();
+      setTimeout(() => {this.openRecordModal();
       }, 500);
     }
 
     this.loadVaccinations();
-    this.loadVaccines();
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:141',message:'ngOnInit completed',data:{showAdverseEventForm:this.showAdverseEventForm,hasAdverseEventForm:!!this.adverseEventForm,hasAdverseEventInForm:!!this.vaccinationForm.get('adverseEvent'),showRecordModal:this.showRecordModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
-    // #endregion
-
-    // Set default date to today and sync site field
+    this.loadVaccines();// Set default date to today and sync site field
     this.vaccinationForm.patchValue({
       administrationDate: new Date().toISOString().split('T')[0],
       administeredDate: format(new Date(), 'yyyy-MM-dd'),
@@ -156,11 +134,7 @@ export class RecordVaccinationComponent implements OnInit {
     });
 
     // Load batches when vaccine is selected
-    this.vaccinationForm.get('vaccineId')?.valueChanges.subscribe(vaccineId => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:120',message:'Vaccine ID changed',data:{vaccineId,hasPatient:!!this.patient,hasSelectedPatient:!!this.selectedPatient,patientId:this.patient?.id||this.selectedPatient?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-      // #endregion
-      if (vaccineId) {
+    this.vaccinationForm.get('vaccineId')?.valueChanges.subscribe(vaccineId => {if (vaccineId) {
         const vaccine = this.availableVaccines.find(v => v.id === vaccineId);
         if (vaccine) {
           this.vaccinationForm.patchValue({ 
@@ -176,33 +150,7 @@ export class RecordVaccinationComponent implements OnInit {
     });
     
     // Monitor form validity changes
-    this.vaccinationForm.statusChanges.subscribe(status => {
-      // #region agent log
-      const formState = {
-        status,
-        valid: this.vaccinationForm.valid,
-        invalid: this.vaccinationForm.invalid,
-        pending: this.vaccinationForm.pending,
-        errors: Object.keys(this.vaccinationForm.controls).filter(key => this.vaccinationForm.get(key)?.invalid).map(key => ({
-          field: key,
-          errors: this.vaccinationForm.get(key)?.errors,
-          value: this.vaccinationForm.get(key)?.value
-        })),
-        values: {
-          patientId: this.vaccinationForm.get('patientId')?.value,
-          vaccineId: this.vaccinationForm.get('vaccineId')?.value,
-          vaccine: this.vaccinationForm.get('vaccine')?.value,
-          doseNumber: this.vaccinationForm.get('doseNumber')?.value,
-          batchNumber: this.vaccinationForm.get('batchNumber')?.value,
-          administeredDate: this.vaccinationForm.get('administeredDate')?.value,
-          administrationDate: this.vaccinationForm.get('administrationDate')?.value,
-          administrationSite: this.vaccinationForm.get('administrationSite')?.value,
-          site: this.vaccinationForm.get('site')?.value
-        }
-      };
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:132',message:'Form status changed',data:formState,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'FORM_DISABLED'})}).catch(()=>{});
-      // #endregion
-    });
+    this.vaccinationForm.statusChanges.subscribe(status => {});
 
     this.vaccinationForm.get('vaccine')?.valueChanges.subscribe(vaccine => {
       if (vaccine) {
@@ -335,12 +283,7 @@ export class RecordVaccinationComponent implements OnInit {
     this.applyFilters();
   }
 
-  openRecordModal(): void {
-    // #region agent log
-    console.log('🔴 openRecordModal CALLED - showAdverseEventForm:', this.showAdverseEventForm, 'hasAdverseEventForm:', !!this.adverseEventForm);
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:320',message:'openRecordModal called',data:{showAdverseEventForm:this.showAdverseEventForm,hasAdverseEventForm:!!this.adverseEventForm,showRecordModal:this.showRecordModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
-    const patientId = this.route.snapshot.queryParamMap.get('patientId');
+  openRecordModal(): void {const patientId = this.route.snapshot.queryParamMap.get('patientId');
     if (patientId) {
       this.loadPatient(patientId);
       this.selectedPatient = { id: patientId } as Patient;
@@ -376,20 +319,8 @@ export class RecordVaccinationComponent implements OnInit {
         description: '',
         actionTaken: ''
       });
-    }
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:openRecordModal',message:'Modal opened - adverse event visibility check',data:{showRecordModal:this.showRecordModal,showAdverseEventForm:this.showAdverseEventForm,hasAdverseEventForm:!!this.adverseEventForm,hasAdverseEventInForm:!!this.vaccinationForm.get('adverseEvent'),patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'ADVERSE_EVENT_VISIBILITY'})}).catch(()=>{});
-    // #endregion
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:343',message:'openRecordModal completed',data:{showRecordModal:this.showRecordModal,showAdverseEventForm:this.showAdverseEventForm,hasAdverseEventForm:!!this.adverseEventForm,modalOpened:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
-    // Force change detection after a brief delay to ensure template renders
-    setTimeout(() => {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:348',message:'openRecordModal - after timeout',data:{showRecordModal:this.showRecordModal,showAdverseEventForm:this.showAdverseEventForm},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
-      // #endregion
-      this.cdr.detectChanges();
+    }// Force change detection after a brief delay to ensure template renders
+    setTimeout(() => {this.cdr.detectChanges();
     }, 100);
   }
 
@@ -454,33 +385,11 @@ export class RecordVaccinationComponent implements OnInit {
     });
   }
 
-  selectPatient(patient: Patient): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:314',message:'selectPatient called',data:{patientId:patient.id,patientName:patient.fullName||`${patient.firstName} ${patient.lastName}`,hasId:!!patient.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'FORM_DISABLED'})}).catch(()=>{});
-    // #endregion
-    this.selectedPatient = patient;
+  selectPatient(patient: Patient): void {this.selectedPatient = patient;
     this.patient = patient; // Also set patient for dose suggestion
     this.patientSearchQuery = patient.fullName || `${patient.firstName} ${patient.lastName}`.trim();
     this.patientSearchResults = [];
-    this.vaccinationForm.patchValue({ patientId: patient.id || patient.patientId });
-    // #region agent log
-    const formState = {
-      patientId: this.vaccinationForm.get('patientId')?.value,
-      vaccineId: this.vaccinationForm.get('vaccineId')?.value,
-      vaccine: this.vaccinationForm.get('vaccine')?.value,
-      doseNumber: this.vaccinationForm.get('doseNumber')?.value,
-      batchNumber: this.vaccinationForm.get('batchNumber')?.value,
-      administeredDate: this.vaccinationForm.get('administeredDate')?.value,
-      administrationDate: this.vaccinationForm.get('administrationDate')?.value,
-      administrationSite: this.vaccinationForm.get('administrationSite')?.value,
-      site: this.vaccinationForm.get('site')?.value,
-      formValid: this.vaccinationForm.valid,
-      formErrors: Object.keys(this.vaccinationForm.controls).filter(key => this.vaccinationForm.get(key)?.invalid).map(key => ({field:key,errors:this.vaccinationForm.get(key)?.errors}))
-    };
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:320',message:'Form state after patient selection',data:formState,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'FORM_DISABLED'})}).catch(()=>{});
-    // #endregion
-    
-    // Auto-suggest dose when patient is selected and vaccine is already chosen
+    this.vaccinationForm.patchValue({ patientId: patient.id || patient.patientId });// Auto-suggest dose when patient is selected and vaccine is already chosen
     const vaccineId = this.vaccinationForm.get('vaccineId')?.value;
     if (vaccineId) {
       const vaccine = this.availableVaccines.find(v => v.id === vaccineId);
@@ -601,11 +510,7 @@ export class RecordVaccinationComponent implements OnInit {
     // Keep site field in sync with administrationSite for backward compatibility
     const adminSite = this.vaccinationForm.get('administrationSite')?.value;
     if (adminSite) {
-      this.vaccinationForm.patchValue({ site: adminSite }, { emitEvent: false });
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:494',message:'Administration site changed',data:{administrationSite:adminSite,siteSynced:true,formValid:this.vaccinationForm.valid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'FORM_DISABLED'})}).catch(()=>{});
-      // #endregion
-    }
+      this.vaccinationForm.patchValue({ site: adminSite }, { emitEvent: false });}
   }
 
   getBatchPlaceholderText(): string {
@@ -618,71 +523,30 @@ export class RecordVaccinationComponent implements OnInit {
     return 'Select Batch';
   }
 
-  suggestNextDose(vaccine: string): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:448',message:'suggestNextDose called',data:{vaccine,hasPatient:!!this.patient,hasSelectedPatient:!!this.selectedPatient,patientId:this.patient?.id||this.selectedPatient?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-    // #endregion
-    // Get patient's vaccination history and suggest next dose
+  suggestNextDose(vaccine: string): void {// Get patient's vaccination history and suggest next dose
     if (this.patient || this.selectedPatient) {
-      const patientId = this.patient?.id || this.selectedPatient?.id;
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:452',message:'Patient ID extracted',data:{patientId,patientHasId:!!this.patient?.id,selectedPatientHasId:!!this.selectedPatient?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-      // #endregion
-      if (patientId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:455',message:'Calling getPatientVaccinations API',data:{patientId,vaccine},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-        // #endregion
-        this.vaccinationService.getPatientVaccinations(patientId).subscribe({
-          next: (vaccinations) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:457',message:'Vaccinations received',data:{vaccinationCount:vaccinations.length,vaccinations:vaccinations.map(v=>({vaccineName:v.vaccineName,doseNumber:v.doseNumber})),targetVaccine:vaccine},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-            // #endregion
-            // Find the highest dose number for this vaccine
+      const patientId = this.patient?.id || this.selectedPatient?.id;if (patientId) {this.vaccinationService.getPatientVaccinations(patientId).subscribe({
+          next: (vaccinations) => {// Find the highest dose number for this vaccine
             const vaccineDoses = vaccinations
               .filter(v => v.vaccineName?.toLowerCase() === vaccine.toLowerCase())
-              .map(v => v.doseNumber || 0);
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:460',message:'Filtered vaccine doses',data:{vaccineDoses,filteredCount:vaccineDoses.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-            // #endregion
-            
-            if (vaccineDoses.length > 0) {
+              .map(v => v.doseNumber || 0);if (vaccineDoses.length > 0) {
               const maxDose = Math.max(...vaccineDoses);
-              this.suggestedDose = maxDose + 1;
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:464',message:'Setting suggested dose',data:{maxDose,suggestedDose:this.suggestedDose},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-              // #endregion
-              // Update form with suggested dose
+              this.suggestedDose = maxDose + 1;// Update form with suggested dose
               this.vaccinationForm.patchValue({ doseNumber: this.suggestedDose });
             } else {
               // First dose
-              this.suggestedDose = 1;
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:468',message:'No previous doses found, setting to 1',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-              // #endregion
-              this.vaccinationForm.patchValue({ doseNumber: 1 });
+              this.suggestedDose = 1;this.vaccinationForm.patchValue({ doseNumber: 1 });
             }
           },
           error: (error) => {
-            console.warn('Could not load vaccination history for dose suggestion:', error);
-            // #region agent log
-            fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:472',message:'Error loading vaccination history',data:{error:error.message||'Unknown error',status:error.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-            // #endregion
-            // Default to dose 1 if history unavailable
+            console.warn('Could not load vaccination history for dose suggestion:', error);// Default to dose 1 if history unavailable
             this.suggestedDose = 1;
             this.vaccinationForm.patchValue({ doseNumber: 1 });
           }
         });
-      } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:478',message:'No patient ID available',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-        // #endregion
-      }
+      } else {}
     } else {
-      // No patient selected, default to dose 1
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:481',message:'No patient selected, defaulting to dose 1',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'DOSE_ALWAYS_1'})}).catch(()=>{});
-      // #endregion
-      this.suggestedDose = 1;
+      // No patient selected, default to dose 1this.suggestedDose = 1;
       this.vaccinationForm.patchValue({ doseNumber: 1 });
     }
   }
@@ -765,18 +629,8 @@ export class RecordVaccinationComponent implements OnInit {
           this.loadVaccinations();
         }, 500);
         return;
-      }
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:664',message:'Submitting vaccination record',data:{vaccinationData,formValid:this.vaccinationForm.valid,formErrors:Object.keys(this.vaccinationForm.controls).filter(k=>this.vaccinationForm.get(k)?.invalid).map(k=>({field:k,errors:this.vaccinationForm.get(k)?.errors}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'VACCINATION_ERROR'})}).catch(()=>{});
-      // #endregion
-      this.vaccinationService.recordVaccination(vaccinationData).subscribe({
-        next: (response) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:666',message:'Vaccination recorded successfully',data:{responseId:response.id,patientId:response.patientId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'VACCINATION_ERROR'})}).catch(()=>{});
-          // #endregion
-          
-          // If adverse event form is filled, submit it
+      }this.vaccinationService.recordVaccination(vaccinationData).subscribe({
+        next: (response) => {// If adverse event form is filled, submit it
           const adverseEventData = this.vaccinationForm.get('adverseEvent')?.value;
           if (this.showAdverseEventForm && adverseEventData && adverseEventData.severity && adverseEventData.description) {
             // Convert vaccination ID to number if it's a string
@@ -832,19 +686,7 @@ export class RecordVaccinationComponent implements OnInit {
             this.loadVaccinations();
           }
         },
-        error: (error) => {
-          // #region agent log
-          const errorDetails = {
-            status: error.status,
-            statusText: error.statusText,
-            message: error.message,
-            error: error.error,
-            url: error.url,
-            fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
-          };
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:682',message:'Vaccination recording error',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'VACCINATION_ERROR'})}).catch(()=>{});
-          // #endregion
-          this.loading = false;
+        error: (error) => {this.loading = false;
           this.toastService.error('Failed to record vaccination. Please try again.');
           console.error('Error:', error);
         }
@@ -985,26 +827,10 @@ export class RecordVaccinationComponent implements OnInit {
     return new Date().toISOString().split('T')[0];
   }
 
-  checkOfflineStatus(): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:571',message:'checkOfflineStatus entry',data:{hasNavigator:typeof window !== 'undefined' && typeof window.navigator !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    this.showOfflineBanner = !(typeof window !== 'undefined' && window.navigator ? window.navigator.onLine : true);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:573',message:'checkOfflineStatus after setting showOfflineBanner',data:{showOfflineBanner:this.showOfflineBanner},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:577',message:'online event fired',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        this.showOfflineBanner = false;
+  checkOfflineStatus(): void {this.showOfflineBanner = !(typeof window !== 'undefined' && window.navigator ? window.navigator.onLine : true);if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {this.showOfflineBanner = false;
       });
-      window.addEventListener('offline', () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'record-vaccination.component.ts:582',message:'offline event fired',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        this.showOfflineBanner = true;
+      window.addEventListener('offline', () => {this.showOfflineBanner = true;
       });
     }
   }

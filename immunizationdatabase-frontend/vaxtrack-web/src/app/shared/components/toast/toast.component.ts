@@ -70,11 +70,3 @@ export class ToastComponent implements OnInit, OnDestroy {
   }
 }
 
-
-
-
-
-
-
-
-

@@ -16,11 +16,3 @@ export interface SmsLogFilter {
   recipientPhone?: string;
 }
 
-
-
-
-
-
-
-
-

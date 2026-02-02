@@ -1,413 +1,319 @@
-# VaxTrack Web Application
+# 🩺 VaxTrack - Immunization Management System
 
-A comprehensive, responsive Angular web application for managing immunization records, patient data, vaccine stock, and generating coverage reports.
+A comprehensive, full-stack web application for managing immunization records, patient data, vaccine stock, and generating coverage reports for health facilities.
 
-## Features
+## 🌟 Features
 
-### Role-Based Access Control (RBAC)
-- **Admin**: User management, SMS logs, system overview
-- **Vaccinator**: Patient registration, vaccination recording, stock viewing, appointment management
-- **District Officer**: Coverage reports, analytics, data export
+### 👥 Role-Based Access Control (RBAC)
+- **🏥 Health Worker**: Patient registration, vaccination recording, basic reporting
+- **👨‍💼 Facility Manager**: Full facility management, staff oversight, inventory, advanced reporting  
+- **🏛️ Government Official**: System administration, multi-facility oversight, policy management
 
-### Key Functionalities
+### 🔧 Key Functionalities
 
-1. **Authentication & Authorization**
-   - Secure JWT-based authentication
-   - Role-based route guards
-   - Auto-login with token storage
+#### 🔐 Authentication & Authorization
+- Secure JWT-based authentication with 30-minute sessions
+- Role-based route guards and permissions
+- Auto-login with secure token storage
 
-2. **Patient Management**
-   - Patient registration with validation
-   - Patient search (by name, phone, ID)
-   - Patient details and vaccination history
+#### 👤 Patient Management
+- Patient registration with comprehensive validation
+- Advanced search (by name, phone, national ID)
+- Complete vaccination history tracking
+- Guardian information management
 
-3. **Vaccination Recording**
-   - Record vaccinations with batch tracking
-   - Automatic appointment scheduling
-   - Adverse event reporting
-   - Dose number validation
+#### 💉 Vaccination Recording
+- Record vaccinations with batch tracking
+- Automatic next appointment scheduling
+- Adverse event reporting system
+- Dose number validation and scheduling
 
-4. **Stock Management**
-   - Real-time stock levels
-   - Low stock alerts
-   - Batch tracking with expiry dates
-   - Stock status indicators (Good/Low/Critical)
+#### 📦 Stock Management
+- Real-time vaccine stock levels
+- Low stock alerts and notifications
+- Batch tracking with expiry date monitoring
+- Stock status indicators (Good/Low/Critical/Expired)
 
-5. **Appointment Management**
-   - Today's appointments view
-   - Date-based filtering
-   - SMS reminder tracking
+#### 📅 Appointment Management
+- Today's appointments dashboard
+- Date-based filtering and search
+- SMS reminder system integration
+- Appointment status tracking
 
-6. **Reporting & Analytics**
-   - Coverage reports
-   - Vaccination statistics
-   - Penta dropout rate calculation
-   - CSV export functionality
+#### 📊 Reporting & Analytics
+- Vaccination coverage reports
+- Statistical dashboards with charts
+- Dropout rate calculations
+- CSV export functionality
+- Multi-facility reporting (for officials)
 
-## Technology Stack
+## 🛠️ Technology Stack
 
-- **Framework**: Angular 21
+### Frontend
+- **Framework**: Angular 21 with TypeScript
 - **Styling**: SCSS with responsive design
-- **Animations**: Angular Animations
-- **HTTP Client**: Angular HttpClient with interceptors
-- **Date Handling**: date-fns
-- **Charts**: Chart.js (ng2-charts) - ready for implementation
+- **UI Components**: Custom component library
+- **Charts**: Chart.js with ng2-charts
+- **HTTP**: Angular HttpClient with interceptors
+- **Date Handling**: date-fns library
 
-## Project Structure
+### Backend
+- **Framework**: Spring Boot 3.2.0
+- **Language**: Java 17
+- **Security**: Spring Security with JWT
+- **Database**: PostgreSQL with JPA/Hibernate
+- **Migration**: Flyway for database versioning
+- **API**: RESTful APIs with comprehensive validation
+
+### Database
+- **Primary**: PostgreSQL 13+
+- **ORM**: Hibernate with JPA
+- **Migration**: Flyway scripts
+- **Features**: UUID primary keys, soft deletes, audit trails
+
+## 🏗️ Project Structure
 
 ```
-src/app/
-├── core/
-│   ├── models/          # Data models and interfaces
-│   ├── services/        # API services
-│   ├── guards/          # Route guards (auth, role)
-│   └── interceptors/    # HTTP interceptors
-├── pages/
-│   ├── landing/         # Landing page
-│   ├── login/           # Login page
-│   ├── admin/           # Admin dashboard & user management
-│   ├── vaccinator/      # Vaccinator dashboards and features
-│   └── district/       # District officer dashboards and reports
-└── shared/
-    └── components/      # Reusable components (loader, alert, modal, layout)
+VaxTrack/
+├── immunizationdatabase-frontend/vaxtrack-web/    # Angular Frontend
+│   ├── src/app/
+│   │   ├── core/                    # Core services, models, guards
+│   │   ├── pages/                   # Feature pages (admin, manager, vaccinator)
+│   │   └── shared/                  # Shared components and utilities
+│   └── src/environments/            # Environment configurations
+├── immunizationdb-backend/          # Spring Boot Backend
+│   ├── src/main/java/com/immunizationdb/
+│   │   ├── auth/                    # Authentication & authorization
+│   │   ├── patient/                 # Patient management
+│   │   ├── vaccination/             # Vaccination records
+│   │   ├── inventory/               # Stock management
+│   │   └── reporting/               # Reports and analytics
+│   └── src/main/resources/
+│       ├── db/migration/            # Flyway database migrations
+│       └── application.yml          # Application configuration
+└── docs/                            # Documentation and setup scripts
 ```
 
-## Getting Started
+## 🚀 Quick Start (Local Development)
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm (v9 or higher)
-- Angular CLI (v21)
+### 📋 Prerequisites
+- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **Java** 17+ ([Download](https://adoptium.net/))
+- **Maven** 3.6+ ([Download](https://maven.apache.org/))
+- **PostgreSQL** 13+ ([Download](https://www.postgresql.org/))
 
-### Installation
+### ⚡ Automated Setup (Windows)
 
-1. Navigate to the project directory:
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/donjunior01/Immunization-Management-Sytem-group5-project-.git
+   cd Immunization-Management-Sytem-group5-project-
+   ```
+
+2. **Run the setup script**:
+   ```bash
+   setup-local-dev.bat
+   ```
+
+3. **Start the development environment**:
+   ```bash
+   start-dev.bat
+   ```
+
+### 🔧 Manual Setup
+
+#### 1. Database Setup
+```sql
+-- Connect to PostgreSQL as superuser and run:
+CREATE DATABASE immunizationdb;
+CREATE USER root WITH PASSWORD 'root';
+GRANT ALL PRIVILEGES ON DATABASE immunizationdb TO root;
+```
+
+#### 2. Backend Setup
 ```bash
-cd vaxtrack-web
+cd immunizationdb-backend
+mvn clean install
+mvn spring-boot:run
 ```
+Backend will be available at: `http://localhost:8080/api`
 
-2. Install dependencies:
+#### 3. Frontend Setup
 ```bash
+cd immunizationdatabase-frontend/vaxtrack-web
 npm install
-```
-
-3. Configure environment:
-   - Update `src/environments/environment.ts` with your backend API URL
-   - Default: `http://localhost:8080`
-
-4. Start development server:
-```bash
 ng serve
 ```
+Frontend will be available at: `http://localhost:4200`
 
-5. Open browser:
-   - Navigate to `http://localhost:4200`
+## 🔑 Test Credentials
 
-## Build for Production
+| Role | Username | Password | Access Level |
+|------|----------|----------|--------------|
+| Health Worker | `health.worker` | `Password123!` | Patient management, basic reporting |
+| Facility Manager | `facility.manager` | `Password123!` | Full facility management |
+| Government Official | `gov.official` | `Password123!` | System administration |
 
+## 🌐 Live Demo
+
+- **Frontend**: [https://donjunior01.github.io/Immunization-Management-Sytem-group5-project-/](https://donjunior01.github.io/Immunization-Management-Sytem-group5-project-/)
+- **Backend API**: [https://immunizationdb-backend.onrender.com/api](https://immunizationdb-backend.onrender.com/api)
+- **Health Check**: [https://immunizationdb-backend.onrender.com/api/actuator/health](https://immunizationdb-backend.onrender.com/api/actuator/health)
+
+## 📱 API Documentation
+
+### Authentication Endpoints
+- `POST /api/auth/login` - User authentication
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/profile` - Get current user profile
+
+### Core Endpoints
+- `GET /api/patients` - List patients
+- `POST /api/patients` - Create new patient
+- `GET /api/patients/{id}` - Get patient details
+- `POST /api/vaccinations` - Record vaccination
+- `GET /api/vaccinations/patient/{id}` - Get patient vaccinations
+- `GET /api/inventory/stock` - Get stock levels
+- `GET /api/appointments` - List appointments
+- `GET /api/reports/coverage` - Coverage reports
+
+### Admin Endpoints
+- `GET /api/users` - User management
+- `POST /api/users` - Create new user
+- `GET /api/sms/logs` - SMS logs
+
+## ✅ Features Implemented
+
+### Core Features
+- ✅ **Authentication System** - JWT-based with role management
+- ✅ **Patient Registration** - Complete patient lifecycle management
+- ✅ **Vaccination Recording** - Comprehensive vaccination tracking
+- ✅ **Stock Management** - Real-time inventory with alerts
+- ✅ **Appointment System** - Scheduling and reminder system
+- ✅ **Reporting Dashboard** - Analytics and coverage reports
+
+### Technical Features
+- ✅ **Responsive Design** - Mobile-first approach
+- ✅ **Real-time Updates** - Live data synchronization
+- ✅ **Error Handling** - Comprehensive error management
+- ✅ **Loading States** - User-friendly loading indicators
+- ✅ **Form Validation** - Client and server-side validation
+- ✅ **Security** - CORS, CSRF protection, input sanitization
+
+### Advanced Features
+- ✅ **SMS Integration** - Africa's Talking SMS gateway
+- ✅ **Data Export** - CSV export functionality
+- ✅ **Audit Trails** - Complete action logging
+- ✅ **Soft Deletes** - Data preservation with recovery
+- ✅ **Database Migrations** - Version-controlled schema changes
+
+## 📱 Responsive Design
+
+Fully responsive across all devices:
+- **Desktop** (1920px+) - Full dashboard experience
+- **Laptop** (1024px-1920px) - Optimized layouts
+- **Tablet** (768px-1024px) - Touch-friendly interface
+- **Mobile** (320px-768px) - Mobile-first design
+
+## 🌍 Browser Support
+
+- ✅ Chrome (latest)
+- ✅ Firefox (latest)
+- ✅ Safari (latest)
+- ✅ Edge (latest)
+- ✅ Mobile browsers (iOS Safari, Chrome Mobile)
+
+## 🧪 Testing
+
+### Frontend Testing
 ```bash
-ng build --configuration production
+cd immunizationdatabase-frontend/vaxtrack-web
+npm test                    # Run unit tests
+ng e2e                      # Run end-to-end tests
 ```
 
-The build artifacts will be stored in the `dist/` directory.
-
-## API Integration
-
-The application expects a Spring Boot backend with the following endpoints:
-
-- `POST /api/v1/auth/login` - Authentication
-- `GET /api/v1/patients` - Patient management
-- `POST /api/v1/vaccinations` - Vaccination recording
-- `GET /api/v1/stock` - Stock levels
-- `GET /api/v1/appointments` - Appointments
-- `GET /api/v1/reports/coverage` - Coverage reports
-- `GET /api/v1/users` - User management (Admin only)
-- `GET /api/v1/sms-logs` - SMS logs (Admin only)
-
-## Features Implemented
-
-✅ Landing page with feature showcase
-✅ Login page with form validation
-✅ Role-based dashboards
-✅ Patient registration and search
-✅ Vaccination recording with validation
-✅ Stock level viewing with status indicators
-✅ Appointment management
-✅ Coverage reports and analytics
-✅ User management (Admin)
-✅ Responsive design
-✅ Loading states and error handling
-✅ Confirmation modals
-✅ Alert notifications
-✅ Professional animations
-
-## Responsive Design
-
-The application is fully responsive and works on:
-- Desktop (1920px+)
-- Laptop (1024px - 1920px)
-- Tablet (768px - 1024px)
-- Mobile (320px - 768px)
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Development
-
-### Running unit tests
+### Backend Testing
 ```bash
-ng test
+cd immunizationdb-backend
+mvn test                    # Run unit tests
+mvn integration-test        # Run integration tests
 ```
 
-### Code scaffolding
+## 🚀 Deployment
+
+### Production Build
 ```bash
-ng generate component component-name
+# Frontend
+cd immunizationdatabase-frontend/vaxtrack-web
+npm run build:prod
+
+# Backend
+cd immunizationdb-backend
+mvn clean package -Pprod
 ```
 
-## License
-
-This project is part of the Immunization Management System for health facilities in Cameroon.
-
-## Support
-
-For issues or questions, please contact the development team.
-
-│   ├── models/          # Data models and interfaces
-│   ├── services/        # API services
-│   ├── guards/          # Route guards (auth, role)
-│   └── interceptors/    # HTTP interceptors
-├── pages/
-│   ├── landing/         # Landing page
-│   ├── login/           # Login page
-│   ├── admin/           # Admin dashboard & user management
-│   ├── vaccinator/      # Vaccinator dashboards and features
-│   └── district/       # District officer dashboards and reports
-└── shared/
-    └── components/      # Reusable components (loader, alert, modal, layout)
-```
-
-## Getting Started
-
-### Prerequisites
-- Node.js (v18 or higher)
-- npm (v9 or higher)
-- Angular CLI (v21)
-
-### Installation
-
-1. Navigate to the project directory:
+### Docker Deployment
 ```bash
-cd vaxtrack-web
+# Build and run with Docker Compose
+docker-compose up --build
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+### Cloud Deployment
+- **Frontend**: Deployed on GitHub Pages
+- **Backend**: Deployed on Render.com
+- **Database**: PostgreSQL on Render.com
 
-3. Configure environment:
-   - Update `src/environments/environment.ts` with your backend API URL
-   - Default: `http://localhost:8080`
+## 🔧 Development Scripts
 
-4. Start development server:
-```bash
-ng serve
-```
+| Script | Description |
+|--------|-------------|
+| `setup-local-dev.bat` | Complete local development setup |
+| `start-dev.bat` | Start both frontend and backend |
+| `start-frontend.bat` | Start only frontend server |
+| `start-backend.bat` | Start only backend server |
+| `setup-database.sql` | Database initialization script |
 
-5. Open browser:
-   - Navigate to `http://localhost:4200`
+## 📊 System Requirements
 
-## Build for Production
+### Minimum Requirements
+- **RAM**: 4GB
+- **Storage**: 2GB free space
+- **CPU**: Dual-core processor
+- **Network**: Internet connection for API calls
 
-```bash
-ng build --configuration production
-```
+### Recommended Requirements
+- **RAM**: 8GB+
+- **Storage**: 5GB+ free space
+- **CPU**: Quad-core processor
+- **Network**: Stable broadband connection
 
-The build artifacts will be stored in the `dist/` directory.
+## 🤝 Contributing
 
-## API Integration
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-The application expects a Spring Boot backend with the following endpoints:
+## 📄 License
 
-- `POST /api/v1/auth/login` - Authentication
-- `GET /api/v1/patients` - Patient management
-- `POST /api/v1/vaccinations` - Vaccination recording
-- `GET /api/v1/stock` - Stock levels
-- `GET /api/v1/appointments` - Appointments
-- `GET /api/v1/reports/coverage` - Coverage reports
-- `GET /api/v1/users` - User management (Admin only)
-- `GET /api/v1/sms-logs` - SMS logs (Admin only)
+This project is part of the Immunization Management System for health facilities. All rights reserved.
 
-## Features Implemented
+## 🆘 Support & Contact
 
-✅ Landing page with feature showcase
-✅ Login page with form validation
-✅ Role-based dashboards
-✅ Patient registration and search
-✅ Vaccination recording with validation
-✅ Stock level viewing with status indicators
-✅ Appointment management
-✅ Coverage reports and analytics
-✅ User management (Admin)
-✅ Responsive design
-✅ Loading states and error handling
-✅ Confirmation modals
-✅ Alert notifications
-✅ Professional animations
+- **Issues**: [GitHub Issues](https://github.com/donjunior01/Immunization-Management-Sytem-group5-project-/issues)
+- **Documentation**: Check the `/docs` folder for detailed guides
+- **Email**: Contact the development team for enterprise support
 
-## Responsive Design
+## 🎯 Roadmap
 
-The application is fully responsive and works on:
-- Desktop (1920px+)
-- Laptop (1024px - 1920px)
-- Tablet (768px - 1024px)
-- Mobile (320px - 768px)
+### Upcoming Features
+- 📱 Mobile app (React Native)
+- 🔔 Push notifications
+- 📈 Advanced analytics dashboard
+- 🌍 Multi-language support
+- 📋 QR code integration
 
-## Browser Support
+---
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Development
-
-### Running unit tests
-```bash
-ng test
-```
-
-### Code scaffolding
-```bash
-ng generate component component-name
-```
-
-## License
-
-This project is part of the Immunization Management System for health facilities in Cameroon.
-
-## Support
-
-For issues or questions, please contact the development team.
-
-│   ├── models/          # Data models and interfaces
-│   ├── services/        # API services
-│   ├── guards/          # Route guards (auth, role)
-│   └── interceptors/    # HTTP interceptors
-├── pages/
-│   ├── landing/         # Landing page
-│   ├── login/           # Login page
-│   ├── admin/           # Admin dashboard & user management
-│   ├── vaccinator/      # Vaccinator dashboards and features
-│   └── district/       # District officer dashboards and reports
-└── shared/
-    └── components/      # Reusable components (loader, alert, modal, layout)
-```
-
-## Getting Started
-
-### Prerequisites
-- Node.js (v18 or higher)
-- npm (v9 or higher)
-- Angular CLI (v21)
-
-### Installation
-
-1. Navigate to the project directory:
-```bash
-cd vaxtrack-web
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Configure environment:
-   - Update `src/environments/environment.ts` with your backend API URL
-   - Default: `http://localhost:8080`
-
-4. Start development server:
-```bash
-ng serve
-```
-
-5. Open browser:
-   - Navigate to `http://localhost:4200`
-
-## Build for Production
-
-```bash
-ng build --configuration production
-```
-
-The build artifacts will be stored in the `dist/` directory.
-
-## API Integration
-
-The application expects a Spring Boot backend with the following endpoints:
-
-- `POST /api/v1/auth/login` - Authentication
-- `GET /api/v1/patients` - Patient management
-- `POST /api/v1/vaccinations` - Vaccination recording
-- `GET /api/v1/stock` - Stock levels
-- `GET /api/v1/appointments` - Appointments
-- `GET /api/v1/reports/coverage` - Coverage reports
-- `GET /api/v1/users` - User management (Admin only)
-- `GET /api/v1/sms-logs` - SMS logs (Admin only)
-
-## Features Implemented
-
-✅ Landing page with feature showcase
-✅ Login page with form validation
-✅ Role-based dashboards
-✅ Patient registration and search
-✅ Vaccination recording with validation
-✅ Stock level viewing with status indicators
-✅ Appointment management
-✅ Coverage reports and analytics
-✅ User management (Admin)
-✅ Responsive design
-✅ Loading states and error handling
-✅ Confirmation modals
-✅ Alert notifications
-✅ Professional animations
-
-## Responsive Design
-
-The application is fully responsive and works on:
-- Desktop (1920px+)
-- Laptop (1024px - 1920px)
-- Tablet (768px - 1024px)
-- Mobile (320px - 768px)
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Development
-
-### Running unit tests
-```bash
-ng test
-```
-
-### Code scaffolding
-```bash
-ng generate component component-name
-```
-
-## License
-
-This project is part of the Immunization Management System for health facilities in Cameroon.
-
-## Support
-
-For issues or questions, please contact the development team.
+**🎉 VaxTrack - Making immunization management simple, efficient, and accessible for everyone.**

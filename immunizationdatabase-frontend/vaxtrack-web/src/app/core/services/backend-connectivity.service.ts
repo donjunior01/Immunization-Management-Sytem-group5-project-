@@ -71,11 +71,3 @@ export class BackendConnectivityService {
   }
 }
 
-
-
-
-
-
-
-
-

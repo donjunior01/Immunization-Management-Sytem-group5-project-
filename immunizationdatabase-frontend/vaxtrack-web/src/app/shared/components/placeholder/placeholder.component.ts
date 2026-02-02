@@ -56,11 +56,3 @@ export class PlaceholderComponent {
   @Input() icon = '🚧';
 }
 
-
-
-
-
-
-
-
-
