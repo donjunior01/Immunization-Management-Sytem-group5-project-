@@ -56,7 +56,7 @@ logging:
     org.springframework.web: WARN
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
-    org.springframework.boot.autoconfigure.flyway: DEBUG  # Debug Flyway issues
+    org.springframework.boot.autoconfigure.flyway: INFO  # Monitor Flyway operations
   file:
     name: ${LOG_FILE:logs/immunizationdb.log}
   pattern:
