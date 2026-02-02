@@ -24,9 +24,6 @@ public class FlywayConfig {
                 .baselineOnMigrate(true)
                 .validateOnMigrate(false)
                 .outOfOrder(true)
-                .ignoreMissingMigrations(true)
-                .ignoreFutureMigrations(true)
-                .cleanDisabled(false)
                 .load();
 
         try {
