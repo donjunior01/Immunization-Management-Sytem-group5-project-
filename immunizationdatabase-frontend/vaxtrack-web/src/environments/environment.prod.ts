@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.vaxtrack.com',
+  apiUrl: 'https://immunizationdb-backend.onrender.com/api', // Update this with your actual backend URL
   useMockAuth: false,
   enableApiLogging: false,
   enableErrorRetry: true,
