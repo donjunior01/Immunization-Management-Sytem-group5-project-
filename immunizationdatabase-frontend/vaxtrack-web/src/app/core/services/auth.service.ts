@@ -39,7 +39,7 @@ export class AuthService {
       password: credentials.password
     };
 
-    return this.http.post<any>(`${this.apiUrl}/api/auth/login`, requestBody)
+    return this.http.post<any>(`${this.apiUrl}/auth/login`, requestBody)
       .pipe(
         map(response => {
           if (!response || !response.token) {
@@ -211,7 +211,7 @@ export class AuthService {
 
     // Call backend logout endpoint if not using mock auth
     if (!environment.useMockAuth && this.isAuthenticated()) {
-      this.http.post(`${this.apiUrl}/api/auth/logout`, {}).subscribe({
+      this.http.post(`${this.apiUrl}/auth/logout`, {}).subscribe({
         next: () => {
           this.clearSession();
         },
@@ -372,7 +372,7 @@ return isExpired;
    * Refresh JWT token
    */
   refreshToken(refreshToken: string): Observable<LoginResponse> {
-    return this.http.post<any>(`${this.apiUrl}/api/auth/refresh`, { refreshToken })
+    return this.http.post<any>(`${this.apiUrl}/auth/refresh`, { refreshToken })
       .pipe(
         map(response => {
           if (!response || !response.token) {
@@ -446,7 +446,7 @@ return isExpired;
    * Get current user profile from backend
    */
   getProfile(): Observable<User> {
-    return this.http.get<any>(`${this.apiUrl}/api/auth/profile`)
+    return this.http.get<any>(`${this.apiUrl}/auth/profile`)
       .pipe(
         map(userData => {
           const fullName = userData.fullName || userData.name || '';

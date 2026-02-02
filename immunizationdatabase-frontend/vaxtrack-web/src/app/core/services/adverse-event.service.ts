@@ -12,15 +12,15 @@ export class AdverseEventService {
   private apiUrl = environment.apiUrl;
 
   createAdverseEvent(request: CreateAdverseEventRequest): Observable<AdverseEvent> {
-    return this.http.post<AdverseEvent>(`${this.apiUrl}/api/v1/adverse-events`, request);
+    return this.http.post<AdverseEvent>(`${this.apiUrl}/v1/adverse-events`, request);
   }
 
   getPatientAdverseEvents(patientId: string): Observable<AdverseEvent[]> {
-    return this.http.get<AdverseEvent[]>(`${this.apiUrl}/api/v1/adverse-events/patient/${patientId}`);
+    return this.http.get<AdverseEvent[]>(`${this.apiUrl}/v1/adverse-events/patient/${patientId}`);
   }
 
   getVaccinationAdverseEvents(vaccinationId: string): Observable<AdverseEvent[]> {
-    return this.http.get<AdverseEvent[]>(`${this.apiUrl}/api/v1/adverse-events/vaccination/${vaccinationId}`);
+    return this.http.get<AdverseEvent[]>(`${this.apiUrl}/v1/adverse-events/vaccination/${vaccinationId}`);
   }
 }
 

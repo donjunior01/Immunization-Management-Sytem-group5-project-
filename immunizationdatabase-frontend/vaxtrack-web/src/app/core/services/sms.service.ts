@@ -26,7 +26,7 @@ export class SmsService {
     if (filter?.recipientPhone && filter.recipientPhone.trim() !== '') {
       params = params.set('recipient_phone', filter.recipientPhone);
     }
-return this.http.get<any[]>(`${this.apiUrl}/api/sms-logs`, { params }).pipe(
+return this.http.get<any[]>(`${this.apiUrl}/sms-logs`, { params }).pipe(
       map((logs: any[]) => logs.map(log => ({
         id: String(log.id || ''),
         recipientPhone: log.recipientPhone || '',
@@ -41,11 +41,11 @@ return this.http.get<any[]>(`${this.apiUrl}/api/sms-logs`, { params }).pipe(
   }
 
   getSmsLogById(id: string): Observable<SmsLog> {
-    return this.http.get<SmsLog>(`${this.apiUrl}/api/sms-logs/${id}`);
+    return this.http.get<SmsLog>(`${this.apiUrl}/sms-logs/${id}`);
   }
 
   sendSms(phone: string, message: string): Observable<SmsLog> {
-return this.http.post<any>(`${this.apiUrl}/api/sms-logs/send`, { phone, message }).pipe(
+return this.http.post<any>(`${this.apiUrl}/sms-logs/send`, { phone, message }).pipe(
       map((response: any) => ({
         id: String(response.id || ''),
         recipientPhone: response.recipientPhone || '',
@@ -60,7 +60,7 @@ return this.http.post<any>(`${this.apiUrl}/api/sms-logs/send`, { phone, message 
   }
 
   deleteSmsLog(id: string): Observable<void> {
-return this.http.delete<void>(`${this.apiUrl}/api/sms-logs/${id}`);
+return this.http.delete<void>(`${this.apiUrl}/sms-logs/${id}`);
   }
 }
 

@@ -13,11 +13,11 @@ export class VaccinationService {
   private apiUrl = environment.apiUrl;
 
   getAllVaccines(): Observable<Vaccine[]> {
-    return this.http.get<Vaccine[]>(`${this.apiUrl}/api/inventory/vaccines`);
+    return this.http.get<Vaccine[]>(`${this.apiUrl}/inventory/vaccines`);
   }
 
   recordVaccination(vaccination: CreateVaccinationRequest): Observable<VaccinationRecord> {
-    return this.http.post<any>(`${this.apiUrl}/api/vaccinations`, vaccination).pipe(
+    return this.http.post<any>(`${this.apiUrl}/vaccinations`, vaccination).pipe(
       map((response: any) => ({
         id: String(response.id || ''),
         patientId: String(response.patientId || ''),
@@ -42,19 +42,19 @@ export class VaccinationService {
   }
 
   getVaccinationById(id: string): Observable<VaccinationRecord> {
-    return this.http.get<VaccinationRecord>(`${this.apiUrl}/api/vaccinations/${id}`);
+    return this.http.get<VaccinationRecord>(`${this.apiUrl}/vaccinations/${id}`);
   }
 
   reportAdverseEvent(adverseEvent: Partial<AdverseEvent>): Observable<AdverseEvent> {
-    return this.http.post<AdverseEvent>(`${this.apiUrl}/api/adverse-events`, adverseEvent);
+    return this.http.post<AdverseEvent>(`${this.apiUrl}/adverse-events`, adverseEvent);
   }
 
   getPatientVaccinations(patientId: string): Observable<VaccinationRecord[]> {
-    return this.http.get<VaccinationRecord[]>(`${this.apiUrl}/api/patients/${patientId}/vaccinations`);
+    return this.http.get<VaccinationRecord[]>(`${this.apiUrl}/patients/${patientId}/vaccinations`);
   }
 
   getVaccinationsByFacility(facilityId: string): Observable<VaccinationRecord[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/vaccinations/facility/${facilityId}`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/vaccinations/facility/${facilityId}`).pipe(
       map((vaccinations: any[]) => vaccinations.map(v => ({
         id: String(v.id || ''),
         patientId: String(v.patientId || ''),
@@ -77,7 +77,7 @@ export class VaccinationService {
   }
 
   getVaccinationsByDateRange(facilityId: string, startDate: string, endDate: string): Observable<VaccinationRecord[]> {
-    return this.http.get<VaccinationRecord[]>(`${this.apiUrl}/api/vaccinations/facility/${facilityId}`, {
+    return this.http.get<VaccinationRecord[]>(`${this.apiUrl}/vaccinations/facility/${facilityId}`, {
       params: { startDate, endDate }
     });
   }

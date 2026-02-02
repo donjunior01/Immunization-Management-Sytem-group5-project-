@@ -28,7 +28,7 @@ export class PatientService {
       backendRequest.facilityId = patient.facilityId;
     }
     
-    return this.http.post<any>(`${this.apiUrl}/api/patients`, backendRequest).pipe(
+    return this.http.post<any>(`${this.apiUrl}/patients`, backendRequest).pipe(
       map(response => this.mapBackendToFrontend(response))
     );
   }
@@ -43,7 +43,7 @@ export class PatientService {
     if (facilityId) {
       params = params.set('facilityId', facilityId);
     }
-    return this.http.get<any[]>(`${this.apiUrl}/api/patients/search`, { params }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/patients/search`, { params }).pipe(
       map(response => {
         if (Array.isArray(response)) {
           return {
@@ -61,7 +61,7 @@ export class PatientService {
   }
 
   getPatientById(id: string): Observable<PatientDetail> {
-    return this.http.get<any>(`${this.apiUrl}/api/patients/${id}`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/patients/${id}`).pipe(
       map(response => {
         const patient = this.mapBackendToFrontend(response);
         return {
@@ -119,18 +119,18 @@ export class PatientService {
 
   getPatientVaccinations(patientId: string): Observable<any[]> {
     // Try new endpoint first, fallback to old endpoint
-    return this.http.get<any[]>(`${this.apiUrl}/api/patients/${patientId}/vaccinations`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/patients/${patientId}/vaccinations`).pipe(
       // If new endpoint fails, try old endpoint
-      // catchError(() => this.http.get<any[]>(`${this.apiUrl}/api/vaccinations/patient/${patientId}`))
+      // catchError(() => this.http.get<any[]>(`${this.apiUrl}/vaccinations/patient/${patientId}`))
     );
   }
 
   updatePatient(id: string, patient: Partial<CreatePatientRequest>): Observable<Patient> {
-    return this.http.put<Patient>(`${this.apiUrl}/api/patients/${id}`, patient);
+    return this.http.put<Patient>(`${this.apiUrl}/patients/${id}`, patient);
   }
 
   getPatientsByFacility(facilityId: string): Observable<Patient[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/patients/facility/${facilityId}`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/patients/facility/${facilityId}`).pipe(
       map(response => response.map(p => this.mapBackendToFrontend(p)))
     );
   }

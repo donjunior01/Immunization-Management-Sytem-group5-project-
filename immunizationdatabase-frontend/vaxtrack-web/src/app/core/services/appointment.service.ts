@@ -16,7 +16,7 @@ export class AppointmentService {
     let params = new HttpParams();
     if (facilityId) params = params.set('facilityId', facilityId);
     if (date) params = params.set('date', date);
-    return this.http.get<any[]>(`${this.apiUrl}/api/appointments`, { params }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/appointments`, { params }).pipe(
       timeout(8000), // 8 second timeout
       map((responses: any[]) => responses.map(response => this.mapBackendToFrontend(response))),
       catchError(error => {
@@ -76,30 +76,30 @@ export class AppointmentService {
   }
 
   getAppointmentById(id: string): Observable<Appointment> {
-    return this.http.get<any>(`${this.apiUrl}/api/appointments/${id}`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/appointments/${id}`).pipe(
       map(response => this.mapBackendToFrontend(response))
     );
   }
 
   createAppointment(appointment: CreateAppointmentRequest): Observable<Appointment> {
-    return this.http.post<any>(`${this.apiUrl}/api/appointments`, appointment).pipe(
+    return this.http.post<any>(`${this.apiUrl}/appointments`, appointment).pipe(
       map(response => this.mapBackendToFrontend(response))
     );
   }
 
   updateAppointment(id: string, appointment: UpdateAppointmentRequest | CreateAppointmentRequest): Observable<Appointment> {
-    return this.http.put<any>(`${this.apiUrl}/api/appointments/${id}`, appointment).pipe(
+    return this.http.put<any>(`${this.apiUrl}/appointments/${id}`, appointment).pipe(
       map(response => this.mapBackendToFrontend(response))
     );
   }
 
   deleteAppointment(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/api/appointments/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/appointments/${id}`);
   }
 
   getPatientAppointments(patientId: string): Observable<Appointment[]> {
     const params = new HttpParams().set('patientId', patientId);
-    return this.http.get<any[]>(`${this.apiUrl}/api/appointments`, { params }).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/appointments`, { params }).pipe(
       map((responses: any[]) => responses.map(response => this.mapBackendToFrontend(response)))
     );
   }

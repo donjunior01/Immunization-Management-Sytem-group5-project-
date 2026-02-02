@@ -61,7 +61,7 @@ let params = new HttpParams();
     if (facilityId) {
       params = params.set('facilityId', facilityId);
     }
-    const url = `${this.apiUrl}/api/campaigns`;
+    const url = `${this.apiUrl}/campaigns`;
 return this.http.get<any[]>(url, { params }).pipe(
 // Map backend response to frontend Campaign interface
       map((response: any[]): Campaign[] => {
@@ -93,7 +93,7 @@ let params = new HttpParams();
     if (facilityId) {
       params = params.set('facilityId', facilityId);
     }
-    const url = `${this.apiUrl}/api/campaigns/active`;
+    const url = `${this.apiUrl}/campaigns/active`;
 return this.http.get<any[]>(url, { params }).pipe(
 // Map backend response to frontend Campaign interface
       map((response: any[]): Campaign[] => {
@@ -121,17 +121,17 @@ return this.http.get<any[]>(url, { params }).pipe(
   }
 
   getCampaignsByFacility(facilityId: string): Observable<Campaign[]> {
-    return this.http.get<Campaign[]>(`${this.apiUrl}/api/campaigns/facility/${facilityId}`);
+    return this.http.get<Campaign[]>(`${this.apiUrl}/campaigns/facility/${facilityId}`);
   }
 
   getCampaignsByDistrict(districtId: string): Observable<Campaign[]> {
     // Get all facilities in district, then get campaigns for each
     // For now, we'll use active campaigns endpoint with district filter
-    return this.http.get<Campaign[]>(`${this.apiUrl}/api/campaigns/active`);
+    return this.http.get<Campaign[]>(`${this.apiUrl}/campaigns/active`);
   }
 
   createCampaign(campaign: CreateCampaignRequest): Observable<Campaign> {
-return this.http.post<any>(`${this.apiUrl}/api/campaigns`, campaign).pipe(
+return this.http.post<any>(`${this.apiUrl}/campaigns`, campaign).pipe(
 // Map backend response to frontend Campaign interface
       map((response: any): Campaign => ({
         id: response.id,
@@ -157,7 +157,7 @@ return this.http.post<any>(`${this.apiUrl}/api/campaigns`, campaign).pipe(
 
   updateCampaignStatus(campaignId: number, status: Campaign['status']): Observable<Campaign> {
 const params = new HttpParams().set('status', status);
-    return this.http.patch<Campaign>(`${this.apiUrl}/api/campaigns/${campaignId}/status`, null, {
+    return this.http.patch<Campaign>(`${this.apiUrl}/campaigns/${campaignId}/status`, null, {
       params
     });
   }

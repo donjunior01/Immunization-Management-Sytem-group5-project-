@@ -13,27 +13,27 @@ export class UserService {
   private apiUrl = environment.apiUrl;
 
   getAllUsers(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/api/users`);
+    return this.http.get<User[]>(`${this.apiUrl}/users`);
   }
 
   getUserById(id: string): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/api/users/${id}`);
+    return this.http.get<User>(`${this.apiUrl}/users/${id}`);
   }
 
   createUser(user: CreateUserRequest): Observable<User> {
-    return this.http.post<User>(`${this.apiUrl}/api/users`, user);
+    return this.http.post<User>(`${this.apiUrl}/users`, user);
   }
 
   updateUser(id: string, user: UpdateUserRequest): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/api/users/${id}`, user);
+    return this.http.put<User>(`${this.apiUrl}/users/${id}`, user);
   }
 
   deleteUser(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/api/users/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/users/${id}`);
   }
 
   getFacilityStaff(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/api/users/facility/staff`).pipe(
+    return this.http.get<User[]>(`${this.apiUrl}/users/facility/staff`).pipe(
       timeout(8000), // 8 second timeout
       catchError(error => {
         console.error('Error fetching facility staff:', error);
@@ -43,7 +43,7 @@ export class UserService {
   }
 
   deactivateUser(id: string): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/api/users/${id}/deactivate`, {});
+    return this.http.put<User>(`${this.apiUrl}/users/${id}/deactivate`, {});
   }
 }
 

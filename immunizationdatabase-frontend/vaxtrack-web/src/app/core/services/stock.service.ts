@@ -36,7 +36,7 @@ export class StockService {
       params = params.set('facility_id', facilityId);
     }
     // Use the new stock endpoint - /api/v1/stock (context path /api + /v1/stock)
-    return this.http.get<StockLevel[]>(`${this.apiUrl}/api/v1/stock`, { params }).pipe(
+    return this.http.get<StockLevel[]>(`${this.apiUrl}/v1/stock`, { params }).pipe(
       map((stockLevels: StockLevel[]) => {
         // Map the response to match the StockLevel interface
         return stockLevels.map((stock: any) => ({
@@ -55,12 +55,12 @@ export class StockService {
 
   receiveStock(receipt: ReceiveStockRequest): Observable<any> {
     // Use the new endpoint: /api/v1/stock/receive
-    return this.http.post<any>(`${this.apiUrl}/api/v1/stock/receive`, receipt);
+    return this.http.post<any>(`${this.apiUrl}/v1/stock/receive`, receipt);
   }
 
   adjustStock(adjustment: AdjustStockRequest): Observable<any> {
     // Use the new endpoint: /api/v1/stock/adjust
-    return this.http.post<any>(`${this.apiUrl}/api/v1/stock/adjust`, adjustment);
+    return this.http.post<any>(`${this.apiUrl}/v1/stock/adjust`, adjustment);
   }
 
   getStockMovements(facilityId?: string, startDate?: string, endDate?: string): Observable<StockMovement[]> {
@@ -68,7 +68,7 @@ export class StockService {
     if (facilityId) params = params.set('facility_id', facilityId);
     if (startDate) params = params.set('start_date', startDate);
     if (endDate) params = params.set('end_date', endDate);
-    return this.http.get<StockMovement[]>(`${this.apiUrl}/api/inventory/stock/movements`, { params });
+    return this.http.get<StockMovement[]>(`${this.apiUrl}/inventory/stock/movements`, { params });
   }
 
   getBatchesByVaccine(vaccineId: string, facilityId?: string): Observable<VaccineBatch[]> {
@@ -79,7 +79,7 @@ export class StockService {
       const encodedVaccineName = encodeURIComponent(vaccineId);
       console.log('Loading batches for vaccine:', vaccineId, 'encoded:', encodedVaccineName, 'facilityId:', facilityId);
       // Use the new endpoint for getting batches by vaccine name and facility
-      return this.http.get<BatchResponse[]>(`${this.apiUrl}/api/inventory/batches/available/${facilityId}/vaccine/${encodedVaccineName}`).pipe(
+      return this.http.get<BatchResponse[]>(`${this.apiUrl}/inventory/batches/available/${facilityId}/vaccine/${encodedVaccineName}`).pipe(
         map((batches: BatchResponse[]) => {
           console.log(`Received ${batches.length} batches from backend for vaccine: ${vaccineId}`);
           return batches.map(b => ({
@@ -98,7 +98,7 @@ export class StockService {
     } else {
       // Fallback to batches endpoint with vaccine_name filter
       let params = new HttpParams().set('vaccine_name', vaccineId);
-      return this.http.get<BatchResponse[]>(`${this.apiUrl}/api/inventory/batches`, { params }).pipe(
+      return this.http.get<BatchResponse[]>(`${this.apiUrl}/inventory/batches`, { params }).pipe(
         map((batches: BatchResponse[]) => batches.map(b => ({
           id: String(b.id || ''),
           vaccineId: String(b.vaccineId || b.vaccine_id || vaccineId),
@@ -119,7 +119,7 @@ export class StockService {
     if (facilityId) {
       params = params.set('facilityId', facilityId);
     }
-    return this.http.get<BatchResponse[]>(`${this.apiUrl}/api/inventory/batches/expiring`, { params }).pipe(
+    return this.http.get<BatchResponse[]>(`${this.apiUrl}/inventory/batches/expiring`, { params }).pipe(
       map((batches: BatchResponse[]) => batches.map(b => ({
         id: String(b.id || ''),
         vaccineId: String(b.vaccineId || b.vaccine_id || ''),
