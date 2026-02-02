@@ -32,7 +32,7 @@ try {
 
     // Build the Angular application for production
     console.log('🔨 Building Angular application for production...');
-    execSync('npm run build', { stdio: 'inherit' });
+    execSync('npm run build -- --base-href="/Immunization-Management-System-group5-project-/"', { stdio: 'inherit' });
     
     // Check if build was successful
     if (!fs.existsSync(distDir)) {
