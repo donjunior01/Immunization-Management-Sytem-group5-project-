@@ -9,9 +9,9 @@ const GITHUB_PAGES_URL = 'https://donjunior01.github.io/Immunization-Management-
 const BACKEND_URL = 'https://immunizationdb-backend.onrender.com';
 const EXPECTED_FILES = [
     'index.html',
-    'main-HB6HUT7Z.js',
+    'main-RYHK4SEP.js',
     'chunk-T4RMSDZY.js',
-    'chunk-H32AX7W2.js',
+    'chunk-K3XQKY74.js',
     'chunk-MLMGL4QO.js',
     'styles-5INURTSO.css',
     'favicon.ico'
