@@ -1,401 +1,101 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
-console.log('🚀 Building VaxTrack for GitHub Pages deployment...');
+console.log('🚀 Building VaxTrack Angular App for GitHub Pages deployment...');
 
-// Create deployment directory
+// Define paths
+const frontendDir = path.join(__dirname, 'immunizationdatabase-frontend', 'vaxtrack-web');
 const deployDir = path.join(__dirname);
+const distDir = path.join(frontendDir, 'dist', 'vaxtrack-web');
+
+console.log('📁 Frontend directory:', frontendDir);
 console.log('📁 Deploy directory:', deployDir);
+console.log('📁 Dist directory:', distDir);
 
-// Enhanced HTML with full functionality
-const deploymentHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VaxTrack - Immunization Management System</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        
-        .header {
-            text-align: center;
-            padding: 40px 20px;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            margin-bottom: 30px;
-        }
-        
-        .header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-        
-        .card {
-            background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 15px;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card h3 {
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 10px;
-        }
-        
-        .status-online { background: #4CAF50; }
-        .status-offline { background: #f44336; }
-        .status-testing { background: #ff9800; animation: pulse 2s infinite; }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        .button {
-            padding: 12px 24px;
-            background: white;
-            color: #667eea;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-            margin: 8px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-        
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        
-        .button.primary {
-            background: #4CAF50;
-            color: white;
-        }
-        
-        .button.secondary {
-            background: #2196F3;
-            color: white;
-        }
-        
-        .logs {
-            background: rgba(0,0,0,0.3);
-            padding: 20px;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 20px;
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 40px 20px;
-            background: rgba(0,0,0,0.2);
-            margin-top: 50px;
-        }
-        
-        .deployment-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-        }
-        
-        .info-item {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .loading {
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top: 3px solid white;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 768px) {
-            .header h1 { font-size: 2em; }
-            .dashboard { grid-template-columns: 1fr; }
-            .container { padding: 0 15px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🏥 VaxTrack</h1>
-        <p>Immunization Management System - GitHub Pages Deployment</p>
-    </div>
+// Check if frontend directory exists
+if (!fs.existsSync(frontendDir)) {
+    console.error('❌ Frontend directory not found:', frontendDir);
+    process.exit(1);
+}
 
-    <div class="container">
-        <div class="dashboard">
-            <div class="card">
-                <h3>🌐 Frontend Status</h3>
-                <p>✅ Successfully deployed on GitHub Pages</p>
-                <p>🔗 URL: <span id="current-url"></span></p>
-                <p>📅 Deployed: <span id="deploy-time"></span></p>
-                <div class="status-indicator status-online"></div>
-            </div>
+// Change to frontend directory and build
+process.chdir(frontendDir);
+console.log('📂 Changed to frontend directory');
 
-            <div class="card">
-                <h3>🖥️ Backend Status</h3>
-                <p id="backend-status">🔄 Testing connection...</p>
-                <p>🔗 URL: https://immunizationdb-backend.onrender.com</p>
-                <div id="backend-indicator" class="status-indicator status-testing"></div>
-                <div style="margin-top: 15px;">
-                    <button class="button primary" onclick="testBackend()">🔄 Test Now</button>
-                </div>
-            </div>
+try {
+    // Install dependencies if node_modules doesn't exist
+    if (!fs.existsSync('node_modules')) {
+        console.log('📦 Installing dependencies...');
+        execSync('npm install', { stdio: 'inherit' });
+    }
 
-            <div class="card">
-                <h3>🗄️ Database Status</h3>
-                <p id="database-status">🔄 Testing through backend...</p>
-                <p>💾 Type: PostgreSQL on Render</p>
-                <div id="database-indicator" class="status-indicator status-testing"></div>
-            </div>
+    // Build the Angular application for production
+    console.log('🔨 Building Angular application for production...');
+    execSync('npm run build', { stdio: 'inherit' });
+    
+    // Check if build was successful
+    if (!fs.existsSync(distDir)) {
+        console.error('❌ Build failed - dist directory not found');
+        process.exit(1);
+    }
 
-            <div class="card">
-                <h3>🧪 System Tests</h3>
-                <button class="button secondary" onclick="runFullTest()">🧪 Full System Test</button>
-                <button class="button" onclick="testAPI()">📡 API Test</button>
-                <button class="button" onclick="clearLogs()">🗑️ Clear Logs</button>
-                <div id="test-results" style="margin-top: 15px;"></div>
-            </div>
-        </div>
+    console.log('✅ Angular build completed successfully');
 
-        <div class="card">
-            <h3>📊 Deployment Information</h3>
-            <div class="deployment-info">
-                <div class="info-item">
-                    <strong>Frontend</strong><br>
-                    GitHub Pages<br>
-                    <small>Static Site Hosting</small>
-                </div>
-                <div class="info-item">
-                    <strong>Backend</strong><br>
-                    Render.com<br>
-                    <small>Spring Boot + PostgreSQL</small>
-                </div>
-                <div class="info-item">
-                    <strong>Repository</strong><br>
-                    GitHub<br>
-                    <small>donjunior01/Immunization-Management-System</small>
-                </div>
-                <div class="info-item">
-                    <strong>Branch</strong><br>
-                    gh-pages<br>
-                    <small>Deployment Branch</small>
-                </div>
-            </div>
-        </div>
+    // Copy built files to deployment directory
+    console.log('📋 Copying built files to deployment directory...');
+    
+    // Get list of files in dist directory
+    const distFiles = fs.readdirSync(distDir);
+    console.log('📄 Files to copy:', distFiles);
 
-        <div class="card">
-            <h3>📝 System Logs</h3>
-            <div id="logs" class="logs">
-                <div>🚀 VaxTrack System Initialized</div>
-                <div>📅 ${new Date().toLocaleString()}</div>
-                <div>🌐 Frontend: GitHub Pages deployment successful</div>
-                <div>🔄 Starting backend connectivity tests...</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="footer">
-        <p>🏥 VaxTrack Immunization Management System</p>
-        <p>Deployed on GitHub Pages | Backend on Render.com</p>
-        <p><small>© 2026 - Built with ❤️ for healthcare management</small></p>
-    </div>
-
-    <script>
-        // Initialize page
-        document.getElementById('current-url').textContent = window.location.href;
-        document.getElementById('deploy-time').textContent = new Date().toLocaleString();
+    // Copy each file from dist to root
+    distFiles.forEach(file => {
+        const srcPath = path.join(distDir, file);
+        const destPath = path.join(deployDir, file);
         
-        const logs = document.getElementById('logs');
-        
-        function addLog(message, type = 'info') {
-            const logEntry = document.createElement('div');
-            logEntry.innerHTML = \`[\${new Date().toLocaleTimeString()}] \${message}\`;
-            if (type === 'error') logEntry.style.color = '#ffcccb';
-            if (type === 'success') logEntry.style.color = '#90EE90';
-            logs.appendChild(logEntry);
-            logs.scrollTop = logs.scrollHeight;
+        if (fs.statSync(srcPath).isDirectory()) {
+            // Copy directory recursively
+            copyDirectory(srcPath, destPath);
+        } else {
+            // Copy file
+            fs.copyFileSync(srcPath, destPath);
         }
-        
-        function clearLogs() {
-            logs.innerHTML = '<div>📝 Logs cleared</div>';
-        }
-        
-        async function testBackend() {
-            const statusEl = document.getElementById('backend-status');
-            const indicatorEl = document.getElementById('backend-indicator');
-            
-            addLog('🔄 Testing backend connection...');
-            statusEl.innerHTML = '<div class="loading"></div>Testing connection...';
-            indicatorEl.className = 'status-indicator status-testing';
-            
-            try {
-                const response = await fetch('https://immunizationdb-backend.onrender.com/api/actuator/health', {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    statusEl.innerHTML = \`✅ Backend Online (\${data.status})\`;
-                    indicatorEl.className = 'status-indicator status-online';
-                    addLog(\`✅ Backend connected successfully: \${data.status}\`, 'success');
-                    
-                    // Test database through backend
-                    testDatabase(data);
-                } else {
-                    statusEl.innerHTML = \`❌ Backend Error (HTTP \${response.status})\`;
-                    indicatorEl.className = 'status-indicator status-offline';
-                    addLog(\`❌ Backend error: HTTP \${response.status}\`, 'error');
-                }
-            } catch (error) {
-                statusEl.innerHTML = \`❌ Backend Unreachable\`;
-                indicatorEl.className = 'status-indicator status-offline';
-                addLog(\`❌ Backend connection failed: \${error.message}\`, 'error');
-            }
-        }
-        
-        function testDatabase(healthData) {
-            const statusEl = document.getElementById('database-status');
-            const indicatorEl = document.getElementById('database-indicator');
-            
-            if (healthData && healthData.status === 'UP') {
-                statusEl.innerHTML = '✅ Database Connected';
-                indicatorEl.className = 'status-indicator status-online';
-                addLog('✅ Database connection verified through backend', 'success');
-            } else {
-                statusEl.innerHTML = '❌ Database Issues';
-                indicatorEl.className = 'status-indicator status-offline';
-                addLog('❌ Database connection issues detected', 'error');
-            }
-        }
-        
-        async function testAPI() {
-            addLog('📡 Testing API endpoints...');
-            
-            const endpoints = [
-                '/api/actuator/health',
-                '/api/auth/login',
-                '/api/patients',
-                '/api/vaccinations'
-            ];
-            
-            for (const endpoint of endpoints) {
-                try {
-                    const response = await fetch(\`https://immunizationdb-backend.onrender.com\${endpoint}\`);
-                    addLog(\`📡 \${endpoint}: HTTP \${response.status}\`, response.ok ? 'success' : 'error');
-                } catch (error) {
-                    addLog(\`📡 \${endpoint}: Failed - \${error.message}\`, 'error');
-                }
-            }
-        }
-        
-        async function runFullTest() {
-            addLog('🧪 Starting full system test...');
-            document.getElementById('test-results').innerHTML = '<div class="loading"></div>Running tests...';
-            
-            await testBackend();
-            await testAPI();
-            
-            document.getElementById('test-results').innerHTML = '✅ Full system test completed';
-            addLog('🧪 Full system test completed', 'success');
-        }
-        
-        // Auto-start tests
-        setTimeout(() => {
-            addLog('🚀 Auto-starting system tests...');
-            testBackend();
-        }, 2000);
-        
-        // Periodic health checks
-        setInterval(() => {
-            addLog('⏰ Periodic health check...');
-            testBackend();
-        }, 300000); // Every 5 minutes
-        
-        console.log('🏥 VaxTrack GitHub Pages deployment loaded successfully!');
-    </script>
-</body>
-</html>`;
+        console.log(`✅ Copied: ${file}`);
+    });
 
-// Write the deployment HTML
-fs.writeFileSync(path.join(deployDir, 'index.html'), deploymentHtml);
-console.log('✅ Created index.html for GitHub Pages');
+} catch (error) {
+    console.error('❌ Build failed:', error.message);
+    process.exit(1);
+}
 
-// Create 404.html for SPA routing
-fs.writeFileSync(path.join(deployDir, '404.html'), deploymentHtml);
-console.log('✅ Created 404.html for routing fallback');
+// Helper function to copy directories recursively
+function copyDirectory(src, dest) {
+    if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+    }
+    
+    const files = fs.readdirSync(src);
+    files.forEach(file => {
+        const srcPath = path.join(src, file);
+        const destPath = path.join(dest, file);
+        
+        if (fs.statSync(srcPath).isDirectory()) {
+            copyDirectory(srcPath, destPath);
+        } else {
+            fs.copyFileSync(srcPath, destPath);
+        }
+    });
+}
+
+// Create 404.html for SPA routing (copy of index.html)
+const indexPath = path.join(deployDir, 'index.html');
+const notFoundPath = path.join(deployDir, '404.html');
+
+if (fs.existsSync(indexPath)) {
+    fs.copyFileSync(indexPath, notFoundPath);
+    console.log('✅ Created 404.html for SPA routing');
+}
 
 // Create _config.yml for Jekyll (GitHub Pages)
 const jekyllConfig = `title: VaxTrack Immunization System
@@ -429,23 +129,11 @@ plugins:
 fs.writeFileSync(path.join(deployDir, '_config.yml'), jekyllConfig);
 console.log('✅ Created _config.yml for Jekyll');
 
-// Create _redirects for Netlify-style routing (GitHub Pages will ignore, but good to have)
+// Create _redirects for SPA routing
 fs.writeFileSync(path.join(deployDir, '_redirects'), '/*    /index.html   200');
 console.log('✅ Created _redirects file');
 
-// Create CNAME file for custom domain (optional)
-const cname = `# Uncomment and modify if you have a custom domain
-# vaxtrack.yourdomain.com`;
-fs.writeFileSync(path.join(deployDir, 'CNAME.example'), cname);
-console.log('✅ Created CNAME.example for custom domain setup');
-
-console.log('🎉 GitHub Pages deployment files created successfully!');
-console.log('📁 Files created:');
-console.log('  - index.html (main application)');
-console.log('  - 404.html (routing fallback)');
-console.log('  - _config.yml (Jekyll configuration)');
-console.log('  - _redirects (routing rules)');
-console.log('  - CNAME.example (custom domain template)');
-console.log('');
+console.log('🎉 Angular application deployed successfully to GitHub Pages!');
+console.log('📁 Files deployed from Angular build');
 console.log('🚀 Ready for GitHub Pages deployment!');
-console.log('🌐 Will be available at: https://donjunior01.github.io/Immunization-Management-Sytem-group5-project-/');
+console.log('🌐 Will be available at: https://donjunior01.github.io/Immunization-Management-System-group5-project-/');
