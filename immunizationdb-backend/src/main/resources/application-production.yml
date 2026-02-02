@@ -33,6 +33,7 @@ spring:
     ignore-missing-migrations: true
     ignore-future-migrations: true
     clean-disabled: false  # Allow clean for fixing migration issues
+    ignore-migration-patterns: "*:V9*"  # Skip V9 migration temporarily
     url: jdbc:postgresql://dpg-d5vtfdvpm1nc73ct44gg-a:5432/immunizationdb
     user: immunizationdb_user
     password: 8WJDR7Ss865Njh7kLVUhTc4GpngqujLQ
