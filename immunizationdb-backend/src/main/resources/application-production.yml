@@ -1,7 +1,9 @@
 spring:
   # Production Database Configuration (overrides default)
   datasource:
-    url: ${DATABASE_URL}
+    url: jdbc:postgresql://dpg-d5vtfdvpm1nc73ct44gg-a:5432/immunizationdb
+    username: immunizationdb_user
+    password: 8WJDR7Ss865Njh7kLVUhTc4GpngqujLQ
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
