@@ -52,7 +52,6 @@ CREATE TABLE IF NOT EXISTS dose_schedules
     dose_number     INTEGER NOT NULL,
     age_months      INTEGER NOT NULL, -- Recommended age in months
     description     VARCHAR(255),
-    CONSTRAINT fk_dose_vaccine FOREIGN KEY (vaccine_id) REFERENCES vaccines(id) ON DELETE CASCADE,
     CONSTRAINT uk_vaccine_dose UNIQUE (vaccine_id, dose_number)
 );
 
@@ -68,8 +67,7 @@ CREATE TABLE IF NOT EXISTS stock_alerts
     is_resolved     BOOLEAN NOT NULL DEFAULT false,
     resolved_at     TIMESTAMP WITHOUT TIME ZONE,
     resolved_by     BIGINT,
-    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_alert_batch FOREIGN KEY (batch_id) REFERENCES vaccine_batches(id) ON DELETE SET NULL
+    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create Audit Log Table
@@ -84,8 +82,7 @@ CREATE TABLE IF NOT EXISTS audit_logs
     new_value       TEXT,
     ip_address      VARCHAR(50),
     user_agent      TEXT,
-    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insert Sample Facilities
@@ -118,44 +115,6 @@ INSERT INTO vaccines (name, full_name, manufacturer, description, dosage_ml, dos
 ('Yellow Fever', 'Yellow Fever Vaccine', 'Sanofi Pasteur', 'Yellow fever protection', 0.5, 1, 0, 270, 2, 8)
 ON CONFLICT (name) DO NOTHING;
 
--- Insert Dose Schedules
-INSERT INTO dose_schedules (vaccine_id, dose_number, age_months, description) VALUES
--- BCG (single dose at birth)
-((SELECT id FROM vaccines WHERE name = 'BCG'), 1, 0, 'At birth'),
-
--- OPV (4 doses)
-((SELECT id FROM vaccines WHERE name = 'OPV'), 1, 0, 'At birth'),
-((SELECT id FROM vaccines WHERE name = 'OPV'), 2, 1, '6 weeks'),
-((SELECT id FROM vaccines WHERE name = 'OPV'), 3, 2, '10 weeks'),
-((SELECT id FROM vaccines WHERE name = 'OPV'), 4, 3, '14 weeks'),
-
--- DTP (3 doses)
-((SELECT id FROM vaccines WHERE name = 'DTP'), 1, 1, '6 weeks'),
-((SELECT id FROM vaccines WHERE name = 'DTP'), 2, 2, '10 weeks'),
-((SELECT id FROM vaccines WHERE name = 'DTP'), 3, 3, '14 weeks'),
-
--- Measles (2 doses)
-((SELECT id FROM vaccines WHERE name = 'Measles'), 1, 9, '9 months'),
-((SELECT id FROM vaccines WHERE name = 'Measles'), 2, 18, '18 months'),
-
--- Hepatitis B (3 doses)
-((SELECT id FROM vaccines WHERE name = 'Hepatitis B'), 1, 0, 'At birth'),
-((SELECT id FROM vaccines WHERE name = 'Hepatitis B'), 2, 1, '6 weeks'),
-((SELECT id FROM vaccines WHERE name = 'Hepatitis B'), 3, 2, '14 weeks'),
-
--- Rotavirus (2 doses)
-((SELECT id FROM vaccines WHERE name = 'Rotavirus'), 1, 1, '6 weeks'),
-((SELECT id FROM vaccines WHERE name = 'Rotavirus'), 2, 2, '10 weeks'),
-
--- Pneumococcal (3 doses)
-((SELECT id FROM vaccines WHERE name = 'Pneumococcal'), 1, 1, '6 weeks'),
-((SELECT id FROM vaccines WHERE name = 'Pneumococcal'), 2, 2, '10 weeks'),
-((SELECT id FROM vaccines WHERE name = 'Pneumococcal'), 3, 3, '14 weeks'),
-
--- Yellow Fever (single dose at 9 months)
-((SELECT id FROM vaccines WHERE name = 'Yellow Fever'), 1, 9, '9 months')
-ON CONFLICT (vaccine_id, dose_number) DO NOTHING;
-
 -- Create Indexes for new tables
 CREATE INDEX IF NOT EXISTS idx_facilities_district ON facilities(district_id);
 CREATE INDEX IF NOT EXISTS idx_facilities_active ON facilities(active);
@@ -167,28 +126,3 @@ CREATE INDEX IF NOT EXISTS idx_stock_alerts_created ON stock_alerts(created_at);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at);
-
--- Add Foreign Key Constraints to existing tables
-ALTER TABLE users ADD CONSTRAINT IF NOT EXISTS fk_users_facility 
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE SET NULL;
-
-ALTER TABLE patients ADD CONSTRAINT IF NOT EXISTS fk_patients_facility 
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE;
-
-ALTER TABLE vaccine_batches ADD CONSTRAINT IF NOT EXISTS fk_batches_facility 
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE;
-
-ALTER TABLE vaccinations ADD CONSTRAINT IF NOT EXISTS fk_vaccinations_patient 
-    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE;
-
-ALTER TABLE vaccinations ADD CONSTRAINT IF NOT EXISTS fk_vaccinations_batch 
-    FOREIGN KEY (batch_id) REFERENCES vaccine_batches(id) ON DELETE RESTRICT;
-
-ALTER TABLE vaccinations ADD CONSTRAINT IF NOT EXISTS fk_vaccinations_nurse 
-    FOREIGN KEY (nurse_id) REFERENCES users(id) ON DELETE RESTRICT;
-
-ALTER TABLE campaigns ADD CONSTRAINT IF NOT EXISTS fk_campaigns_facility 
-    FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE;
-
-ALTER TABLE campaigns ADD CONSTRAINT IF NOT EXISTS fk_campaigns_creator 
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL;

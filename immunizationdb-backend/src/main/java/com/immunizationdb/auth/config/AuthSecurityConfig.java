@@ -54,11 +54,14 @@ public class AuthSecurityConfig {
                         // Public endpoints (without /api prefix since context path is already /api)
                         .requestMatchers(
                                 "/auth/login",
-                                "/auth/register",
+                                "/auth/register", 
                                 "/auth/health",
                                 "/auth/refresh",
                                 "/auth/logout",
-                                "/error"  // Allow error endpoint for proper error handling
+                                "/actuator/**",  // Allow actuator endpoints
+                                "/health",       // Allow health endpoint
+                                "/error",        // Allow error endpoint for proper error handling
+                                "/"              // Allow root endpoint
                         ).permitAll()
 
                         // All other requests require authentication (rely on @PreAuthorize for fine-grained control)
@@ -86,7 +89,12 @@ public class AuthSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*")); // Allow all localhost ports
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*", 
+            "https://*.github.io",
+            "https://*.onrender.com",
+            "https://donjunior01.github.io"
+        )); 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Authorization"));
