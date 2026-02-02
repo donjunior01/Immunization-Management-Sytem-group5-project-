@@ -1,192 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" data-beasties-container>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VaxTrack - Immunization Management System</title>
-    <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; 
-            padding: 0;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        }
-        .container {
-            background: rgba(255,255,255,0.1);
-            padding: 50px;
-            border-radius: 20px;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            max-width: 600px;
-            margin: 20px;
-        }
-        h1 { 
-            margin-bottom: 30px; 
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        .status { 
-            margin: 20px 0; 
-            font-size: 1.1em;
-        }
-        .loading { 
-            border: 4px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top: 4px solid white;
-            width: 50px;
-            height: 50px;
-            animation: spin 2s linear infinite;
-            margin: 30px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .error { color: #ffcccb; }
-        .success { color: #90EE90; }
-        .button {
-            padding: 15px 30px; 
-            background: white; 
-            color: #667eea; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer;
-            font-size: 1.1em;
-            font-weight: bold;
-            margin: 10px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        .info {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            text-align: left;
-        }
-        .deployment-info {
-            font-size: 0.9em;
-            opacity: 0.8;
-            margin-top: 30px;
-        }
-    </style>
-</head>
+  <meta charset="utf-8">
+  <title>VaxTrack - Immunization Management System</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Modern vaccination management system for health facilities. Register patients, record vaccinations, manage stock, and improve immunization coverage.">
+  <meta name="keywords" content="vaccination, immunization, health management, patient registry, vaccine tracking">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin></script>
+  
+  <!-- Handle redirected routes from 404.html -->
+  <script type="text/javascript">
+    (function(l) {
+      if (l.search[1] === '/' ) {
+        var decoded = l.search.slice(1).split('&').map(function(s) { 
+          return s.replace(/~and~/g, '&')
+        }).join('?');
+        window.history.replaceState(null, null,
+            l.pathname.slice(0, -1) + decoded + l.hash
+        );
+      }
+    }(window.location))
+  </script>
+<link rel="stylesheet" href="styles-5INURTSO.css"></head>
 <body>
-    <div class="container">
-        <h1>🏥 VaxTrack</h1>
-        <h2>Immunization Management System</h2>
-        
-        <div class="loading"></div>
-        <div class="status">✅ Frontend deployed successfully on GitHub Pages!</div>
-        <div class="status">🔗 Testing backend connection...</div>
-        <div id="backend-status">Connecting...</div>
-        
-        <div class="info">
-            <h3>🎯 System Status</h3>
-            <div id="system-info">
-                <div>📱 Frontend: <span class="success">✅ Online (GitHub Pages)</span></div>
-                <div>🖥️ Backend: <span id="backend-indicator">🔄 Testing...</span></div>
-                <div>🗄️ Database: <span id="db-indicator">🔄 Testing...</span></div>
-            </div>
-        </div>
-        
-        <div style="margin-top: 30px;">
-            <button class="button" onclick="testBackend()">🔄 Test Backend</button>
-            <button class="button" onclick="testFullSystem()">🧪 Full System Test</button>
-        </div>
-        
-        <div class="deployment-info">
-            <strong>Deployment Information:</strong><br>
-            Frontend: GitHub Pages<br>
-            Backend: Render.com<br>
-            Repository: Immunization-Management-System
-        </div>
-    </div>
-
-    <script>
-        console.log('🏥 VaxTrack Frontend Loaded Successfully on GitHub Pages');
-        
-        async function testBackend() {
-            const statusDiv = document.getElementById('backend-status');
-            const indicator = document.getElementById('backend-indicator');
-            
-            statusDiv.innerHTML = '🔄 Testing backend connection...';
-            indicator.innerHTML = '🔄 Testing...';
-            
-            try {
-                console.log('Testing backend at: https://immunizationdb-backend.onrender.com/api/actuator/health');
-                
-                const response = await fetch('https://immunizationdb-backend.onrender.com/api/actuator/health', {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    statusDiv.innerHTML = '<span class="success">✅ Backend Connected Successfully!</span>';
-                    indicator.innerHTML = '<span class="success">✅ Online (' + data.status + ')</span>';
-                    console.log('✅ Backend response:', data);
-                } else {
-                    statusDiv.innerHTML = '<span class="error">❌ Backend Error: HTTP ' + response.status + '</span>';
-                    indicator.innerHTML = '<span class="error">❌ Error (' + response.status + ')</span>';
-                    console.error('❌ Backend error:', response.status, response.statusText);
-                }
-            } catch (error) {
-                statusDiv.innerHTML = '<span class="error">❌ Backend Unreachable: ' + error.message + '</span>';
-                indicator.innerHTML = '<span class="error">❌ Offline</span>';
-                console.error('❌ Backend connection failed:', error);
-            }
-        }
-        
-        async function testFullSystem() {
-            console.log('🧪 Running full system test...');
-            
-            // Test backend
-            await testBackend();
-            
-            // Test database (through backend)
-            const dbIndicator = document.getElementById('db-indicator');
-            try {
-                const response = await fetch('https://immunizationdb-backend.onrender.com/api/actuator/health');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.status === 'UP') {
-                        dbIndicator.innerHTML = '<span class="success">✅ Connected</span>';
-                    } else {
-                        dbIndicator.innerHTML = '<span class="error">❌ Issues detected</span>';
-                    }
-                } else {
-                    dbIndicator.innerHTML = '<span class="error">❌ Cannot verify</span>';
-                }
-            } catch (error) {
-                dbIndicator.innerHTML = '<span class="error">❌ Cannot verify</span>';
-            }
-            
-            console.log('🧪 Full system test completed');
-        }
-        
-        // Auto-test backend on load
-        setTimeout(testBackend, 2000);
-        
-        // Show current time
-        setInterval(() => {
-            const now = new Date().toLocaleString();
-            console.log('⏰ System check at:', now);
-        }, 60000);
-    </script>
-</body>
+  <app-root></app-root>
+<link rel="modulepreload" href="chunk-MLMGL4QO.js"><link rel="modulepreload" href="chunk-3YJIJH2N.js"><link rel="modulepreload" href="chunk-T4RMSDZY.js"><script src="main-VCLTXYGM.js" type="module"></script></body>
 </html>
