@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080',
+  apiUrl: 'https://immunizationdb-backend.onrender.com/api',
   useMockAuth: false, // Set to true for development without backend
   enableApiLogging: true, // Enable request/response logging in development
   enableErrorRetry: true, // Enable automatic retry for transient failures
