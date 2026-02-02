@@ -26,12 +26,13 @@ spring:
 
   # Flyway Migration Configuration - Override any environment variables
   flyway:
-    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    enabled: false  # Disable automatic migration, we handle it manually
     baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE:true}
     validate-on-migrate: false  # Disable for production deployment
     out-of-order: true
     ignore-missing-migrations: true
     ignore-future-migrations: true
+    clean-disabled: false  # Allow clean for fixing migration issues
     url: jdbc:postgresql://dpg-d5vtfdvpm1nc73ct44gg-a:5432/immunizationdb
     user: immunizationdb_user
     password: 8WJDR7Ss865Njh7kLVUhTc4GpngqujLQ
