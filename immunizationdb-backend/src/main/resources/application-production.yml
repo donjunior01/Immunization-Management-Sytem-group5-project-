@@ -26,8 +26,8 @@ spring:
 
   # Flyway Migration Configuration - Override any environment variables
   flyway:
-    enabled: false  # Disable automatic migration, we handle it manually
-    baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE:true}
+    enabled: true  # Enable Flyway to work with Hibernate
+    baseline-on-migrate: true
     validate-on-migrate: false  # Disable for production deployment
     out-of-order: true
     ignore-missing-migrations: true
