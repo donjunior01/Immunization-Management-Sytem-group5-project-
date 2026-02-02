@@ -1,0 +1,75 @@
+name: Deploy Frontend to GitHub Pages
+
+on:
+  push:
+    branches: [ donjunior01 ]
+    paths:
+      - 'immunizationdatabase-frontend/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: immunizationdatabase-frontend/vaxtrack-web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: immunizationdatabase-frontend/vaxtrack-web
+        run: npm ci
+
+      - name: Set API URL for production
+        working-directory: immunizationdatabase-frontend/vaxtrack-web
+        run: |
+          echo "Setting API URL for GitHub Pages deployment"
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const envFile = path.join(__dirname, 'src', 'environments', 'environment.prod.ts');
+            let content = fs.readFileSync(envFile, 'utf8');
+            content = content.replace(
+              /apiUrl:\s*['\"].*?['\"]/,
+              'apiUrl: \"https://immunizationdb-backend.onrender.com/api\"'
+            );
+            fs.writeFileSync(envFile, content);
+            console.log('✅ API URL updated for production');
+          "
+
+      - name: Build Angular app
+        working-directory: immunizationdatabase-frontend/vaxtrack-web
+        run: npm run build --if-present || npm run build:simple
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: immunizationdatabase-frontend/vaxtrack-web/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
