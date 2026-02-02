@@ -20,6 +20,7 @@ com\immunizationdb\reporting\dto\CoverageReportResponse$TrendData$TrendDataBuild
 com\immunizationdb\inventory\repository\StockMovementRepository.class
 com\immunizationdb\reporting\dto\CoverageReportResponse$TrendData.class
 com\immunizationdb\vaccination\dto\RecordVaccinationRequest$RecordVaccinationRequestBuilder.class
+com\immunizationdb\config\ProductionDataSourceConfig.class
 com\immunizationdb\sms\service\SmsService$AfricasTalkingRecipient.class
 com\immunizationdb\config\WebConfig$1.class
 com\immunizationdb\campaign\entity\Campaign$CampaignStatus.class
@@ -121,6 +122,7 @@ com\immunizationdb\auth\dto\RegisterRequest.class
 com\immunizationdb\reporting\dto\FacilityComparisonResponse$BestPractice.class
 com\immunizationdb\reporting\dto\FacilityComparisonResponse$FacilityComparisonResponseBuilder.class
 com\immunizationdb\campaign\dto\CreateCampaignRequest.class
+com\immunizationdb\config\FlywayConfig.class
 com\immunizationdb\reporting\dto\FacilityComparisonResponse$ComparisonMetric$ComparisonMetricBuilder.class
 com\immunizationdb\vaccination\service\VaccinationService.class
 com\immunizationdb\auth\controller\AuthController.class
