@@ -1,4 +1,14 @@
-<!DOCTYPE html>
+const fs = require('fs');
+const path = require('path');
+
+console.log('🚀 Building VaxTrack for GitHub Pages deployment...');
+
+// Create deployment directory
+const deployDir = path.join(__dirname);
+console.log('📁 Deploy directory:', deployDir);
+
+// Enhanced HTML with full functionality
+const deploymentHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -249,7 +259,7 @@
             <h3>📝 System Logs</h3>
             <div id="logs" class="logs">
                 <div>🚀 VaxTrack System Initialized</div>
-                <div>📅 02/02/2026 04:57:08</div>
+                <div>📅 ${new Date().toLocaleString()}</div>
                 <div>🌐 Frontend: GitHub Pages deployment successful</div>
                 <div>🔄 Starting backend connectivity tests...</div>
             </div>
@@ -271,7 +281,7 @@
         
         function addLog(message, type = 'info') {
             const logEntry = document.createElement('div');
-            logEntry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEntry.innerHTML = \`[\${new Date().toLocaleTimeString()}] \${message}\`;
             if (type === 'error') logEntry.style.color = '#ffcccb';
             if (type === 'success') logEntry.style.color = '#90EE90';
             logs.appendChild(logEntry);
@@ -298,21 +308,21 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    statusEl.innerHTML = `✅ Backend Online (${data.status})`;
+                    statusEl.innerHTML = \`✅ Backend Online (\${data.status})\`;
                     indicatorEl.className = 'status-indicator status-online';
-                    addLog(`✅ Backend connected successfully: ${data.status}`, 'success');
+                    addLog(\`✅ Backend connected successfully: \${data.status}\`, 'success');
                     
                     // Test database through backend
                     testDatabase(data);
                 } else {
-                    statusEl.innerHTML = `❌ Backend Error (HTTP ${response.status})`;
+                    statusEl.innerHTML = \`❌ Backend Error (HTTP \${response.status})\`;
                     indicatorEl.className = 'status-indicator status-offline';
-                    addLog(`❌ Backend error: HTTP ${response.status}`, 'error');
+                    addLog(\`❌ Backend error: HTTP \${response.status}\`, 'error');
                 }
             } catch (error) {
-                statusEl.innerHTML = `❌ Backend Unreachable`;
+                statusEl.innerHTML = \`❌ Backend Unreachable\`;
                 indicatorEl.className = 'status-indicator status-offline';
-                addLog(`❌ Backend connection failed: ${error.message}`, 'error');
+                addLog(\`❌ Backend connection failed: \${error.message}\`, 'error');
             }
         }
         
@@ -343,10 +353,10 @@
             
             for (const endpoint of endpoints) {
                 try {
-                    const response = await fetch(`https://immunizationdb-backend.onrender.com${endpoint}`);
-                    addLog(`📡 ${endpoint}: HTTP ${response.status}`, response.ok ? 'success' : 'error');
+                    const response = await fetch(\`https://immunizationdb-backend.onrender.com\${endpoint}\`);
+                    addLog(\`📡 \${endpoint}: HTTP \${response.status}\`, response.ok ? 'success' : 'error');
                 } catch (error) {
-                    addLog(`📡 ${endpoint}: Failed - ${error.message}`, 'error');
+                    addLog(\`📡 \${endpoint}: Failed - \${error.message}\`, 'error');
                 }
             }
         }
@@ -377,4 +387,65 @@
         console.log('🏥 VaxTrack GitHub Pages deployment loaded successfully!');
     </script>
 </body>
-</html>
+</html>`;
+
+// Write the deployment HTML
+fs.writeFileSync(path.join(deployDir, 'index.html'), deploymentHtml);
+console.log('✅ Created index.html for GitHub Pages');
+
+// Create 404.html for SPA routing
+fs.writeFileSync(path.join(deployDir, '404.html'), deploymentHtml);
+console.log('✅ Created 404.html for routing fallback');
+
+// Create _config.yml for Jekyll (GitHub Pages)
+const jekyllConfig = `title: VaxTrack Immunization System
+description: Healthcare management system for immunization tracking
+baseurl: ""
+url: "https://donjunior01.github.io"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Exclude files
+exclude:
+  - immunizationdb-backend/
+  - immunizationdatabase-frontend/
+  - .github/
+  - node_modules/
+  - "*.md"
+  - "*.yml"
+  - "*.json"
+
+# Include files
+include:
+  - _redirects
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap`;
+
+fs.writeFileSync(path.join(deployDir, '_config.yml'), jekyllConfig);
+console.log('✅ Created _config.yml for Jekyll');
+
+// Create _redirects for Netlify-style routing (GitHub Pages will ignore, but good to have)
+fs.writeFileSync(path.join(deployDir, '_redirects'), '/*    /index.html   200');
+console.log('✅ Created _redirects file');
+
+// Create CNAME file for custom domain (optional)
+const cname = `# Uncomment and modify if you have a custom domain
+# vaxtrack.yourdomain.com`;
+fs.writeFileSync(path.join(deployDir, 'CNAME.example'), cname);
+console.log('✅ Created CNAME.example for custom domain setup');
+
+console.log('🎉 GitHub Pages deployment files created successfully!');
+console.log('📁 Files created:');
+console.log('  - index.html (main application)');
+console.log('  - 404.html (routing fallback)');
+console.log('  - _config.yml (Jekyll configuration)');
+console.log('  - _redirects (routing rules)');
+console.log('  - CNAME.example (custom domain template)');
+console.log('');
+console.log('🚀 Ready for GitHub Pages deployment!');
+console.log('🌐 Will be available at: https://donjunior01.github.io/Immunization-Management-Sytem-group5-project-/');

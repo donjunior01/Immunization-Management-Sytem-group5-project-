@@ -1,0 +1,27 @@
+title: VaxTrack Immunization System
+description: Healthcare management system for immunization tracking
+baseurl: ""
+url: "https://donjunior01.github.io"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Exclude files
+exclude:
+  - immunizationdb-backend/
+  - immunizationdatabase-frontend/
+  - .github/
+  - node_modules/
+  - "*.md"
+  - "*.yml"
+  - "*.json"
+
+# Include files
+include:
+  - _redirects
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
