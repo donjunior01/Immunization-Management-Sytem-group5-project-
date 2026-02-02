@@ -16,7 +16,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate  # Don't auto-create tables in production
+      ddl-auto: update  # Change to update to create missing tables
     show-sql: false  # Disable SQL logging in production
     properties:
       hibernate:
