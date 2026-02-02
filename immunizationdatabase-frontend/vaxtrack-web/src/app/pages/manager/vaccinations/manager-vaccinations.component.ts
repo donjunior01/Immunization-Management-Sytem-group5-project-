@@ -287,12 +287,7 @@ export class ManagerVaccinationsComponent implements OnInit {
         administrationSite: formValue.administrationSite || 'LEFT_ARM', // Backend requires administrationSite
         notes: formValue.adverseEventNotes || undefined // Backend expects notes, not adverseEventNotes
       };
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-vaccinations.component.ts:280',message:'Submitting vaccination record from manager page',data:{vaccinationRequest,formValue},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'VACCINATION_ERROR'})}).catch(()=>{});
-      // #endregion
-
-      // Log user role before making request
+// Log user role before making request
       console.log('Recording vaccination - User role:', currentUser?.role, 'Facility ID:', facilityId);
       console.log('Vaccination request:', vaccinationRequest);
       
@@ -315,18 +310,7 @@ export class ManagerVaccinationsComponent implements OnInit {
         },
         error: (error) => {
           console.error('Failed to record vaccination:', error);
-          // #region agent log
-          const errorDetails = {
-            status: error.status,
-            statusText: error.statusText,
-            message: error.message,
-            error: error.error,
-            url: error.url,
-            fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
-          };
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-vaccinations.component.ts:311',message:'Vaccination recording error from manager page',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'VACCINATION_ERROR'})}).catch(()=>{});
-          // #endregion
-          const user = this.authService.getCurrentUser();
+const user = this.authService.getCurrentUser();
           if (error.status === 403) {
             this.errorMessage = `Access denied. Your role (${user?.role || 'Unknown'}) may not have permission to record vaccinations. Required roles: HEALTH_WORKER, FACILITY_MANAGER, or GOVERNMENT_OFFICIAL.`;
           } else if (error.status === 400) {

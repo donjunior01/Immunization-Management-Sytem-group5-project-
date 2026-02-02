@@ -212,12 +212,7 @@ export class RegisterPatientComponent implements OnInit {
       const user = this.authService.getCurrentUser();
       const token = this.authService.getToken();
       const formValue = this.patientForm.value;
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-patient.component.ts:196',message:'Creating patient - user info',data:{hasUser:!!user,userRole:user?.role,userFacilityId:user?.facilityId,hasToken:!!token,tokenLength:token?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'AUTH_403'})}).catch(()=>{});
-      // #endregion
-      
-      // Combine firstName and lastName into fullName for backend
+// Combine firstName and lastName into fullName for backend
       const fullName = `${formValue.firstName || ''} ${formValue.lastName || ''}`.trim();
       
       const patientData: CreatePatientRequest = {
@@ -235,17 +230,9 @@ export class RegisterPatientComponent implements OnInit {
         address: formValue.address || formValue.village || undefined,
         facilityId: user?.facilityId
       };
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-patient.component.ts:218',message:'Calling createPatient API',data:{patientData:JSON.stringify(patientData)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'AUTH_403'})}).catch(()=>{});
-      // #endregion
-      
-      this.patientService.createPatient(patientData).subscribe({
+this.patientService.createPatient(patientData).subscribe({
         next: (response) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-patient.component.ts:222',message:'Patient created successfully',data:{patientId:response?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'AUTH_403'})}).catch(()=>{});
-          // #endregion
-          this.createdPatient = response;
+this.createdPatient = response;
           this.formDirty = false;
           ensureMinimumLoadingTime(startTime, () => {
             this.loading = false;
@@ -259,11 +246,7 @@ export class RegisterPatientComponent implements OnInit {
           });
         },
         error: (error) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register-patient.component.ts:234',message:'Patient creation error',data:{status:error.status,statusText:error.statusText,errorMessage:error.error?.message,userRole:user?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'AUTH_403'})}).catch(()=>{});
-          // #endregion
-          
-          if (error.status === 409 || error.error?.message?.includes('duplicate') || error.error?.message?.includes('already exists')) {
+if (error.status === 409 || error.error?.message?.includes('duplicate') || error.error?.message?.includes('already exists')) {
             // Handle duplicate patient
             this.duplicatePatient = error.error?.duplicatePatient || null;
             this.showDuplicateModal = true;

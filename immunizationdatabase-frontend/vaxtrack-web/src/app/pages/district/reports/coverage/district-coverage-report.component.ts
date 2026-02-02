@@ -96,17 +96,11 @@ export class DistrictCoverageReportComponent implements OnInit {
 
   loadFacilities(): void {
     // District dashboard plays admin role - load ALL facilities
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:97',message:'Loading all facilities (admin role)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    const user = this.authService.getCurrentUser();
+const user = this.authService.getCurrentUser();
     
     this.facilityService.getAllFacilities(true).subscribe({
       next: (facilities) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:105',message:'All facilities loaded',data:{facilitiesCount:facilities.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        this.facilities = facilities.map(f => ({ id: f.id, name: f.name || f.id }));
+this.facilities = facilities.map(f => ({ id: f.id, name: f.name || f.id }));
         if (user?.facilityId && this.facilities.length > 0) {
           // Pre-select user's facility if available
           if (this.facilities.find(f => f.id === user.facilityId)) {
@@ -116,10 +110,7 @@ export class DistrictCoverageReportComponent implements OnInit {
         }
       },
       error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-coverage-report.component.ts:117',message:'Failed to load all facilities',data:{error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        console.error('Error loading all facilities:', error);
+console.error('Error loading all facilities:', error);
         this.facilities = [];
       }
     });

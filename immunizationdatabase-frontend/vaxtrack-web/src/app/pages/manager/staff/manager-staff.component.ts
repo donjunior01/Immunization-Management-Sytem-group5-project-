@@ -84,15 +84,9 @@ export class ManagerStaffComponent implements OnInit, OnDestroy {
     }, 10000); // 10 second timeout
 
     // Load staff for current facility
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-staff.component.ts:loadStaff',message:'Starting staff load',data:{loading:this.loading,startTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER_INFINITE'})}).catch(()=>{});
-    // #endregion
-    this.subscription = this.userService.getFacilityStaff().subscribe({
+this.subscription = this.userService.getFacilityStaff().subscribe({
       next: (staff) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-staff.component.ts:loadStaff:next',message:'Staff loaded successfully',data:{staffCount:staff?.length||0,loading:this.loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER_INFINITE'})}).catch(()=>{});
-        // #endregion
-        if (this.loadingTimeout) {
+if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
           this.loadingTimeout = undefined;
         }
@@ -100,15 +94,9 @@ export class ManagerStaffComponent implements OnInit, OnDestroy {
         // Set loading to false immediately, don't wait for minimum time
         this.loading = false;
         this.cdr.detectChanges();
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-staff.component.ts:loadStaff:next:after',message:'Loading set to false',data:{loading:this.loading,staffCount:this.staff.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER_INFINITE'})}).catch(()=>{});
-        // #endregion
-      },
+},
       error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-staff.component.ts:loadStaff:error',message:'Staff load error',data:{error:error?.message||'Unknown error',status:error?.status,loading:this.loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER_INFINITE'})}).catch(()=>{});
-        // #endregion
-        if (this.loadingTimeout) {
+if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
           this.loadingTimeout = undefined;
         }
@@ -117,10 +105,7 @@ export class ManagerStaffComponent implements OnInit, OnDestroy {
         // Set loading to false immediately on error
         this.loading = false;
         this.cdr.detectChanges();
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-staff.component.ts:loadStaff:error:after',message:'Loading set to false after error',data:{loading:this.loading,error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'LOADER_INFINITE'})}).catch(()=>{});
-        // #endregion
-      }
+}
     });
   }
 

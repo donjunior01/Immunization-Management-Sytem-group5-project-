@@ -156,34 +156,14 @@ export class ManagerAppointmentsComponent implements OnInit {
         appointmentTime: timeStr, // HH:mm format
         notes: formValue.reason || appointment.notes || undefined
       };
-
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-appointments.component.ts:onRescheduleSubmit',message:'Sending update request',data:{appointmentId:appointmentId,updateRequest:updateRequest,patientIdType:typeof updateRequest.patientId,facilityIdType:typeof updateRequest.facilityId,dateStr:dateStr,timeStr:timeStr,originalAppointment:appointment},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'APPOINTMENT_UPDATE'})}).catch(()=>{});
-      // #endregion
-
-      this.appointmentService.updateAppointment(appointmentId, updateRequest).subscribe({
+this.appointmentService.updateAppointment(appointmentId, updateRequest).subscribe({
         next: () => {
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-appointments.component.ts:onRescheduleSubmit:next',message:'Appointment updated successfully',data:{appointmentId:appointmentId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'APPOINTMENT_UPDATE'})}).catch(()=>{});
-          // #endregion
-          this.loading = false;
+this.loading = false;
           this.closeRescheduleModal();
           this.loadAppointments();
         },
         error: (error) => {
-          // #region agent log
-          const errorData = {
-            status: error?.status,
-            statusText: error?.statusText,
-            url: error?.url,
-            errorBody: error?.error,
-            errorMessage: error?.error?.message || error?.message,
-            errorKeys: error?.error ? Object.keys(error.error) : [],
-            fullError: JSON.stringify(error?.error || {}).substring(0, 500)
-          };
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'manager-appointments.component.ts:onRescheduleSubmit:error',message:'Failed to update appointment',data:errorData,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'APPOINTMENT_UPDATE'})}).catch(()=>{});
-          // #endregion
-          console.error('Failed to reschedule appointment:', error);
+console.error('Failed to reschedule appointment:', error);
           // Extract validation errors if present
           if (error?.error && typeof error.error === 'object') {
             const validationErrors = Object.keys(error.error).map(key => `${key}: ${error.error[key]}`).join(', ');

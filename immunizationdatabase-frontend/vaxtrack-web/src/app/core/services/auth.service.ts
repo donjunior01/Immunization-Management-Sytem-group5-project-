@@ -239,21 +239,14 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:233',message:'getCurrentUser called',data:{hasValue:!!this.currentUserSubject.value,hasToken:!!this.getToken()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
-
-    // If subject is null but localStorage has user, load it
+// If subject is null but localStorage has user, load it
     if (!this.currentUserSubject.value) {
       const userStr = localStorage.getItem('user');
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
           this.currentUserSubject.next(user);
-          // #region agent log
-          fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:240',message:'getCurrentUser loaded from storage',data:{userRole:user?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-          // #endregion
-          return user;
+return user;
         } catch (e) {
           console.error('Error parsing user from storage:', e);
         }
@@ -266,26 +259,15 @@ export class AuthService {
   isAuthenticated(): boolean {
     const token = this.getToken();
     if (!token) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:250',message:'isAuthenticated - no token',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
-      return false;
+return false;
     }
 
     // Check if token is expired
     if (this.isTokenExpired()) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:256',message:'isAuthenticated - token expired',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-      // #endregion
-      this.clearSession();
+this.clearSession();
       return false;
     }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:262',message:'isAuthenticated - true',data:{hasUser:!!this.getCurrentUser()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
-
-    return true;
+return true;
   }
 
   hasRole(role: string): boolean {
@@ -299,23 +281,14 @@ export class AuthService {
   }
 
   private setSession(response: LoginResponse, rememberMe: boolean = false): void {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:262',message:'setSession called',data:{hasUser:!!response.user,userRole:response.user?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
-
-    localStorage.setItem('token', response.token);
+localStorage.setItem('token', response.token);
     localStorage.setItem('user', JSON.stringify(response.user));
 
     // Store token expiration time
     const now = Date.now();
     const expirationTime = now + response.expiresIn;
     localStorage.setItem('tokenExpiration', expirationTime.toString());
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:303',message:'Token expiration set',data:{now,expiresIn:response.expiresIn,expirationTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
-
-    // Store remember me preference
+// Store remember me preference
     if (rememberMe) {
       localStorage.setItem('rememberMe', 'true');
     } else {
@@ -324,11 +297,7 @@ export class AuthService {
 
     // CRITICAL: Update current user subject IMMEDIATELY - guards depend on this
     this.currentUserSubject.next(response.user);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:278',message:'setSession completed',data:{currentUserSet:!!this.currentUserSubject.value,userRole:this.currentUserSubject.value?.role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion
-  }
+}
 
   private loadUserFromStorage(): void {
     const userStr = localStorage.getItem('user');
@@ -353,30 +322,17 @@ export class AuthService {
   private isTokenExpired(): boolean {
     const expirationTime = localStorage.getItem('tokenExpiration');
     if (!expirationTime) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:340',message:'isTokenExpired - no expiration time',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
-      return true; // No expiration time means expired
+return true; // No expiration time means expired
     }
 
     const expiration = parseInt(expirationTime, 10);
     const now = Date.now();
     const timeUntilExpiration = expiration - now;
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:348',message:'isTokenExpired check',data:{expiration,now,timeUntilExpiration,expirationTime,buffer:300000},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
-
-    // Add 5 minute buffer before actual expiration, but only if token has more than 5 minutes left
+// Add 5 minute buffer before actual expiration, but only if token has more than 5 minutes left
     // If token expires in less than 5 minutes, don't apply buffer (to avoid immediate expiration)
     const buffer = Math.min(300000, Math.max(0, timeUntilExpiration)); // Use smaller of 5 min or remaining time
     const isExpired = now >= (expiration - buffer);
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:355',message:'isTokenExpired result',data:{isExpired},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion
-
-    return isExpired;
+return isExpired;
   }
 
   /**

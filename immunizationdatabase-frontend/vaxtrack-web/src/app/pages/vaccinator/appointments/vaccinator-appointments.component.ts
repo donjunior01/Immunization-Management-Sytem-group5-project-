@@ -66,24 +66,11 @@ export class VaccinatorAppointmentsComponent implements OnInit {
       this.isLoadingData = false;
       return;
     }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-appointments.component.ts:70',message:'Loading appointments',data:{facilityId,selectedDate:this.selectedDate,hasFacilityId:!!facilityId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'APPOINTMENTS_NOT_LOADING'})}).catch(()=>{});
-    // #endregion
-    this.appointmentService.getAppointments(facilityId, this.selectedDate).subscribe({
+this.appointmentService.getAppointments(facilityId, this.selectedDate).subscribe({
       next: (appointments) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-appointments.component.ts:72',message:'Appointments received',data:{appointmentCount:appointments?.length||0,appointments:appointments?.slice(0,3).map(a=>({id:a.id,patientName:a.patientName,status:a.status,vaccineName:a.vaccineName})),rawData:JSON.stringify(appointments?.slice(0,2))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'APPOINTMENTS_NOT_LOADING'})}).catch(()=>{});
-        // #endregion
-        this.appointments = appointments || [];
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-appointments.component.ts:74',message:'Applying filters',data:{appointmentsCount:this.appointments.length,searchQuery:this.searchQuery,appointmentFilter:this.appointmentFilter},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'APPOINTMENTS_NOT_LOADING'})}).catch(()=>{});
-        // #endregion
-        this.applyFilters();
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-appointments.component.ts:76',message:'Filters applied',data:{filteredCount:this.filteredAppointments.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'APPOINTMENTS_NOT_LOADING'})}).catch(()=>{});
-        // #endregion
-        ensureMinimumLoadingTime(startTime, () => {
+this.appointments = appointments || [];
+this.applyFilters();
+ensureMinimumLoadingTime(startTime, () => {
           this.loading = false;
           this.isLoadingData = false;
           this.cdr.detectChanges();
@@ -91,17 +78,7 @@ export class VaccinatorAppointmentsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to load appointments:', error);
-        // #region agent log
-        const errorDetails = {
-          status: error.status,
-          statusText: error.statusText,
-          message: error.message,
-          error: error.error,
-          url: error.url
-        };
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'vaccinator-appointments.component.ts:80',message:'Error loading appointments',data:errorDetails,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'APPOINTMENTS_NOT_LOADING'})}).catch(()=>{});
-        // #endregion
-        this.appointments = [];
+this.appointments = [];
         this.filteredAppointments = [];
         this.errorMessage = 'Failed to load appointments. Please try again.';
         ensureMinimumLoadingTime(startTime, () => {

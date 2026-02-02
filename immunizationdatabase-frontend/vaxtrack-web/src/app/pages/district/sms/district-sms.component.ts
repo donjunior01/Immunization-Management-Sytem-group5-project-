@@ -64,12 +64,7 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
   loadSmsLogs(): void {
     this.loading = true;
     this.errorMessage = '';
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:loadSmsLogs',message:'Starting SMS logs load',data:{hasStartDate:!!this.filterForm.value.startDate,hasEndDate:!!this.filterForm.value.endDate,hasStatus:!!this.filterForm.value.status,hasPhone:!!this.filterForm.value.recipientPhone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_LOADING'})}).catch(()=>{});
-    // #endregion
-
-    const filter: SmsLogFilter = {};
+const filter: SmsLogFilter = {};
     
     if (this.filterForm.value.startDate) {
       filter.startDate = new Date(this.filterForm.value.startDate).toISOString();
@@ -83,18 +78,10 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
     if (this.filterForm.value.recipientPhone) {
       filter.recipientPhone = this.filterForm.value.recipientPhone;
     }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:loadSmsLogs',message:'Before API call',data:{filter:filter},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_LOADING'})}).catch(()=>{});
-    // #endregion
-
-    // Set a safety timeout to prevent infinite loading
+// Set a safety timeout to prevent infinite loading
     this.loadingTimeout = setTimeout(() => {
       if (this.loading) {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:loadSmsLogs:timeout',message:'Loading timeout triggered',data:{loading:this.loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_LOADING'})}).catch(()=>{});
-        // #endregion
-        this.loading = false;
+this.loading = false;
         this.errorMessage = 'Request timed out. Please try again.';
       }
     }, 10000); // 10 second timeout
@@ -107,10 +94,7 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
     this.subscription = this.smsService.getSmsLogs(filter).pipe(
       timeout(8000), // 8 second timeout for the HTTP request
       catchError((error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:loadSmsLogs:catchError',message:'Error in pipe',data:{error:error?.message||'Unknown',name:error?.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_LOADING'})}).catch(()=>{});
-        // #endregion
-        if (this.loadingTimeout) {
+if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
         }
         this.loading = false;
@@ -124,10 +108,7 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
       next: (logs) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:loadSmsLogs:next',message:'SMS logs received',data:{logsCount:logs?.length||0,logs:logs},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_LOADING'})}).catch(()=>{});
-        // #endregion
-        if (this.loadingTimeout) {
+if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
         }
         this.smsLogs = logs || [];
@@ -135,10 +116,7 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:loadSmsLogs:error',message:'SMS logs error',data:{error:error?.message||'Unknown',status:error?.status,statusText:error?.statusText,url:error?.url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_LOADING'})}).catch(()=>{});
-        // #endregion
-        if (this.loadingTimeout) {
+if (this.loadingTimeout) {
           clearTimeout(this.loadingTimeout);
         }
         console.error('Failed to load SMS logs:', error);
@@ -209,17 +187,9 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
     this.successMessage = '';
 
     const formValue = this.sendSmsForm.value;
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:onSendSms',message:'Sending SMS',data:{phone:formValue.phone,messageLength:formValue.message?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_SEND'})}).catch(()=>{});
-    // #endregion
-
-    this.smsService.sendSms(formValue.phone, formValue.message).subscribe({
+this.smsService.sendSms(formValue.phone, formValue.message).subscribe({
       next: (smsLog) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:onSendSms:next',message:'SMS sent successfully',data:{smsLogId:smsLog.id,status:smsLog.status,errorMessage:smsLog.errorMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_SEND'})}).catch(()=>{});
-        // #endregion
-        this.sendingSms = false;
+this.sendingSms = false;
         // Show success message even if SMS gateway failed (message is logged)
         if (smsLog.status === 'SENT') {
           this.successMessage = 'SMS sent successfully!';
@@ -235,10 +205,7 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
         }, 500);
       },
       error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:onSendSms:error',message:'Failed to send SMS',data:{error:error?.error||error?.message,status:error?.status,errorBody:error?.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_SEND'})}).catch(()=>{});
-        // #endregion
-        this.sendingSms = false;
+this.sendingSms = false;
         // Even if there's an error, reload logs in case the message was saved
         this.errorMessage = error?.error?.message || error?.message || 'Failed to send SMS. Please try again.';
         console.error('Failed to send SMS:', error);
@@ -288,17 +255,9 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
 
     this.deletingSms = true;
     this.errorMessage = '';
-
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:confirmDelete',message:'Deleting SMS log',data:{smsLogId:this.smsToDelete.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_DELETE'})}).catch(()=>{});
-    // #endregion
-
-    this.smsService.deleteSmsLog(this.smsToDelete.id).subscribe({
+this.smsService.deleteSmsLog(this.smsToDelete.id).subscribe({
       next: () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:confirmDelete:next',message:'SMS log deleted successfully',data:{smsLogId:this.smsToDelete?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_DELETE'})}).catch(()=>{});
-        // #endregion
-        this.deletingSms = false;
+this.deletingSms = false;
         this.closeDeleteModal();
         this.successMessage = 'SMS log deleted successfully.';
         setTimeout(() => {
@@ -307,10 +266,7 @@ export class DistrictSmsComponent implements OnInit, OnDestroy {
         }, 1500);
       },
       error: (error) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/beb0f3e8-0ff1-4b21-b2a4-519a994a184e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'district-sms.component.ts:confirmDelete:error',message:'Failed to delete SMS log',data:{error:error?.error||error?.message,status:error?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'SMS_DELETE'})}).catch(()=>{});
-        // #endregion
-        this.deletingSms = false;
+this.deletingSms = false;
         this.errorMessage = error?.error?.message || error?.message || 'Failed to delete SMS log. Please try again.';
         console.error('Failed to delete SMS log:', error);
       }
