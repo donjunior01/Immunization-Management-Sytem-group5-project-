@@ -17,6 +17,8 @@ public class FlywayConfig {
 
     @PostConstruct
     public void migrateFlyway() {
+        System.out.println("=== CUSTOM FLYWAY CONFIG STARTING ===");
+        
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .baselineOnMigrate(true)
@@ -28,19 +30,30 @@ public class FlywayConfig {
                 .load();
 
         try {
+            System.out.println("=== ATTEMPTING FLYWAY REPAIR ===");
             // Try to repair first in case of failed migrations
             flyway.repair();
+            System.out.println("=== FLYWAY REPAIR SUCCESSFUL ===");
+            
+            System.out.println("=== STARTING FLYWAY MIGRATION ===");
             flyway.migrate();
+            System.out.println("=== FLYWAY MIGRATION SUCCESSFUL ===");
         } catch (Exception e) {
             // If repair fails, try clean and migrate (only for development/testing)
-            System.out.println("Migration failed, attempting to clean and migrate...");
+            System.out.println("=== MIGRATION FAILED, ATTEMPTING CLEAN AND MIGRATE ===");
+            System.out.println("Error: " + e.getMessage());
             try {
                 flyway.clean();
+                System.out.println("=== FLYWAY CLEAN SUCCESSFUL ===");
                 flyway.migrate();
+                System.out.println("=== FLYWAY MIGRATE AFTER CLEAN SUCCESSFUL ===");
             } catch (Exception cleanException) {
-                System.out.println("Clean and migrate also failed: " + cleanException.getMessage());
+                System.out.println("=== CLEAN AND MIGRATE ALSO FAILED ===");
+                System.out.println("Clean error: " + cleanException.getMessage());
                 throw cleanException;
             }
         }
+        
+        System.out.println("=== CUSTOM FLYWAY CONFIG COMPLETED ===");
     }
 }
